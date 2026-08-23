@@ -1,0 +1,185 @@
+name: CI/CD — La Pocha Tracker
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+      - 'finalproject-**'
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  # ─────────────────────────────────────────
+  # JOB 1: Análisis y tests (todas las ramas)
+  # ─────────────────────────────────────────
+  analyze_and_test:
+    name: Analyze & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Restaurar firebase_options.dart
+        run: |
+          echo "${{ secrets.FIREBASE_OPTIONS }}" > app/lib/firebase_options.dart
+
+      - name: Restaurar google-services.json
+        run: |
+          echo "${{ secrets.GOOGLE_SERVICES }}" > app/android/app/google-services.json
+
+      - name: Instalar dependencias
+        working-directory: app
+        run: flutter pub get
+
+      - name: Generar código Drift
+        working-directory: app
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Flutter analyze
+        working-directory: app
+        run: flutter analyze
+
+      - name: Flutter test
+        working-directory: app
+        run: flutter test
+
+  # ─────────────────────────────────────────
+  # JOB 2: APK Debug (rama develop y features)
+  # ─────────────────────────────────────────
+  build_debug_apk:
+    name: Build Debug APK
+    runs-on: ubuntu-latest
+    needs: analyze_and_test
+    if: github.ref != 'refs/heads/main'
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Restaurar firebase_options.dart
+        run: |
+          echo "${{ secrets.FIREBASE_OPTIONS }}" > app/lib/firebase_options.dart
+
+      - name: Restaurar google-services.json
+        run: |
+          echo "${{ secrets.GOOGLE_SERVICES }}" > app/android/app/google-services.json
+
+      - name: Instalar dependencias
+        working-directory: app
+        run: flutter pub get
+
+      - name: Generar código Drift
+        working-directory: app
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build APK Debug
+        working-directory: app
+        run: flutter build apk --debug
+
+      - name: Subir APK Debug como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: la-pocha-debug-${{ github.sha }}
+          path: app/build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 7
+
+  # ─────────────────────────────────────────
+  # JOB 3: APK Release (solo rama main)
+  # ─────────────────────────────────────────
+  build_release_apk:
+    name: Build & Publish Release APK
+    runs-on: ubuntu-latest
+    needs: analyze_and_test
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+          cache: true
+
+      - name: Restaurar firebase_options.dart
+        run: |
+          echo "${{ secrets.FIREBASE_OPTIONS }}" > app/lib/firebase_options.dart
+
+      - name: Restaurar google-services.json
+        run: |
+          echo "${{ secrets.GOOGLE_SERVICES }}" > app/android/app/google-services.json
+
+      - name: Configurar keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode \
+            > app/android/la-pocha.keystore
+
+      - name: Configurar key.properties
+        run: |
+          cat > app/android/key.properties << EOF
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=../la-pocha.keystore
+          EOF
+
+      - name: Instalar dependencias
+        working-directory: app
+        run: flutter pub get
+
+      - name: Generar código Drift
+        working-directory: app
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Build APK Release
+        working-directory: app
+        run: flutter build apk --release
+
+      - name: Obtener versión del pubspec
+        id: version
+        working-directory: app
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Crear GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: La Pocha Tracker v${{ steps.version.outputs.version }}
+          body: |
+            ## La Pocha Tracker — Release automático
+
+            Generado automáticamente al hacer merge a `main`.
+
+            ### Instalación
+            1. Descarga `la-pocha-tracker.apk`
+            2. En tu Android: Ajustes → Seguridad → Fuentes desconocidas
+            3. Instala el APK descargado
+
+            ### Cambios
+            Ver historial de commits para los cambios incluidos en esta versión.
+          files: app/build/app/outputs/flutter-apk/app-release.apk
+          token: ${{ secrets.GITHUB_TOKEN }}
+          make_latest: true
