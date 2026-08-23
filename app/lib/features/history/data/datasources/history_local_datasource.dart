@@ -1,0 +1,73 @@
+import 'package:drift/drift.dart';
+import 'package:la_pocha/core/database/app_database.dart';
+import 'package:la_pocha/features/game_setup/data/datasources/game_local_datasource.dart';
+import 'package:la_pocha/features/game_setup/data/datasources/round_local_datasource.dart';
+import 'package:la_pocha/features/game_setup/data/mappers/game_mapper.dart';
+import 'package:la_pocha/features/game_setup/domain/entities/game.dart';
+import 'package:la_pocha/features/game_setup/domain/entities/game_status.dart';
+import 'package:la_pocha/features/game_setup/domain/entities/round.dart';
+import 'package:la_pocha/features/game_setup/domain/entities/round_status.dart';
+import 'package:la_pocha/features/history/domain/entities/game_history_item.dart';
+import 'package:la_pocha/features/history/domain/services/game_history_mapper.dart';
+
+class HistoryLocalDatasource {
+  HistoryLocalDatasource(
+    this._database,
+    this._gameLocalDatasource,
+    this._roundLocalDatasource, {
+    GameHistoryMapper? mapper,
+  }) : _mapper = mapper ?? const GameHistoryMapper();
+
+  final AppDatabase _database;
+  final GameLocalDatasource _gameLocalDatasource;
+  final RoundLocalDatasource _roundLocalDatasource;
+  final GameHistoryMapper _mapper;
+
+  Future<List<GameHistoryItem>> getFinishedGames({int? limit}) async {
+    final entries = await _buildFinishedGamesQuery(limit: limit).get();
+    return _mapEntries(entries);
+  }
+
+  Stream<List<GameHistoryItem>> watchFinishedGames({int? limit}) {
+    return _buildFinishedGamesQuery(limit: limit).watch().map(_mapEntries);
+  }
+
+  SimpleSelectStatement<$GamesTable, GameEntry> _buildFinishedGamesQuery({
+    int? limit,
+  }) {
+    final query = _database.select(_database.games)
+      ..where((table) => table.status.equals('finished'))
+      ..orderBy([(table) => OrderingTerm.desc(table.finishedAt)]);
+    if (limit != null) {
+      query.limit(limit);
+    }
+    return query;
+  }
+
+  List<GameHistoryItem> _mapEntries(List<GameEntry> entries) {
+    return entries
+        .map(GameMapper.toDomain)
+        .map(_mapper.fromLocalGame)
+        .whereType<GameHistoryItem>()
+        .toList();
+  }
+
+  Future<({Game game, List<Round> rounds})> loadFinishedGameDetail(
+    String gameId,
+  ) async {
+    final game = await _gameLocalDatasource.getGameById(gameId);
+    if (game == null) {
+      throw StateError('Game not found: $gameId');
+    }
+    if (game.status != GameStatus.finished) {
+      throw StateError('Game is not finished: $gameId');
+    }
+
+    final rounds = await _roundLocalDatasource.getRoundsByGameId(gameId);
+    final closedRounds = rounds
+        .where((round) => round.status == RoundStatus.closed)
+        .toList();
+
+    return (game: game, rounds: closedRounds);
+  }
+}

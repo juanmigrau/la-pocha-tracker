@@ -1,0 +1,153 @@
+# Contrato de acceso a datos — La Pocha (Flutter + Firebase)
+# Sustituye a api-spec.yml (OpenAPI REST). Toda la app consume datos vía Firebase SDK.
+# Identificadores de colecciones y campos en inglés; documentación en español en data-model.md.
+
+specVersion: "1.0.0"
+title: La Pocha Data Access (Firebase)
+description: |
+  Operaciones de datos para la app Flutter (la_pocha).
+  Modelo de colecciones en data-model.md.
+  Implementar en capa data (datasources + repositories) según firebase-standards.mdc.
+
+replaces: api-spec.yml
+
+sdk:
+  packages:
+    - firebase_core
+    - cloud_firestore
+    - firebase_auth
+  platforms:
+    - android
+    - ios
+
+authentication:
+  provider: firebase_auth
+  flows:
+    signInWithEmailPassword:
+      sdk: FirebaseAuth.signInWithEmailAndPassword
+    signUpWithEmailPassword:
+      sdk: FirebaseAuth.createUserWithEmailAndPassword
+    signOut:
+      sdk: FirebaseAuth.signOut
+    sendPasswordResetEmail:
+      sdk: FirebaseAuth.sendPasswordResetEmail
+      usage: Diálogo "¿Olvidaste tu contraseña?" sobre SignInPage (LPT-25)
+    authStateChanges:
+      sdk: FirebaseAuth.authStateChanges
+      usage: BLoC de sesión / navegación condicional
+    deleteAccount:
+      sdk: FirebaseAuth.currentUser.delete
+      usage: |
+        Eliminar cuenta desde ProfilePage. Si Firebase lanza requires-recent-login,
+        reautenticar (email/contraseña o GoogleSignIn) y reintentar delete().
+        Borrar users/{uid} en Firestore ANTES de Auth.delete para cumplir Security Rules.
+  profileSync:
+    description: Tras registro/login, crear o actualizar users/{uid}
+    sdk: FirebaseFirestore.doc('users/${uid}').set(..., SetOptions(merge: true))
+
+firestore:
+  conventions:
+    documentId: string
+    timestamps: Timestamp
+    pagination: startAfterDocument + limit
+    references: DocumentReference o string userId según data-model.md
+
+  collections:
+    users:
+      path: users/{userId}
+      mapsFromModel: User
+      documentIdNote: Preferir userId == Auth.uid
+      operations:
+        getProfile:
+          sdk: doc('users/{userId}').get()
+        upsertProfile:
+          sdk: doc('users/{userId}').set(data, merge: true)
+        watchProfile:
+          sdk: doc('users/{userId}').snapshots()
+        deleteProfile:
+          sdk: doc('users/{userId}').delete()
+          usage: Al eliminar cuenta, mientras request.auth.uid == userId
+
+    games:
+      path: games/{gameId}
+      mapsFromModel: Game
+      operations:
+        listByHost:
+          sdk: collection('games').where('hostId', isEqualTo: uid).orderBy('finishedAt', descending: true)
+        listByParticipant:
+          sdk: collection('games').where('participantIds', arrayContains: uid).where('status', isEqualTo: 'finished').orderBy('finishedAt', descending: true)
+        listActive:
+          sdk: collection('games').where('status', isEqualTo: 'in_progress')  # índice requerido
+        getById:
+          sdk: doc('games/{gameId}').get()
+        syncFinishedGame:
+          description: |
+            Subida atómica al finalizar partida (LPT-20). Escribe games/{gameId} con players[] embebido
+            y subcolección rounds/{roundNumber}. Usar WriteBatch; cloudGameId local == gameId.
+          sdk: |
+            FirebaseFirestore.batch()
+              ..set(doc('games/{gameId}'), { hostId, participantIds, status: 'finished', players: [...], ... })
+              ..set(doc('games/{gameId}/rounds/{roundNumber}'), { roundNumber, bids, tricks, scoresDelta, status: 'closed', ... })
+              ..commit()
+        update:
+          sdk: doc('games/{gameId}').update(...)
+        watchGame:
+          sdk: doc('games/{gameId}').snapshots()
+      embeddedFields:
+        players:
+          description: Roster embebido en el documento games (no subcolección). Ver readme.md §3.
+          fields: [id, displayName, userId, isGuest, seatOrder, totalScore, joinedAt]
+        participantIds:
+          description: userId de jugadores registrados; denormalizado para consultas array-contains
+      subcollections:
+        rounds:
+          path: games/{gameId}/rounds/{roundNumber}
+          mapsFromModel: Round
+          documentIdNote: roundNumber como string (p. ej. "1", "22")
+          operations:
+            list:
+              sdk: collection('games/{gameId}/rounds').orderBy('roundNumber')
+            create:
+              sdk: doc('games/{gameId}/rounds/{roundNumber}').set({ roundNumber, status: 'closed', ... })
+            close:
+              sdk: doc('games/{gameId}/rounds/{roundNumber}').update({ status: 'closed', closedAt: serverTimestamp, scoresDelta: ... })
+
+    hideGameForUser:
+      description: Oculta una partida del historial del usuario actual sin borrar el documento en Firestore.
+      persistence: local
+      driftTable: hidden_games
+      sdk: HiddenGamesLocalDatasource.hideGame(gameId)
+      notes:
+        - No escribe en games/{gameId}
+        - Usado para GameHistorySource.cloud y para cloudGameId tras borrado local sincronizado
+
+    favorites:
+      description: Lista local de jugadores favoritos para añadir rápido a partidas.
+      persistence: local
+      driftTable: favorites
+      schemaVersion: 7
+      sdk: FavoriteLocalDatasource / FavoriteRepository
+      notes:
+        - Local only; no Firestore en MVP
+        - Una fila por favorito (id, displayName, userId opcional, createdAt)
+        - Deduplicación por userId o displayName (case-insensitive) en FavoriteRepositoryImpl
+
+errors:
+  mapping:
+    firebase_auth/user-not-found: DomainAuthFailure
+    cloud_firestore/permission-denied: DomainForbiddenFailure
+    cloud_firestore/not-found: DomainNotFoundFailure
+  pattern: FirebaseException en datasource → Failure en dominio → State en BLoC
+
+realtime:
+  recommended:
+    - games/{gameId} durante partida activa
+    - games/{gameId}/rounds última ronda abierta
+
+security:
+  sourceOfTruth: firestore.rules
+  mustAlignWith: data-model.md sección 9
+
+deprecatedREST:
+  file: api-spec.yml
+  status: obsolete

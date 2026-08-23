@@ -1,0 +1,25 @@
+import '../entities/game_detail.dart';
+import '../entities/game_history_item.dart';
+import '../entities/game_history_load_result.dart';
+import '../entities/game_history_source.dart';
+
+abstract class HistoryRepository {
+  Future<GameHistoryLoadResult> getGameHistory();
+
+  Stream<GameHistoryLoadResult> watchGameHistory();
+
+  Future<List<GameHistoryItem>> getRecentFinishedGames({int limit = 3});
+
+  Stream<List<GameHistoryItem>> watchRecentFinishedGames({int limit = 3});
+
+  Future<GameDetail> getGameDetail({
+    required String gameId,
+    required GameHistorySource source,
+  });
+
+  Future<void> deleteLocalGame(String gameId);
+
+  Future<void> hideCloudGame(String gameId);
+
+  Future<void> clearHiddenGames();
+}

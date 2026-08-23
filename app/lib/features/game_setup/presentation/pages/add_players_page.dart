@@ -1,0 +1,314 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:la_pocha/core/di/injection.dart';
+import 'package:la_pocha/core/utils/snack_bar_helper.dart';
+import 'package:la_pocha/core/widgets/pocha_app_bar.dart';
+import 'package:la_pocha/core/widgets/primary_button.dart';
+import 'package:la_pocha/features/auth/domain/entities/user_profile.dart';
+import 'package:la_pocha/features/favorites/domain/entities/favorite_player.dart';
+import 'package:la_pocha/features/game_setup/domain/entities/player_embed.dart';
+import 'package:la_pocha/features/game_setup/presentation/bloc/add_players_bloc.dart';
+import 'package:la_pocha/features/game_setup/presentation/widgets/favorites_chip_section.dart';
+import 'package:la_pocha/features/game_setup/presentation/widgets/players_roster_section.dart';
+import 'package:la_pocha/features/game_setup/presentation/widgets/user_search_field.dart';
+import 'package:la_pocha/features/game_setup/presentation/widgets/user_search_result_tile.dart';
+
+class AddPlayersPage extends StatelessWidget {
+  const AddPlayersPage({super.key, required this.gameId});
+
+  final String gameId;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) =>
+          getIt<AddPlayersBloc>()..add(AddPlayersStarted(gameId: gameId)),
+      child: _AddPlayersView(gameId: gameId),
+    );
+  }
+}
+
+class _AddPlayersView extends StatelessWidget {
+  const _AddPlayersView({required this.gameId});
+
+  final String gameId;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocListener<AddPlayersBloc, AddPlayersState>(
+      listener: (context, state) {
+        if (state is! AddPlayersLoaded) {
+          return;
+        }
+        final errorMessage = state.errorMessage;
+        if (errorMessage == null || errorMessage.isEmpty) {
+          return;
+        }
+        SnackBarHelper.showError(errorMessage);
+      },
+      child: Scaffold(
+        body: SafeArea(
+          top: false,
+          child: BlocBuilder<AddPlayersBloc, AddPlayersState>(
+            builder: (context, state) {
+              if (state is AddPlayersLoading || state is AddPlayersInitial) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (state is AddPlayersFailure) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(state.message),
+                  ),
+                );
+              }
+              if (state is! AddPlayersLoaded) {
+                return const SizedBox.shrink();
+              }
+
+              if (state.isUserSearchActive) {
+                return _UserSearchBody(state: state);
+              }
+
+              final visibleFavorites = _visibleFavorites(state);
+              final remaining = state.playerCount - state.players.length;
+              final isComplete = remaining == 0;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  PochaAppBar(
+                    title: 'Jugadores',
+                    subtitle:
+                        '${state.players.length} de ${state.playerCount} añadidos',
+                    onBack: () => context.go('/games/new'),
+                    actions: [
+                      IconButton(
+                        onPressed: () {
+                          context.read<AddPlayersBloc>().add(
+                            const UserSearchOpened(),
+                          );
+                        },
+                        icon: const Icon(Icons.search, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            FavoritesChipSection(
+                              visibleFavorites: visibleFavorites,
+                              currentUser: _visibleCurrentUser(state),
+                              onFavoriteTap: (favorite) {
+                                context.read<AddPlayersBloc>().add(
+                                  FavoriteChipTapped(favorite: favorite),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            PlayersRosterSection(
+                              playerCount: state.playerCount,
+                              players: state.players,
+                              activeEditIndex: state.activeEditIndex,
+                              isLoading: state.isLoading,
+                              currentUserId: state.currentUser?.uid,
+                              currentUserPhotoUrl: state.currentUser?.photoUrl,
+                              isFavoritePlayer: (player) =>
+                                  _isFavoritePlayer(player, state.favorites),
+                              onEmptySlotEditActivated: (index) {
+                                context.read<AddPlayersBloc>().add(
+                                  EditSlotActivated(index: index),
+                                );
+                              },
+                              onPlayerEditActivated: (playerId) {
+                                context.read<AddPlayersBloc>().add(
+                                  PlayerEditActivated(playerId: playerId),
+                                );
+                              },
+                              onEditCancelled: () {
+                                context.read<AddPlayersBloc>().add(
+                                  const EditSlotCancelled(),
+                                );
+                              },
+                              onEmptySlotNameConfirmed: (index, name) {
+                                context.read<AddPlayersBloc>().add(
+                                  PlayerNameConfirmed(index: index, name: name),
+                                );
+                              },
+                              onPlayerNameUpdated: (playerId, name) {
+                                context.read<AddPlayersBloc>().add(
+                                  PlayerNameUpdated(
+                                    playerId: playerId,
+                                    newName: name,
+                                  ),
+                                );
+                              },
+                              onFavoriteToggle: (playerId) {
+                                context.read<AddPlayersBloc>().add(
+                                  PlayerFavoriteToggled(playerId: playerId),
+                                );
+                              },
+                              onRemovePlayer: (playerId) {
+                                context.read<AddPlayersBloc>().add(
+                                  PlayerRemoved(playerId: playerId),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                    child: PrimaryButton(
+                      label: isComplete
+                          ? 'Continuar'
+                          : 'Faltan $remaining jugadores',
+                      onPressed: isComplete && !state.isLoading
+                          ? () => context.go('/games/$gameId/setup')
+                          : null,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<FavoritePlayer> _visibleFavorites(AddPlayersLoaded state) {
+    return state.favorites
+        .where((favorite) => !_playersContainsFavorite(state.players, favorite))
+        .toList();
+  }
+
+  UserProfile? _visibleCurrentUser(AddPlayersLoaded state) {
+    final user = state.currentUser;
+    if (user == null) {
+      return null;
+    }
+    for (final player in state.players) {
+      if (player.userId == user.uid) {
+        return null;
+      }
+    }
+    return user;
+  }
+
+  bool _playersContainsFavorite(
+    List<PlayerEmbed> players,
+    FavoritePlayer favorite,
+  ) {
+    for (final player in players) {
+      if (_isFavoriteMatch(player, favorite)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool _isFavoritePlayer(PlayerEmbed player, List<FavoritePlayer> favorites) {
+    for (final favorite in favorites) {
+      if (_isFavoriteMatch(player, favorite)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool _isFavoriteMatch(PlayerEmbed player, FavoritePlayer favorite) {
+    if (player.userId != null && favorite.userId == player.userId) {
+      return true;
+    }
+    return player.userId == null &&
+        favorite.userId == null &&
+        player.displayName.toLowerCase() == favorite.displayName.toLowerCase();
+  }
+}
+
+class _UserSearchBody extends StatelessWidget {
+  const _UserSearchBody({required this.state});
+
+  final AddPlayersLoaded state;
+
+  @override
+  Widget build(BuildContext context) {
+    final bloc = context.read<AddPlayersBloc>();
+    final query = state.userSearchQuery.trim();
+    final showEmptyMessage =
+        !state.userSearchLoading &&
+        state.userSearchError == null &&
+        query.length >= 2 &&
+        state.userSearchResults.isEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        UserSearchAppBar(
+          onQueryChanged: (value) {
+            bloc.add(UserSearchQueryChanged(query: value));
+          },
+          onClosed: () {
+            bloc.add(const UserSearchClosed());
+          },
+        ),
+        Expanded(
+          child: _buildResults(context, showEmptyMessage: showEmptyMessage),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildResults(BuildContext context, {required bool showEmptyMessage}) {
+    if (state.userSearchError != null) {
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(
+          state.userSearchError!,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      );
+    }
+
+    if (state.userSearchLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (showEmptyMessage) {
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(
+          'No se encontraron usuarios con ese nombre.',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: state.userSearchResults.length,
+      itemBuilder: (context, index) {
+        final user = state.userSearchResults[index];
+        return UserSearchResultTile(
+          user: user,
+          colorIndex: index,
+          alreadyInGame: state.isUserAlreadyInGame(user.uid),
+          onSelected: (selected) {
+            context.read<AddPlayersBloc>().add(
+              UserSearchResultSelected(user: selected),
+            );
+          },
+        );
+      },
+    );
+  }
+}
