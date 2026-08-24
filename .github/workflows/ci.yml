@@ -32,12 +32,10 @@ jobs:
           cache: true
 
       - name: Restaurar firebase_options.dart
-        run: |
-          echo "${{ secrets.FIREBASE_OPTIONS }}" > app/lib/firebase_options.dart
+        run: echo "${{ secrets.FIREBASE_OPTIONS }}" | base64 --decode > app/lib/firebase_options.dart
 
       - name: Restaurar google-services.json
-        run: |
-          echo "${{ secrets.GOOGLE_SERVICES }}" > app/android/app/google-services.json
+        run: echo "${{ secrets.GOOGLE_SERVICES }}" | base64 --decode > app/android/app/google-services.json
 
       - name: Instalar dependencias
         working-directory: app
