@@ -94,7 +94,7 @@ jobs:
         run: flutter build apk --debug
 
       - name: Subir APK Debug como artefacto
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: la-pocha-debug-${{ github.sha }}
           path: app/build/app/outputs/flutter-apk/app-debug.apk
@@ -111,10 +111,10 @@ jobs:
 
     steps:
       - name: Checkout código
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.2.2
 
       - name: Configurar Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@v2.14.0
         with:
           flutter-version: '3.x'
           channel: 'stable'
@@ -161,7 +161,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Crear GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v2.3.2
         with:
           tag_name: v${{ steps.version.outputs.version }}
           name: La Pocha Tracker v${{ steps.version.outputs.version }}
