@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:la_pocha/features/auth/domain/entities/user_profile.dart';
 import 'package:la_pocha/features/auth/domain/failures/auth_failure.dart' as domain;
 import 'package:la_pocha/features/auth/domain/repositories/auth_repository.dart';
+import 'package:la_pocha/features/auth/domain/usecases/link_google_account_with_password_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/send_password_reset_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
@@ -20,6 +21,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this._signIn,
     required this._signUp,
     required this._signInWithGoogle,
+    required this._linkGoogleAccountWithPassword,
     required this._signOut,
     required this._sendPasswordReset,
   }) : super(const AuthInitial()) {
@@ -27,6 +29,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<SignInSubmitted>(_onSignInSubmitted);
     on<SignUpSubmitted>(_onSignUpSubmitted);
     on<GoogleSignInSubmitted>(_onGoogleSignInSubmitted);
+    on<LinkAccountWithPasswordRequested>(_onLinkAccountWithPasswordRequested);
     on<SignOutRequested>(_onSignOutRequested);
     on<PasswordResetRequested>(_onPasswordResetRequested);
     on<AuthProfileUpdated>(_onAuthProfileUpdated);
@@ -37,6 +40,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SignInUseCase _signIn;
   final SignUpUseCase _signUp;
   final SignInWithGoogleUseCase _signInWithGoogle;
+  final LinkGoogleAccountWithPasswordUseCase _linkGoogleAccountWithPassword;
   final SignOutUseCase _signOut;
   final SendPasswordResetUseCase _sendPasswordReset;
   StreamSubscription<UserProfile?>? _authSubscription;
@@ -57,7 +61,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) {
     if (event.user != null) {
       emit(Authenticated(event.user!));
-    } else if (state is! AuthLoading) {
+    } else if (state is! AuthLoading && state is! AuthNeedsPasswordToLink) {
       emit(const Unauthenticated());
     }
   }
@@ -88,6 +92,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         displayName: event.displayName,
       );
       emit(Authenticated(user));
+    } on domain.GoogleAccountAlreadyExistsFailure {
+      emit(const AuthGoogleAccountExists());
+      emit(const Unauthenticated());
     } on domain.AuthFailure catch (error) {
       emit(AuthFailure(message: error.message));
       emit(const Unauthenticated());
@@ -105,6 +112,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(const Unauthenticated());
         return;
       }
+      emit(Authenticated(user));
+    } on domain.AccountExistsWithDifferentCredentialFailure catch (error) {
+      emit(AuthNeedsPasswordToLink(email: error.email));
+    } on domain.AuthFailure catch (error) {
+      emit(AuthFailure(message: error.message));
+      emit(const Unauthenticated());
+    }
+  }
+
+  Future<void> _onLinkAccountWithPasswordRequested(
+    LinkAccountWithPasswordRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoading());
+    try {
+      final user = await _linkGoogleAccountWithPassword(
+        email: event.email,
+        password: event.password,
+      );
       emit(Authenticated(user));
     } on domain.AuthFailure catch (error) {
       emit(AuthFailure(message: error.message));

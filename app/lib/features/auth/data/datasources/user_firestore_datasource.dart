@@ -123,4 +123,34 @@ class UserFirestoreDatasource {
   Future<void> deleteProfile(String uid) {
     return _users.doc(uid).delete();
   }
+
+  /// Returns true when a Firestore profile for [email] looks like a Google
+  /// account (photo from Google or `authProviders` contains `google.com`).
+  ///
+  /// Used because `fetchSignInMethodsForEmail` was removed in firebase_auth 6.
+  Future<bool> looksLikeGoogleAccount(String email) async {
+    final snapshot = await _users
+        .where('email', isEqualTo: email)
+        .limit(1)
+        .get();
+    if (snapshot.docs.isEmpty) {
+      return false;
+    }
+
+    final data = snapshot.docs.first.data();
+    final providers = data['authProviders'];
+    if (providers is List && providers.contains('google.com')) {
+      return true;
+    }
+
+    final photoUrl = data['photoUrl'] as String?;
+    return photoUrl != null && photoUrl.contains('googleusercontent');
+  }
+
+  Future<void> markGoogleProvider(String uid) {
+    return _users.doc(uid).set({
+      'authProviders': FieldValue.arrayUnion(['google.com']),
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
 }

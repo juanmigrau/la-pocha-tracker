@@ -90,6 +90,7 @@ import 'package:la_pocha/features/auth/domain/repositories/auth_repository.dart'
 import 'package:la_pocha/features/auth/domain/usecases/delete_account_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/get_player_stats_usecase.dart';
+import 'package:la_pocha/features/auth/domain/usecases/link_google_account_with_password_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/send_password_reset_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
@@ -148,6 +149,10 @@ Future<void> configureDependencies() async {
 
   getIt.registerLazySingleton<SignInWithGoogleUseCase>(
     () => SignInWithGoogleUseCase(getIt<AuthRepository>()),
+  );
+
+  getIt.registerLazySingleton<LinkGoogleAccountWithPasswordUseCase>(
+    () => LinkGoogleAccountWithPasswordUseCase(getIt<AuthRepository>()),
   );
 
   getIt.registerLazySingleton<SignOutUseCase>(
@@ -211,6 +216,8 @@ Future<void> configureDependencies() async {
       signIn: getIt<SignInUseCase>(),
       signUp: getIt<SignUpUseCase>(),
       signInWithGoogle: getIt<SignInWithGoogleUseCase>(),
+      linkGoogleAccountWithPassword:
+          getIt<LinkGoogleAccountWithPasswordUseCase>(),
       signOut: getIt<SignOutUseCase>(),
       sendPasswordReset: getIt<SendPasswordResetUseCase>(),
     ),

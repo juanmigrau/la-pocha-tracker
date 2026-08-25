@@ -41,6 +41,12 @@ class AuthRepositoryImpl implements AuthRepository {
         isCreate: true,
       );
       return profile.toEntity();
+    } on EmailAlreadyInUseFailure {
+      final isGoogle = await _userDatasource.looksLikeGoogleAccount(email);
+      if (isGoogle) {
+        throw const GoogleAccountAlreadyExistsFailure();
+      }
+      rethrow;
     } on AuthFailure {
       rethrow;
     } catch (_) {
@@ -106,6 +112,42 @@ class AuthRepositoryImpl implements AuthRepository {
         photoUrl: user.photoURL,
         isCreate: existing == null,
       );
+      await _userDatasource.markGoogleProvider(user.uid);
+      return profile.toEntity();
+    } on AuthFailure {
+      rethrow;
+    } catch (_) {
+      throw const UnknownAuthFailure();
+    }
+  }
+
+  @override
+  Future<UserProfile> linkGoogleAccountWithPassword({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final credential = await _authDatasource.linkPendingGoogleCredential(
+        email: email,
+        password: password,
+      );
+      final user = credential.user;
+      if (user == null) {
+        throw const UnknownAuthFailure();
+      }
+
+      final existing = await _userDatasource.getProfile(user.uid);
+      final profile = existing == null
+          ? await _userDatasource.upsertProfile(
+              uid: user.uid,
+              displayName: user.displayName ?? email.split('@').first,
+              email: email,
+              photoUrl: user.photoURL,
+              isCreate: true,
+            )
+          : await _userDatasource.touchProfile(uid: user.uid, email: email);
+
+      await _userDatasource.markGoogleProvider(user.uid);
       return profile.toEntity();
     } on AuthFailure {
       rethrow;

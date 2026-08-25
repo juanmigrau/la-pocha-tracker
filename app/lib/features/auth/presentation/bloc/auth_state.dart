@@ -40,3 +40,16 @@ final class AuthFailure extends AuthState {
 final class PasswordResetEmailSent extends AuthState {
   const PasswordResetEmailSent();
 }
+
+final class AuthNeedsPasswordToLink extends AuthState {
+  const AuthNeedsPasswordToLink({required this.email});
+
+  final String email;
+
+  @override
+  List<Object?> get props => [email];
+}
+
+final class AuthGoogleAccountExists extends AuthState {
+  const AuthGoogleAccountExists();
+}

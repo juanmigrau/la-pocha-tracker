@@ -47,6 +47,19 @@ final class GoogleSignInSubmitted extends AuthEvent {
   const GoogleSignInSubmitted();
 }
 
+final class LinkAccountWithPasswordRequested extends AuthEvent {
+  const LinkAccountWithPasswordRequested({
+    required this.email,
+    required this.password,
+  });
+
+  final String email;
+  final String password;
+
+  @override
+  List<Object?> get props => [email, password];
+}
+
 final class PasswordResetRequested extends AuthEvent {
   const PasswordResetRequested({required this.email});
 
