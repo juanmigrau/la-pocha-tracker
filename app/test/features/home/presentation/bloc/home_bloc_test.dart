@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:la_pocha/features/auth/domain/entities/user_profile.dart';
+import 'package:la_pocha/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:la_pocha/features/history/domain/entities/game_history_item.dart';
 import 'package:la_pocha/features/history/domain/entities/game_history_source.dart';
 import 'package:la_pocha/features/history/domain/usecases/get_recent_games_usecase.dart';
@@ -25,11 +29,28 @@ void main() {
     ),
   ];
 
+  final user = UserProfile(
+    uid: 'user-1',
+    email: 'ana@example.com',
+    displayName: 'Ana',
+    createdAt: DateTime(2026, 1, 1),
+    updatedAt: DateTime(2026, 1, 1),
+  );
+
   setUp(() {
     getRecentGames = MockGetRecentGamesUseCase();
   });
 
-  HomeBloc buildBloc() => HomeBloc(getRecentGames: getRecentGames);
+  HomeBloc buildBloc({
+    Stream<AuthState>? authStateChanges,
+    AuthState? initialAuthState,
+  }) {
+    return HomeBloc(
+      getRecentGames: getRecentGames,
+      authStateChanges: authStateChanges,
+      initialAuthState: initialAuthState,
+    );
+  }
 
   blocTest<HomeBloc, HomeState>(
     'emits loaded when there are recent games',
@@ -92,4 +113,55 @@ void main() {
       const HomeEmpty(),
     ],
   );
+
+  group('auth logout reload', () {
+    late StreamController<AuthState> authStates;
+
+    setUp(() {
+      authStates = StreamController<AuthState>.broadcast();
+    });
+
+    tearDown(() async {
+      await authStates.close();
+    });
+
+    blocTest<HomeBloc, HomeState>(
+      'reloads Drift recent games when auth becomes Unauthenticated after logout',
+      build: () => buildBloc(
+        authStateChanges: authStates.stream,
+        initialAuthState: Authenticated(user),
+      ),
+      setUp: () {
+        when(getRecentGames()).thenAnswer((_) => Stream.value(items));
+      },
+      act: (bloc) async {
+        authStates.add(const Unauthenticated());
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      },
+      wait: const Duration(milliseconds: 30),
+      expect: () => [const HomeLoading(), HomeLoaded(recentGames: items)],
+      verify: (_) {
+        verify(getRecentGames()).called(1);
+      },
+    );
+
+    blocTest<HomeBloc, HomeState>(
+      'does not reload when Unauthenticated is emitted without prior Authenticated',
+      build: () => buildBloc(
+        authStateChanges: authStates.stream,
+        initialAuthState: const Unauthenticated(),
+      ),
+      setUp: () {
+        when(getRecentGames()).thenAnswer((_) => Stream.value(items));
+      },
+      act: (bloc) async {
+        authStates.add(const Unauthenticated());
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+      },
+      expect: () => <HomeState>[],
+      verify: (_) {
+        verifyNever(getRecentGames());
+      },
+    );
+  });
 }
