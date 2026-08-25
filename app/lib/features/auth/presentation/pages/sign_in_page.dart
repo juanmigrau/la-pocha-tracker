@@ -9,6 +9,7 @@ import 'package:la_pocha/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:la_pocha/features/auth/presentation/widgets/auth_text_field.dart';
 import 'package:la_pocha/features/auth/presentation/widgets/forgot_password_dialog.dart';
 import 'package:la_pocha/features/auth/presentation/widgets/google_sign_in_button.dart';
+import 'package:la_pocha/features/auth/presentation/widgets/link_account_password_dialog.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -55,6 +56,9 @@ class _SignInPageState extends State<SignInPage> {
             'Te hemos enviado un email para restablecer tu contraseña. '
             'Revisa tu bandeja de entrada.',
           );
+        }
+        if (state is AuthNeedsPasswordToLink) {
+          showLinkAccountPasswordDialog(context, email: state.email);
         }
         if (state is Authenticated) {
           if (context.canPop()) {

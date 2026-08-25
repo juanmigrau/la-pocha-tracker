@@ -151,6 +151,37 @@ class MockAuthRepository extends _i1.Mock implements _i6.AuthRepository {
           as _i7.Future<_i2.UserProfile?>);
 
   @override
+  _i7.Future<_i2.UserProfile> linkGoogleAccountWithPassword({
+    required String? email,
+    required String? password,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#linkGoogleAccountWithPassword, [], {
+              #email: email,
+              #password: password,
+            }),
+            returnValue: _i7.Future<_i2.UserProfile>.value(
+              _FakeUserProfile_0(
+                this,
+                Invocation.method(#linkGoogleAccountWithPassword, [], {
+                  #email: email,
+                  #password: password,
+                }),
+              ),
+            ),
+            returnValueForMissingStub: _i7.Future<_i2.UserProfile>.value(
+              _FakeUserProfile_0(
+                this,
+                Invocation.method(#linkGoogleAccountWithPassword, [], {
+                  #email: email,
+                  #password: password,
+                }),
+              ),
+            ),
+          )
+          as _i7.Future<_i2.UserProfile>);
+
+  @override
   _i7.Future<void> signOut() =>
       (super.noSuchMethod(
             Invocation.method(#signOut, []),

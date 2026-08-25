@@ -41,3 +41,17 @@ final class RequiresRecentLoginFailure extends AuthFailure {
 final class ReauthCancelledFailure extends AuthFailure {
   const ReauthCancelledFailure() : super('Reautenticación cancelada');
 }
+
+final class AccountExistsWithDifferentCredentialFailure extends AuthFailure {
+  const AccountExistsWithDifferentCredentialFailure({required this.email})
+    : super('Ya existe una cuenta con este email. Introduce tu contraseña.');
+
+  final String email;
+}
+
+final class GoogleAccountAlreadyExistsFailure extends AuthFailure {
+  const GoogleAccountAlreadyExistsFailure()
+    : super(
+        'Ya tienes una cuenta con Google. Inicia sesión con Google directamente.',
+      );
+}

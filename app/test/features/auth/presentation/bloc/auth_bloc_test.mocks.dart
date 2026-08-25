@@ -9,14 +9,16 @@ import 'package:la_pocha/features/auth/domain/entities/user_profile.dart'
     as _i2;
 import 'package:la_pocha/features/auth/domain/repositories/auth_repository.dart'
     as _i3;
+import 'package:la_pocha/features/auth/domain/usecases/link_google_account_with_password_usecase.dart'
+    as _i8;
 import 'package:la_pocha/features/auth/domain/usecases/send_password_reset_usecase.dart'
-    as _i9;
+    as _i10;
 import 'package:la_pocha/features/auth/domain/usecases/sign_in_usecase.dart'
     as _i5;
 import 'package:la_pocha/features/auth/domain/usecases/sign_in_with_google_usecase.dart'
     as _i7;
 import 'package:la_pocha/features/auth/domain/usecases/sign_out_usecase.dart'
-    as _i8;
+    as _i9;
 import 'package:la_pocha/features/auth/domain/usecases/sign_up_usecase.dart'
     as _i6;
 import 'package:mockito/mockito.dart' as _i1;
@@ -128,6 +130,37 @@ class MockAuthRepository extends _i1.Mock implements _i3.AuthRepository {
             returnValueForMissingStub: _i4.Future<_i2.UserProfile?>.value(),
           )
           as _i4.Future<_i2.UserProfile?>);
+
+  @override
+  _i4.Future<_i2.UserProfile> linkGoogleAccountWithPassword({
+    required String? email,
+    required String? password,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#linkGoogleAccountWithPassword, [], {
+              #email: email,
+              #password: password,
+            }),
+            returnValue: _i4.Future<_i2.UserProfile>.value(
+              _FakeUserProfile_0(
+                this,
+                Invocation.method(#linkGoogleAccountWithPassword, [], {
+                  #email: email,
+                  #password: password,
+                }),
+              ),
+            ),
+            returnValueForMissingStub: _i4.Future<_i2.UserProfile>.value(
+              _FakeUserProfile_0(
+                this,
+                Invocation.method(#linkGoogleAccountWithPassword, [], {
+                  #email: email,
+                  #password: password,
+                }),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.UserProfile>);
 
   @override
   _i4.Future<void> signOut() =>
@@ -273,10 +306,44 @@ class MockSignInWithGoogleUseCase extends _i1.Mock
           as _i4.Future<_i2.UserProfile?>);
 }
 
+/// A class which mocks [LinkGoogleAccountWithPasswordUseCase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockLinkGoogleAccountWithPasswordUseCase extends _i1.Mock
+    implements _i8.LinkGoogleAccountWithPasswordUseCase {
+  @override
+  _i4.Future<_i2.UserProfile> call({
+    required String? email,
+    required String? password,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#call, [], {#email: email, #password: password}),
+            returnValue: _i4.Future<_i2.UserProfile>.value(
+              _FakeUserProfile_0(
+                this,
+                Invocation.method(#call, [], {
+                  #email: email,
+                  #password: password,
+                }),
+              ),
+            ),
+            returnValueForMissingStub: _i4.Future<_i2.UserProfile>.value(
+              _FakeUserProfile_0(
+                this,
+                Invocation.method(#call, [], {
+                  #email: email,
+                  #password: password,
+                }),
+              ),
+            ),
+          )
+          as _i4.Future<_i2.UserProfile>);
+}
+
 /// A class which mocks [SignOutUseCase].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockSignOutUseCase extends _i1.Mock implements _i8.SignOutUseCase {
+class MockSignOutUseCase extends _i1.Mock implements _i9.SignOutUseCase {
   @override
   _i4.Future<void> call() =>
       (super.noSuchMethod(
@@ -291,7 +358,7 @@ class MockSignOutUseCase extends _i1.Mock implements _i8.SignOutUseCase {
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockSendPasswordResetUseCase extends _i1.Mock
-    implements _i9.SendPasswordResetUseCase {
+    implements _i10.SendPasswordResetUseCase {
   @override
   _i4.Future<void> call({required String? email}) =>
       (super.noSuchMethod(

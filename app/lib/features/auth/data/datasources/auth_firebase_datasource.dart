@@ -15,6 +15,7 @@ class AuthFirebaseDatasource {
 
   final FirebaseAuth _auth;
   final GoogleSignIn _googleSignIn;
+  AuthCredential? _pendingGoogleCredential;
 
   Stream<User?> authStateChanges() => _auth.authStateChanges();
 
@@ -54,12 +55,62 @@ class AuthFirebaseDatasource {
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      return _auth.signInWithCredential(credential);
+
+      try {
+        return await _auth.signInWithCredential(credential);
+      } on FirebaseAuthException catch (error) {
+        if (error.code == 'account-exists-with-different-credential') {
+          _pendingGoogleCredential = error.credential ?? credential;
+          final email = error.email;
+          if (email == null || email.isEmpty) {
+            throw const UnknownAuthFailure();
+          }
+          throw AccountExistsWithDifferentCredentialFailure(email: email);
+        }
+        rethrow;
+      }
     });
+  }
+
+  /// Signs in with email/password then links the stored Google credential.
+  Future<UserCredential> linkPendingGoogleCredential({
+    required String email,
+    required String password,
+  }) {
+    return _wrapAuthCall(() async {
+      final pending = _pendingGoogleCredential;
+      if (pending == null) {
+        throw const UnknownAuthFailure(
+          'No hay una credencial de Google pendiente de vincular.',
+        );
+      }
+
+      final signedIn = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      final user = signedIn.user;
+      if (user == null) {
+        throw const UnknownAuthFailure();
+      }
+
+      try {
+        final linked = await user.linkWithCredential(pending);
+        _pendingGoogleCredential = null;
+        return linked;
+      } on FirebaseAuthException catch (error) {
+        throw _mapAuthException(error);
+      }
+    });
+  }
+
+  void clearPendingGoogleCredential() {
+    _pendingGoogleCredential = null;
   }
 
   Future<void> signOut() {
     return _wrapAuthCall(() async {
+      _pendingGoogleCredential = null;
       await Future.wait<void>([_auth.signOut(), _googleSignIn.signOut()]);
     });
   }
@@ -163,6 +214,8 @@ class AuthFirebaseDatasource {
   Future<T> _wrapAuthCall<T>(Future<T> Function() action) async {
     try {
       return await action();
+    } on AuthFailure {
+      rethrow;
     } on FirebaseAuthException catch (error) {
       throw _mapAuthException(error);
     }

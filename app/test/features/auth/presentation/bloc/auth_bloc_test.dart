@@ -3,6 +3,7 @@ import 'package:la_pocha/features/auth/domain/entities/user_profile.dart';
 import 'package:la_pocha/features/auth/domain/failures/auth_failure.dart'
     as domain;
 import 'package:la_pocha/features/auth/domain/repositories/auth_repository.dart';
+import 'package:la_pocha/features/auth/domain/usecases/link_google_account_with_password_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/send_password_reset_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
@@ -20,6 +21,7 @@ import 'auth_bloc_test.mocks.dart';
   MockSpec<SignInUseCase>(),
   MockSpec<SignUpUseCase>(),
   MockSpec<SignInWithGoogleUseCase>(),
+  MockSpec<LinkGoogleAccountWithPasswordUseCase>(),
   MockSpec<SignOutUseCase>(),
   MockSpec<SendPasswordResetUseCase>(),
 ])
@@ -28,6 +30,7 @@ void main() {
   late MockSignInUseCase signIn;
   late MockSignUpUseCase signUp;
   late MockSignInWithGoogleUseCase signInWithGoogle;
+  late MockLinkGoogleAccountWithPasswordUseCase linkGoogleAccountWithPassword;
   late MockSignOutUseCase signOut;
   late MockSendPasswordResetUseCase sendPasswordReset;
 
@@ -53,6 +56,7 @@ void main() {
         signIn: signIn,
         signUp: signUp,
         signInWithGoogle: signInWithGoogle,
+        linkGoogleAccountWithPassword: linkGoogleAccountWithPassword,
         signOut: signOut,
         sendPasswordReset: sendPasswordReset,
       );
@@ -62,6 +66,7 @@ void main() {
     signIn = MockSignInUseCase();
     signUp = MockSignUpUseCase();
     signInWithGoogle = MockSignInWithGoogleUseCase();
+    linkGoogleAccountWithPassword = MockLinkGoogleAccountWithPasswordUseCase();
     signOut = MockSignOutUseCase();
     sendPasswordReset = MockSendPasswordResetUseCase();
     when(authRepository.authStateChanges).thenAnswer((_) => const Stream.empty());
@@ -132,6 +137,32 @@ void main() {
   );
 
   blocTest<AuthBloc, AuthState>(
+    'emits AuthGoogleAccountExists then Unauthenticated when Google account exists',
+    build: buildBloc,
+    setUp: () {
+      when(
+        signUp(
+          email: 'ana@gmail.com',
+          password: 'secret1',
+          displayName: 'Ana',
+        ),
+      ).thenThrow(const domain.GoogleAccountAlreadyExistsFailure());
+    },
+    act: (bloc) => bloc.add(
+      const SignUpSubmitted(
+        displayName: 'Ana',
+        email: 'ana@gmail.com',
+        password: 'secret1',
+      ),
+    ),
+    expect: () => [
+      const AuthLoading(),
+      const AuthGoogleAccountExists(),
+      const Unauthenticated(),
+    ],
+  );
+
+  blocTest<AuthBloc, AuthState>(
     'emits Authenticated when Google sign in succeeds',
     build: buildBloc,
     setUp: () {
@@ -167,6 +198,70 @@ void main() {
     expect: () => [
       const AuthLoading(),
       const AuthFailure(message: 'Comprueba tu conexión e inténtalo de nuevo.'),
+      const Unauthenticated(),
+    ],
+  );
+
+  blocTest<AuthBloc, AuthState>(
+    'emits AuthNeedsPasswordToLink when Google account conflicts with password',
+    build: buildBloc,
+    setUp: () {
+      when(signInWithGoogle()).thenThrow(
+        const domain.AccountExistsWithDifferentCredentialFailure(
+          email: 'ana@example.com',
+        ),
+      );
+    },
+    act: (bloc) => bloc.add(const GoogleSignInSubmitted()),
+    expect: () => [
+      const AuthLoading(),
+      const AuthNeedsPasswordToLink(email: 'ana@example.com'),
+    ],
+  );
+
+  blocTest<AuthBloc, AuthState>(
+    'emits Authenticated when linking Google account with password succeeds',
+    build: buildBloc,
+    setUp: () {
+      when(
+        linkGoogleAccountWithPassword(
+          email: 'ana@example.com',
+          password: 'secret1',
+        ),
+      ).thenAnswer((_) async => profile);
+    },
+    act: (bloc) => bloc.add(
+      const LinkAccountWithPasswordRequested(
+        email: 'ana@example.com',
+        password: 'secret1',
+      ),
+    ),
+    expect: () => [
+      const AuthLoading(),
+      Authenticated(profile),
+    ],
+  );
+
+  blocTest<AuthBloc, AuthState>(
+    'emits AuthFailure then Unauthenticated when linking Google account fails',
+    build: buildBloc,
+    setUp: () {
+      when(
+        linkGoogleAccountWithPassword(
+          email: 'ana@example.com',
+          password: 'bad',
+        ),
+      ).thenThrow(const domain.InvalidCredentialsFailure());
+    },
+    act: (bloc) => bloc.add(
+      const LinkAccountWithPasswordRequested(
+        email: 'ana@example.com',
+        password: 'bad',
+      ),
+    ),
+    expect: () => [
+      const AuthLoading(),
+      const AuthFailure(message: 'Email o contraseña incorrectos'),
       const Unauthenticated(),
     ],
   );

@@ -7,6 +7,7 @@ import 'package:la_pocha/core/widgets/pocha_app_bar.dart';
 import 'package:la_pocha/core/widgets/primary_button.dart';
 import 'package:la_pocha/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:la_pocha/features/auth/presentation/widgets/auth_text_field.dart';
+import 'package:la_pocha/features/auth/presentation/widgets/google_account_exists_dialog.dart';
 import 'package:la_pocha/features/auth/presentation/widgets/google_sign_in_button.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -51,6 +52,9 @@ class _SignUpPageState extends State<SignUpPage> {
       listener: (context, state) {
         if (state is AuthFailure) {
           SnackBarHelper.showError(state.message);
+        }
+        if (state is AuthGoogleAccountExists) {
+          showGoogleAccountExistsDialog(context);
         }
         if (state is Authenticated) {
           if (context.canPop()) {
