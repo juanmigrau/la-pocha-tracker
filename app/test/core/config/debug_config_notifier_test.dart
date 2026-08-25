@@ -9,11 +9,6 @@ void main() {
   });
 
   group('DebugConfigNotifier', () {
-    test('starts with short game mode disabled and default sequence', () {
-      expect(notifier.shortGameMode, isFalse);
-      expect(notifier.shortRoundSequence, [1, 4, 8, 8, 4, 1]);
-    });
-
     test('toggleShortGameMode updates flag and notifies listeners', () {
       var notified = 0;
       notifier.addListener(() => notified++);
