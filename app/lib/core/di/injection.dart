@@ -344,7 +344,11 @@ Future<void> configureDependencies() async {
   );
 
   getIt.registerFactory<HomeBloc>(
-    () => HomeBloc(getRecentGames: getIt<GetRecentGamesUseCase>()),
+    () => HomeBloc(
+      getRecentGames: getIt<GetRecentGamesUseCase>(),
+      authStateChanges: getIt<AuthBloc>().stream,
+      initialAuthState: getIt<AuthBloc>().state,
+    ),
   );
 
   getIt.registerFactory<GetGameDetailUseCase>(

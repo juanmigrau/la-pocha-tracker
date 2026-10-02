@@ -71,7 +71,16 @@ class _SignUpPageState extends State<SignUpPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              PochaAppBar(title: 'Crear cuenta', onBack: () => context.pop()),
+              PochaAppBar(
+                title: 'Crear cuenta',
+                onBack: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/');
+                  }
+                },
+              ),
               Expanded(
                 child: BlocBuilder<AuthBloc, AuthState>(
                   builder: (context, state) {

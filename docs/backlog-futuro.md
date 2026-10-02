@@ -5,6 +5,26 @@
 > a implementarlas en esta entrega. Revisar en la Entrega final si queda
 > margen, o como roadmap post-entrega.
 
+## Tests de integración automatizados (Artemis/integration_test)
+
+**Surgido:** octubre 2026
+
+Implementar tests E2E con Flutter integration_test framework
+para automatizar la verificación del flujo principal:
+
+- Crear partida → añadir jugadores → orden de mesa → empezar
+- Completar rondas con kShortGameMode (secuencia corta)
+- Verificar resultado final y guardado en historial
+
+Integrar en el workflow de GitHub Actions como job adicional
+ejecutado contra emulador Android en el runner de CI.
+
+Valor para portfolio: demuestra ciclo completo de desarrollo
+con verificación automatizada — diferenciador clave.
+
+Abrir cuando los bugs pendientes estén cerrados y la app
+esté en estado estable.
+
 ## Theming configurable por el usuario
 
 **Origen:** sesión de diseño de wireframes (17/06/2026), al decidir el
