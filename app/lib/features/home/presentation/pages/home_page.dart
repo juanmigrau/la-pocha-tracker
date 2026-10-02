@@ -90,9 +90,15 @@ class _HomeViewState extends State<_HomeView> {
       context.push('/profile');
       return;
     }
+    final colorScheme = Theme.of(context).colorScheme;
     showModalBottomSheet<void>(
       context: context,
+      isScrollControlled: true,
       showDragHandle: true,
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (sheetContext) => const _AccountBenefitsSheet(),
     );
   }
@@ -328,62 +334,75 @@ class _AccountBenefitsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final mediaQuery = MediaQuery.of(context);
 
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.cloud_outlined,
-              size: 48,
-              color: colorScheme.primary,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              '¿Por qué registrarse?',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+    return Padding(
+      padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: mediaQuery.size.height * 0.85,
+        ),
+        child: SingleChildScrollView(
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.cloud_outlined,
+                    size: 48,
+                    color: colorScheme.primary,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    '¿Por qué registrarse?',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const _BenefitRow(
+                    icon: Icons.history,
+                    text:
+                        'Accede a tu historial desde cualquier dispositivo',
+                  ),
+                  const _BenefitRow(
+                    icon: Icons.bar_chart,
+                    text: 'Consulta tus estadísticas personales',
+                  ),
+                  const _BenefitRow(
+                    icon: Icons.cloud_done,
+                    text:
+                        'Tus partidas se guardan automáticamente en la nube',
+                  ),
+                  const _BenefitRow(
+                    icon: Icons.people,
+                    text:
+                        'Los demás jugadores registrados reciben la partida '
+                        'en su historial',
+                  ),
+                  const SizedBox(height: 24),
+                  PrimaryButton(
+                    label: 'Crear cuenta gratis',
+                    onPressed: () {
+                      Navigator.pop(context);
+                      context.go('/auth/sign-up');
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      context.go('/auth/sign-in');
+                    },
+                    child: const Text('Ya tengo cuenta — Iniciar sesión'),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 12),
-            const _BenefitRow(
-              icon: Icons.history,
-              text: 'Accede a tu historial desde cualquier dispositivo',
-            ),
-            const _BenefitRow(
-              icon: Icons.bar_chart,
-              text: 'Consulta tus estadísticas personales',
-            ),
-            const _BenefitRow(
-              icon: Icons.cloud_done,
-              text: 'Tus partidas se guardan automáticamente en la nube',
-            ),
-            const _BenefitRow(
-              icon: Icons.people,
-              text:
-                  'Los demás jugadores registrados reciben la partida '
-                  'en su historial',
-            ),
-            const SizedBox(height: 24),
-            PrimaryButton(
-              label: 'Crear cuenta gratis',
-              onPressed: () {
-                Navigator.pop(context);
-                context.go('/auth/sign-up');
-              },
-            ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                context.go('/auth/sign-in');
-              },
-              child: const Text('Ya tengo cuenta — Iniciar sesión'),
-            ),
-          ],
+          ),
         ),
       ),
     );

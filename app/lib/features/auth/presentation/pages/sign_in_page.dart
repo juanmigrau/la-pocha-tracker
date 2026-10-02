@@ -75,7 +75,16 @@ class _SignInPageState extends State<SignInPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              PochaAppBar(title: 'Iniciar sesión', onBack: () => context.pop()),
+              PochaAppBar(
+                title: 'Iniciar sesión',
+                onBack: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/');
+                  }
+                },
+              ),
               Expanded(
                 child: BlocBuilder<AuthBloc, AuthState>(
                   builder: (context, state) {
