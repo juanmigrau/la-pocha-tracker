@@ -71,12 +71,12 @@ class HistoryRepositoryImpl implements HistoryRepository {
       final cloudItems = await _firestoreDatasource
           .getFinishedCloudGames()
           .timeout(_cloudTimeout);
-      return mergeLocalWithCloud(
+      return await mergeLocalWithCloud(
         localItems: localItems,
         cloudItems: cloudItems,
       );
     } catch (_) {
-      return mergeLocalWithCloud(
+      return await mergeLocalWithCloud(
         localItems: localItems,
         cloudItems: const [],
         cloudError: true,
