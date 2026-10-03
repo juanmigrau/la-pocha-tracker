@@ -98,7 +98,13 @@ class _SyncStatusChip extends StatelessWidget {
       return _PendingSyncControls(item: item, syncStatus: syncStatus!);
     }
 
-    return _SourceChip(source: item.source);
+    final showAsCloud = item.source == GameHistorySource.cloud ||
+        syncStatus == SyncStatus.synced ||
+        item.cloudGameId != null;
+
+    return _SourceChip(
+      source: showAsCloud ? GameHistorySource.cloud : GameHistorySource.local,
+    );
   }
 }
 

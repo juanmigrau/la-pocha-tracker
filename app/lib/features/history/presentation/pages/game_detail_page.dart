@@ -177,7 +177,10 @@ class _LoadedBody extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              SourceBadge(source: detail.source),
+              SourceBadge(
+                source: detail.source,
+                syncStatus: detail.game.syncStatus,
+              ),
             ],
           ),
         ),

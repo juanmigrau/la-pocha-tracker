@@ -121,18 +121,23 @@ void main() {
     final outcome = await useCase(gameId: 'game-1');
 
     expect(outcome, UploadFinishedGameOutcome.pending);
+    // local→pending before attempt, then pending again when offline.
     verify(gameLocalDatasource.updateSyncMetadata(
       gameId: 'game-1',
       syncStatus: SyncStatus.pending.toStorageString(),
-    )).called(1);
+    )).called(2);
   });
 
-  test('returns synced after successful upload', () async {
+  test('promotes local to pending before successful upload', () async {
     when(authRepository.getCurrentUser()).thenAnswer((_) async => user);
     when(gameLocalDatasource.getGameById('game-1'))
         .thenAnswer((_) async => finishedGame(syncStatus: SyncStatus.local));
     when(connectivity.checkConnectivity())
         .thenAnswer((_) async => [ConnectivityResult.wifi]);
+    when(gameLocalDatasource.updateSyncMetadata(
+      gameId: 'game-1',
+      syncStatus: SyncStatus.pending.toStorageString(),
+    )).thenAnswer((_) async => finishedGame(syncStatus: SyncStatus.pending));
     when(gameSyncRepository.uploadFinishedGame(
       gameId: 'game-1',
       hostId: 'uid-1',
@@ -141,6 +146,10 @@ void main() {
     final outcome = await useCase(gameId: 'game-1');
 
     expect(outcome, UploadFinishedGameOutcome.synced);
+    verify(gameLocalDatasource.updateSyncMetadata(
+      gameId: 'game-1',
+      syncStatus: SyncStatus.pending.toStorageString(),
+    )).called(1);
   });
 
   test('marks failed on permission denied', () async {
@@ -149,6 +158,10 @@ void main() {
         .thenAnswer((_) async => finishedGame(syncStatus: SyncStatus.local));
     when(connectivity.checkConnectivity())
         .thenAnswer((_) async => [ConnectivityResult.wifi]);
+    when(gameLocalDatasource.updateSyncMetadata(
+      gameId: 'game-1',
+      syncStatus: SyncStatus.pending.toStorageString(),
+    )).thenAnswer((_) async => finishedGame(syncStatus: SyncStatus.pending));
     when(gameSyncRepository.uploadFinishedGame(
       gameId: 'game-1',
       hostId: 'uid-1',

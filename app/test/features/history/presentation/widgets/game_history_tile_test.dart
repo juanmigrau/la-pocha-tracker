@@ -195,6 +195,28 @@ void main() {
     expect(find.byIcon(Icons.refresh_outlined), findsNothing);
   });
 
+  testWidgets('shows Nube chip for local source when syncStatus is synced', (
+    tester,
+  ) async {
+    final syncedLocalItem = GameHistoryItem(
+      id: 'game-1',
+      source: GameHistorySource.local,
+      finishedAt: DateTime(2026, 7, 4, 22, 0),
+      playerCount: 4,
+      displayLabel: '4 jul 2026, 22:00 — Ana, Carlos',
+      winnerName: 'Ana',
+      winnerScore: 42,
+      cloudGameId: 'game-1',
+      syncStatus: SyncStatus.synced,
+    );
+
+    await tester.pumpWidget(wrapTile(tileItem: syncedLocalItem, onTap: () {}));
+
+    expect(find.text('Nube'), findsOneWidget);
+    expect(find.text('Local'), findsNothing);
+    expect(find.byIcon(Icons.refresh_outlined), findsNothing);
+  });
+
   testWidgets('shows spinner while syncing', (tester) async {
     final pendingItem = GameHistoryItem(
       id: 'game-1',

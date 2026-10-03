@@ -189,7 +189,8 @@ class GameLocalDatasource {
       GamesCompanion(
         status: const Value('finished'),
         finishedAt: Value(finishedAt),
-        syncStatus: const Value('local'),
+        // Upload is attempted right after finish; pending enables retry UI.
+        syncStatus: const Value('pending'),
         updatedAt: Value(now),
       ),
     );

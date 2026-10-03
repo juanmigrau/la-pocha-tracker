@@ -72,6 +72,13 @@ class GameSyncRepositoryImpl implements GameSyncRepository {
     final failed = await _gameLocalDatasource.getGamesBySyncStatus(
       SyncStatus.failed.toStorageString(),
     );
-    return [...pending, ...failed];
+    // Orphan finished games left as `local` (pre-fix or race) still need retry.
+    final localOrphans = (await _gameLocalDatasource.getGamesBySyncStatus(
+      SyncStatus.local.toStorageString(),
+    )).where(
+      (game) =>
+          game.status == GameStatus.finished && game.cloudGameId == null,
+    );
+    return [...pending, ...failed, ...localOrphans];
   }
 }
