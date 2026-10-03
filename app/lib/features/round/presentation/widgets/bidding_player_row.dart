@@ -65,6 +65,7 @@ class BiddingPlayerRow extends StatelessWidget {
                   PlayerInitialAvatar(
                     name: player.displayName,
                     colorIndex: index,
+                    photoURL: player.photoURL,
                     radius: 16,
                   ),
                   const SizedBox(width: 12),

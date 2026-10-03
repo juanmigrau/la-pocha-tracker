@@ -166,10 +166,10 @@ class _LoadedBody extends StatelessWidget {
                   const SizedBox(height: 16),
                   WinnerCard(
                     entry: data.entries.first,
-                    photoURL:
-                        data.entries.first.player.userId == currentUser?.uid
-                        ? currentUser?.photoUrl
-                        : null,
+                    photoURL: data.entries.first.player.photoURL ??
+                        (data.entries.first.player.userId == currentUser?.uid
+                            ? currentUser?.photoUrl
+                            : null),
                     currentUserId: currentUser?.uid,
                     currentDisplayName: currentUser?.displayName,
                   ),

@@ -13,6 +13,7 @@ class PlayerEmbedMapper {
       seatOrder: model.seatOrder,
       totalScore: model.totalScore,
       joinedAt: model.joinedAt,
+      photoURL: model.photoURL,
     );
   }
 
@@ -25,6 +26,7 @@ class PlayerEmbedMapper {
       seatOrder: player.seatOrder,
       totalScore: player.totalScore,
       joinedAt: player.joinedAt,
+      photoURL: player.photoURL,
     );
   }
 }

@@ -68,9 +68,10 @@ class PlayersRosterSection extends StatelessWidget {
                 isFavorite: player != null && isFavoritePlayer(player),
                 showFavoriteButton: showFavoriteButton,
                 isBusy: isLoading,
-                photoURL: player != null && player.userId == currentUserId
-                    ? currentUserPhotoUrl
-                    : null,
+                photoURL: player?.photoURL ??
+                    (player != null && player.userId == currentUserId
+                        ? currentUserPhotoUrl
+                        : null),
                 onActivateEdit: () {
                   if (player != null) {
                     onPlayerEditActivated?.call(player.id);

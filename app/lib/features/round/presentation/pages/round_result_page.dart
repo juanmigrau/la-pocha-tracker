@@ -259,11 +259,11 @@ class _LoadedBody extends StatelessWidget {
                         ),
                       RoundResultPlayerRow(
                         entry: result.entries[index],
-                        photoURL:
-                            result.entries[index].player.userId ==
-                                currentUser?.uid
-                            ? currentUser?.photoUrl
-                            : null,
+                        photoURL: result.entries[index].player.photoURL ??
+                            (result.entries[index].player.userId ==
+                                    currentUser?.uid
+                                ? currentUser?.photoUrl
+                                : null),
                         currentUserId: currentUser?.uid,
                         currentDisplayName: currentUser?.displayName,
                       ),

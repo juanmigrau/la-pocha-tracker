@@ -213,9 +213,10 @@ class _LoadedBody extends StatelessWidget {
                             bid: playState.round.bids[player.id] ?? 0,
                             isDealer:
                                 player.id == playState.round.dealerPlayerId,
-                            photoURL: player.userId == currentUser?.uid
-                                ? currentUser?.photoUrl
-                                : null,
+                            photoURL: player.photoURL ??
+                                (player.userId == currentUser?.uid
+                                    ? currentUser?.photoUrl
+                                    : null),
                           );
                         },
                       ),

@@ -116,6 +116,7 @@ void main() {
     expect(game.players.first.displayName, 'Carlos');
     expect(game.players.first.isGuest, isFalse);
     expect(game.players.first.userId, 'user-1');
+    expect(game.players.first.photoURL, 'https://example.com/photo.jpg');
     expect(repository.lastUpdatedPlayers, hasLength(1));
   });
 

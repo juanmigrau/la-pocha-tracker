@@ -57,11 +57,7 @@ class _SignUpPageState extends State<SignUpPage> {
           showGoogleAccountExistsDialog(context);
         }
         if (state is Authenticated) {
-          if (context.canPop()) {
-            context.pop();
-          } else {
-            context.go('/');
-          }
+          context.go('/');
         }
       },
       child: Scaffold(

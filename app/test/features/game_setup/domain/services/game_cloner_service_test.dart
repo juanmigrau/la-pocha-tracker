@@ -30,6 +30,7 @@ void main() {
           seatOrder: 0,
           totalScore: 42,
           joinedAt: DateTime(2026, 7, 1),
+          photoURL: 'https://example.com/ana.jpg',
         ),
         PlayerEmbed(
           id: 'player-2',
@@ -78,6 +79,7 @@ void main() {
       expect(ana.seatOrder, 0);
       expect(ana.totalScore, 0);
       expect(ana.joinedAt, now);
+      expect(ana.photoURL, 'https://example.com/ana.jpg');
 
       final carlos = cloned.players[1];
       expect(carlos.id, 'new-player-2');
