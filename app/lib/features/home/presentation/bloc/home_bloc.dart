@@ -43,6 +43,19 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
   Future<void> _onStarted(HomeStarted event, Emitter<HomeState> emit) async {
     emit(const HomeLoading());
+
+    try {
+      final primed = await _getRecentGames.getOnce();
+      if (primed.isEmpty) {
+        emit(const HomeEmpty());
+      } else {
+        emit(HomeLoaded(recentGames: primed));
+      }
+    } catch (error) {
+      emit(HomeFailure(message: mapExceptionToUserMessage(error)));
+      return;
+    }
+
     await _subscription?.cancel();
     _subscription = _getRecentGames().listen(
       (games) => add(_HomeWatchData(games)),

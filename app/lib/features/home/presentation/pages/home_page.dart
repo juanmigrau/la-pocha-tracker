@@ -170,11 +170,37 @@ class _HomeViewState extends State<_HomeView> {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-              child: Text(
-                'ÚLTIMAS PARTIDAS',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+              child: BlocBuilder<HomeBloc, HomeState>(
+                buildWhen: (previous, current) =>
+                    previous is HomeLoading ||
+                    current is HomeLoading ||
+                    previous is HomeInitial ||
+                    current is HomeInitial,
+                builder: (context, state) {
+                  final showSpinner =
+                      state is HomeLoading || state is HomeInitial;
+                  return Row(
+                    children: [
+                      Text(
+                        'ÚLTIMAS PARTIDAS',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      if (showSpinner) ...[
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: 12,
+                          height: 12,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ],
+                  );
+                },
               ),
             ),
             Padding(
@@ -182,9 +208,8 @@ class _HomeViewState extends State<_HomeView> {
               child: BlocBuilder<HomeBloc, HomeState>(
                 builder: (context, state) {
                   return switch (state) {
-                    HomeLoading() || HomeInitial() => const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(child: CircularProgressIndicator()),
+                    HomeLoading() || HomeInitial() => const SizedBox(
+                      height: 48,
                     ),
                     HomeLoaded(:final recentGames) => _RecentGamesList(
                       games: recentGames,

@@ -8,4 +8,8 @@ class GetRecentGamesUseCase {
 
   Stream<List<GameHistoryItem>> call({int limit = 3}) =>
       _repository.watchRecentFinishedGames(limit: limit);
+
+  /// One-shot Drift read for immediate Home priming.
+  Future<List<GameHistoryItem>> getOnce({int limit = 3}) =>
+      _repository.getRecentFinishedGames(limit: limit);
 }

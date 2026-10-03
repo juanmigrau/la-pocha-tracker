@@ -5,6 +5,9 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i6;
 
+import 'package:connectivity_plus/connectivity_plus.dart' as _i12;
+import 'package:connectivity_plus_platform_interface/connectivity_plus_platform_interface.dart'
+    as _i13;
 import 'package:la_pocha/features/game_setup/domain/entities/game.dart' as _i2;
 import 'package:la_pocha/features/game_setup/domain/entities/player_embed.dart'
     as _i11;
@@ -435,4 +438,33 @@ class MockGameRepository extends _i1.Mock implements _i10.GameRepository {
             returnValueForMissingStub: _i6.Future<void>.value(),
           )
           as _i6.Future<void>);
+}
+
+/// A class which mocks [Connectivity].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockConnectivity extends _i1.Mock implements _i12.Connectivity {
+  @override
+  _i6.Stream<List<_i13.ConnectivityResult>> get onConnectivityChanged =>
+      (super.noSuchMethod(
+            Invocation.getter(#onConnectivityChanged),
+            returnValue: _i6.Stream<List<_i13.ConnectivityResult>>.empty(),
+            returnValueForMissingStub:
+                _i6.Stream<List<_i13.ConnectivityResult>>.empty(),
+          )
+          as _i6.Stream<List<_i13.ConnectivityResult>>);
+
+  @override
+  _i6.Future<List<_i13.ConnectivityResult>> checkConnectivity() =>
+      (super.noSuchMethod(
+            Invocation.method(#checkConnectivity, []),
+            returnValue: _i6.Future<List<_i13.ConnectivityResult>>.value(
+              <_i13.ConnectivityResult>[],
+            ),
+            returnValueForMissingStub:
+                _i6.Future<List<_i13.ConnectivityResult>>.value(
+                  <_i13.ConnectivityResult>[],
+                ),
+          )
+          as _i6.Future<List<_i13.ConnectivityResult>>);
 }

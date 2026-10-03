@@ -21,36 +21,51 @@ class HistoryListBloc extends Bloc<HistoryListEvent, HistoryListState> {
     on<HistoryListGameDeleted>(_onGameDeleted);
     on<SyncRetryRequested>(_onSyncRetryRequested);
     on<SyncAllPendingRequested>(_onSyncAllPendingRequested);
-    on<_HistoryListWatchData>(_onWatchData);
+    on<_HistoryListLocalData>(_onLocalData);
+    on<_HistoryListCloudEnriched>(_onCloudEnriched);
     on<_HistoryListWatchFailed>(_onWatchFailed);
   }
 
   final GetGameHistoryUseCase _getGameHistory;
   final RetryPendingUploadsUseCase _retryPendingUploads;
-  StreamSubscription<GameHistoryLoadResult>? _subscription;
+  StreamSubscription<List<GameHistoryItem>>? _subscription;
+
+  List<GameHistoryItem> _lastLocalItems = const [];
+  List<GameHistoryItem> _lastCloudItems = const [];
+  bool _cloudError = false;
+  bool _isCloudLoading = false;
+  bool _enrichRequested = false;
 
   Future<void> _onStarted(
     HistoryListStarted event,
     Emitter<HistoryListState> emit,
   ) async {
-    emit(const HistoryListLoading());
-    try {
-      await _retryPendingUploads();
-      await _listenToWatch();
-    } catch (error) {
-      emit(HistoryListFailure(message: mapExceptionToUserMessage(error)));
+    if (state is! HistoryListLoaded) {
+      emit(const HistoryListLoading());
     }
+    unawaited(_retryPendingUploads());
+    _lastCloudItems = const [];
+    _cloudError = false;
+    _isCloudLoading = true;
+    _enrichRequested = false;
+    await _listenToLocalWatch();
   }
 
   Future<void> _onRefreshed(
     HistoryListRefreshed event,
     Emitter<HistoryListState> emit,
   ) async {
-    // Retry pending uploads when auth and upload are available.
+    unawaited(_retryPendingUploads());
+    _lastCloudItems = const [];
+    _cloudError = false;
+    _isCloudLoading = true;
+    _enrichRequested = false;
+
     try {
-      await _retryPendingUploads();
-      final result = await _getGameHistory();
-      _emitHistoryResult(result, emit);
+      final localItems = await _getGameHistory.getLocal();
+      _lastLocalItems = localItems;
+      _emitFromCache(emit, isCloudLoading: true);
+      await _runCloudEnrich(localItems);
     } catch (error) {
       emit(HistoryListFailure(message: mapExceptionToUserMessage(error)));
     }
@@ -72,7 +87,17 @@ class HistoryListBloc extends Bloc<HistoryListEvent, HistoryListState> {
         )
         .toList();
 
-    if (updatedItems.isEmpty) {
+    _lastLocalItems = _lastLocalItems
+        .where(
+          (item) =>
+              item.id != event.gameId && item.cloudGameId != event.gameId,
+        )
+        .toList();
+    _lastCloudItems = _lastCloudItems
+        .where((item) => item.id != event.gameId)
+        .toList();
+
+    if (updatedItems.isEmpty && !current.isCloudLoading) {
       emit(const HistoryListEmpty());
       return;
     }
@@ -163,11 +188,47 @@ class HistoryListBloc extends Bloc<HistoryListEvent, HistoryListState> {
     );
   }
 
-  void _onWatchData(
-    _HistoryListWatchData event,
+  Future<void> _onLocalData(
+    _HistoryListLocalData event,
+    Emitter<HistoryListState> emit,
+  ) async {
+    _lastLocalItems = event.items;
+
+    if (!_enrichRequested) {
+      _enrichRequested = true;
+      _isCloudLoading = true;
+      _emitFromCache(emit, isCloudLoading: true);
+      // Enrich in background; result arrives via _HistoryListCloudEnriched.
+      unawaited(_runCloudEnrich(event.items));
+      return;
+    }
+
+    if (_lastCloudItems.isEmpty && !_isCloudLoading) {
+      _emitFromCache(emit, isCloudLoading: false);
+      return;
+    }
+
+    if (_lastCloudItems.isEmpty) {
+      _emitFromCache(emit, isCloudLoading: _isCloudLoading);
+      return;
+    }
+
+    final merged = await _getGameHistory.mergeLocalWithCloud(
+      localItems: _lastLocalItems,
+      cloudItems: _lastCloudItems,
+      cloudError: _cloudError,
+    );
+    _emitResult(merged, emit, isCloudLoading: _isCloudLoading);
+  }
+
+  void _onCloudEnriched(
+    _HistoryListCloudEnriched event,
     Emitter<HistoryListState> emit,
   ) {
-    _emitHistoryResult(event.result, emit);
+    _isCloudLoading = false;
+    _cloudError = event.result.cloudError;
+    _lastCloudItems = event.result.cloudItems;
+    _emitResult(event.result, emit, isCloudLoading: false);
   }
 
   void _onWatchFailed(
@@ -177,20 +238,49 @@ class HistoryListBloc extends Bloc<HistoryListEvent, HistoryListState> {
     emit(HistoryListFailure(message: mapExceptionToUserMessage(event.error)));
   }
 
-  Future<void> _listenToWatch() async {
+  Future<void> _listenToLocalWatch() async {
     await _subscription?.cancel();
-    _subscription = _getGameHistory.watch().listen(
-      (result) => add(_HistoryListWatchData(result)),
+    _subscription = _getGameHistory.watchLocal().listen(
+      (items) => add(_HistoryListLocalData(items)),
       onError: (Object error, StackTrace _) =>
           add(_HistoryListWatchFailed(error)),
     );
   }
 
-  void _emitHistoryResult(
+  Future<void> _runCloudEnrich(List<GameHistoryItem> localItems) async {
+    try {
+      final result = await _getGameHistory.enrichWithCloud(localItems);
+      add(_HistoryListCloudEnriched(result));
+    } catch (error) {
+      add(
+        _HistoryListCloudEnriched(
+          GameHistoryLoadResult(items: localItems, cloudError: true),
+        ),
+      );
+    }
+  }
+
+  void _emitFromCache(
+    Emitter<HistoryListState> emit, {
+    required bool isCloudLoading,
+  }) {
+    _emitResult(
+      GameHistoryLoadResult(
+        items: _lastLocalItems,
+        cloudError: _cloudError,
+        cloudItems: _lastCloudItems,
+      ),
+      emit,
+      isCloudLoading: isCloudLoading,
+    );
+  }
+
+  void _emitResult(
     GameHistoryLoadResult result,
-    Emitter<HistoryListState> emit,
-  ) {
-    if (result.items.isEmpty) {
+    Emitter<HistoryListState> emit, {
+    required bool isCloudLoading,
+  }) {
+    if (result.items.isEmpty && !isCloudLoading) {
       emit(const HistoryListEmpty());
       return;
     }
@@ -207,6 +297,7 @@ class HistoryListBloc extends Bloc<HistoryListEvent, HistoryListState> {
       HistoryListLoaded(
         items: result.items,
         cloudError: result.cloudError,
+        isCloudLoading: isCloudLoading,
         syncingGameIds: syncingGameIds,
         syncRetryFeedback: syncRetryFeedback,
       ),

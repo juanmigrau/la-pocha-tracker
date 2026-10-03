@@ -5,12 +5,14 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i4;
 
+import 'package:la_pocha/features/history/domain/entities/game_history_item.dart'
+    as _i5;
 import 'package:la_pocha/features/history/domain/entities/game_history_load_result.dart'
     as _i2;
 import 'package:la_pocha/features/history/domain/usecases/get_game_history_usecase.dart'
     as _i3;
 import 'package:la_pocha/features/sync/domain/usecases/retry_pending_uploads_usecase.dart'
-    as _i5;
+    as _i6;
 import 'package:mockito/mockito.dart' as _i1;
 
 // ignore_for_file: type=lint
@@ -57,6 +59,88 @@ class MockGetGameHistoryUseCase extends _i1.Mock
           as _i4.Future<_i2.GameHistoryLoadResult>);
 
   @override
+  _i4.Stream<List<_i5.GameHistoryItem>> watchLocal() =>
+      (super.noSuchMethod(
+            Invocation.method(#watchLocal, []),
+            returnValue: _i4.Stream<List<_i5.GameHistoryItem>>.empty(),
+            returnValueForMissingStub:
+                _i4.Stream<List<_i5.GameHistoryItem>>.empty(),
+          )
+          as _i4.Stream<List<_i5.GameHistoryItem>>);
+
+  @override
+  _i4.Future<List<_i5.GameHistoryItem>> getLocal() =>
+      (super.noSuchMethod(
+            Invocation.method(#getLocal, []),
+            returnValue: _i4.Future<List<_i5.GameHistoryItem>>.value(
+              <_i5.GameHistoryItem>[],
+            ),
+            returnValueForMissingStub:
+                _i4.Future<List<_i5.GameHistoryItem>>.value(
+                  <_i5.GameHistoryItem>[],
+                ),
+          )
+          as _i4.Future<List<_i5.GameHistoryItem>>);
+
+  @override
+  _i4.Future<_i2.GameHistoryLoadResult> enrichWithCloud(
+    List<_i5.GameHistoryItem>? localItems,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#enrichWithCloud, [localItems]),
+            returnValue: _i4.Future<_i2.GameHistoryLoadResult>.value(
+              _FakeGameHistoryLoadResult_0(
+                this,
+                Invocation.method(#enrichWithCloud, [localItems]),
+              ),
+            ),
+            returnValueForMissingStub:
+                _i4.Future<_i2.GameHistoryLoadResult>.value(
+                  _FakeGameHistoryLoadResult_0(
+                    this,
+                    Invocation.method(#enrichWithCloud, [localItems]),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.GameHistoryLoadResult>);
+
+  @override
+  _i4.Future<_i2.GameHistoryLoadResult> mergeLocalWithCloud({
+    required List<_i5.GameHistoryItem>? localItems,
+    required List<_i5.GameHistoryItem>? cloudItems,
+    bool? cloudError = false,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#mergeLocalWithCloud, [], {
+              #localItems: localItems,
+              #cloudItems: cloudItems,
+              #cloudError: cloudError,
+            }),
+            returnValue: _i4.Future<_i2.GameHistoryLoadResult>.value(
+              _FakeGameHistoryLoadResult_0(
+                this,
+                Invocation.method(#mergeLocalWithCloud, [], {
+                  #localItems: localItems,
+                  #cloudItems: cloudItems,
+                  #cloudError: cloudError,
+                }),
+              ),
+            ),
+            returnValueForMissingStub:
+                _i4.Future<_i2.GameHistoryLoadResult>.value(
+                  _FakeGameHistoryLoadResult_0(
+                    this,
+                    Invocation.method(#mergeLocalWithCloud, [], {
+                      #localItems: localItems,
+                      #cloudItems: cloudItems,
+                      #cloudError: cloudError,
+                    }),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.GameHistoryLoadResult>);
+
+  @override
   _i4.Stream<_i2.GameHistoryLoadResult> watch() =>
       (super.noSuchMethod(
             Invocation.method(#watch, []),
@@ -71,7 +155,7 @@ class MockGetGameHistoryUseCase extends _i1.Mock
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockRetryPendingUploadsUseCase extends _i1.Mock
-    implements _i5.RetryPendingUploadsUseCase {
+    implements _i6.RetryPendingUploadsUseCase {
   @override
   _i4.Future<int> call({String? gameId}) =>
       (super.noSuchMethod(

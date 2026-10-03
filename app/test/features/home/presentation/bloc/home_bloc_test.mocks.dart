@@ -40,4 +40,18 @@ class MockGetRecentGamesUseCase extends _i1.Mock
                 _i3.Stream<List<_i4.GameHistoryItem>>.empty(),
           )
           as _i3.Stream<List<_i4.GameHistoryItem>>);
+
+  @override
+  _i3.Future<List<_i4.GameHistoryItem>> getOnce({int? limit = 3}) =>
+      (super.noSuchMethod(
+            Invocation.method(#getOnce, [], {#limit: limit}),
+            returnValue: _i3.Future<List<_i4.GameHistoryItem>>.value(
+              <_i4.GameHistoryItem>[],
+            ),
+            returnValueForMissingStub:
+                _i3.Future<List<_i4.GameHistoryItem>>.value(
+                  <_i4.GameHistoryItem>[],
+                ),
+          )
+          as _i3.Future<List<_i4.GameHistoryItem>>);
 }

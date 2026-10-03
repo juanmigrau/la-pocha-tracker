@@ -7,12 +7,14 @@ import 'dart:async' as _i5;
 
 import 'package:la_pocha/features/history/domain/entities/game_detail.dart'
     as _i3;
+import 'package:la_pocha/features/history/domain/entities/game_history_item.dart'
+    as _i6;
 import 'package:la_pocha/features/history/domain/entities/game_history_load_result.dart'
     as _i2;
 import 'package:la_pocha/features/history/domain/entities/game_history_source.dart'
-    as _i7;
+    as _i8;
 import 'package:la_pocha/features/history/domain/usecases/get_game_detail_usecase.dart'
-    as _i6;
+    as _i7;
 import 'package:la_pocha/features/history/domain/usecases/get_game_history_usecase.dart'
     as _i4;
 import 'package:mockito/mockito.dart' as _i1;
@@ -66,6 +68,88 @@ class MockGetGameHistoryUseCase extends _i1.Mock
           as _i5.Future<_i2.GameHistoryLoadResult>);
 
   @override
+  _i5.Stream<List<_i6.GameHistoryItem>> watchLocal() =>
+      (super.noSuchMethod(
+            Invocation.method(#watchLocal, []),
+            returnValue: _i5.Stream<List<_i6.GameHistoryItem>>.empty(),
+            returnValueForMissingStub:
+                _i5.Stream<List<_i6.GameHistoryItem>>.empty(),
+          )
+          as _i5.Stream<List<_i6.GameHistoryItem>>);
+
+  @override
+  _i5.Future<List<_i6.GameHistoryItem>> getLocal() =>
+      (super.noSuchMethod(
+            Invocation.method(#getLocal, []),
+            returnValue: _i5.Future<List<_i6.GameHistoryItem>>.value(
+              <_i6.GameHistoryItem>[],
+            ),
+            returnValueForMissingStub:
+                _i5.Future<List<_i6.GameHistoryItem>>.value(
+                  <_i6.GameHistoryItem>[],
+                ),
+          )
+          as _i5.Future<List<_i6.GameHistoryItem>>);
+
+  @override
+  _i5.Future<_i2.GameHistoryLoadResult> enrichWithCloud(
+    List<_i6.GameHistoryItem>? localItems,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#enrichWithCloud, [localItems]),
+            returnValue: _i5.Future<_i2.GameHistoryLoadResult>.value(
+              _FakeGameHistoryLoadResult_0(
+                this,
+                Invocation.method(#enrichWithCloud, [localItems]),
+              ),
+            ),
+            returnValueForMissingStub:
+                _i5.Future<_i2.GameHistoryLoadResult>.value(
+                  _FakeGameHistoryLoadResult_0(
+                    this,
+                    Invocation.method(#enrichWithCloud, [localItems]),
+                  ),
+                ),
+          )
+          as _i5.Future<_i2.GameHistoryLoadResult>);
+
+  @override
+  _i5.Future<_i2.GameHistoryLoadResult> mergeLocalWithCloud({
+    required List<_i6.GameHistoryItem>? localItems,
+    required List<_i6.GameHistoryItem>? cloudItems,
+    bool? cloudError = false,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#mergeLocalWithCloud, [], {
+              #localItems: localItems,
+              #cloudItems: cloudItems,
+              #cloudError: cloudError,
+            }),
+            returnValue: _i5.Future<_i2.GameHistoryLoadResult>.value(
+              _FakeGameHistoryLoadResult_0(
+                this,
+                Invocation.method(#mergeLocalWithCloud, [], {
+                  #localItems: localItems,
+                  #cloudItems: cloudItems,
+                  #cloudError: cloudError,
+                }),
+              ),
+            ),
+            returnValueForMissingStub:
+                _i5.Future<_i2.GameHistoryLoadResult>.value(
+                  _FakeGameHistoryLoadResult_0(
+                    this,
+                    Invocation.method(#mergeLocalWithCloud, [], {
+                      #localItems: localItems,
+                      #cloudItems: cloudItems,
+                      #cloudError: cloudError,
+                    }),
+                  ),
+                ),
+          )
+          as _i5.Future<_i2.GameHistoryLoadResult>);
+
+  @override
   _i5.Stream<_i2.GameHistoryLoadResult> watch() =>
       (super.noSuchMethod(
             Invocation.method(#watch, []),
@@ -80,11 +164,11 @@ class MockGetGameHistoryUseCase extends _i1.Mock
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockGetGameDetailUseCase extends _i1.Mock
-    implements _i6.GetGameDetailUseCase {
+    implements _i7.GetGameDetailUseCase {
   @override
   _i5.Future<_i3.GameDetail> call({
     required String? gameId,
-    required _i7.GameHistorySource? source,
+    required _i8.GameHistorySource? source,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#call, [], {#gameId: gameId, #source: source}),

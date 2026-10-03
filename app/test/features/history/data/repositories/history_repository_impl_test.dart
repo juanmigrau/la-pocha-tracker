@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:la_pocha/features/game_setup/domain/entities/game.dart';
 import 'package:la_pocha/features/game_setup/domain/entities/game_status.dart';
@@ -23,12 +24,14 @@ import 'history_repository_impl_test.mocks.dart';
   MockSpec<HistoryFirestoreDatasource>(),
   MockSpec<HiddenGamesLocalDatasource>(),
   MockSpec<GameRepository>(),
+  MockSpec<Connectivity>(),
 ])
 void main() {
   late MockHistoryLocalDatasource localDatasource;
   late MockHistoryFirestoreDatasource firestoreDatasource;
   late MockHiddenGamesLocalDatasource hiddenGamesDatasource;
   late MockGameRepository gameRepository;
+  late MockConnectivity connectivity;
   late HistoryRepositoryImpl repository;
 
   final olderLocal = GameHistoryItem(
@@ -87,15 +90,20 @@ void main() {
     firestoreDatasource = MockHistoryFirestoreDatasource();
     hiddenGamesDatasource = MockHiddenGamesLocalDatasource();
     gameRepository = MockGameRepository();
+    connectivity = MockConnectivity();
     repository = HistoryRepositoryImpl(
       localDatasource,
       firestoreDatasource,
       hiddenGamesDatasource,
       gameRepository,
+      connectivity: connectivity,
     );
     when(
       hiddenGamesDatasource.getHiddenGameIds(),
     ).thenAnswer((_) async => <String>{});
+    when(connectivity.checkConnectivity()).thenAnswer(
+      (_) async => [ConnectivityResult.wifi],
+    );
   });
 
   test('merges local and cloud items sorted by finishedAt desc', () async {
@@ -211,6 +219,32 @@ void main() {
       expect(result.items.map((item) => item.id), ['local-2', 'local-1']);
     },
   );
+
+  test(
+    'enrichGameHistoryWithCloud skips Firestore when offline',
+    () async {
+      when(connectivity.checkConnectivity()).thenAnswer(
+        (_) async => [ConnectivityResult.none],
+      );
+
+      final result = await repository.enrichGameHistoryWithCloud([olderLocal]);
+
+      expect(result.cloudError, isTrue);
+      expect(result.items, [olderLocal]);
+      verifyNever(firestoreDatasource.getFinishedCloudGames());
+    },
+  );
+
+  test('getLocalFinishedGames does not touch Firestore', () async {
+    when(
+      localDatasource.getFinishedGames(),
+    ).thenAnswer((_) async => [newerLocal, olderLocal]);
+
+    final items = await repository.getLocalFinishedGames();
+
+    expect(items.map((item) => item.id), ['local-2', 'local-1']);
+    verifyNever(firestoreDatasource.getFinishedCloudGames());
+  });
 
   test(
     'getRecentFinishedGames reads only local datasource with limit',
