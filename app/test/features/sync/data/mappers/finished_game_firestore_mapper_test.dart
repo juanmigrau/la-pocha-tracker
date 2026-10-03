@@ -31,6 +31,7 @@ void main() {
               seatOrder: 0,
               totalScore: 12,
               joinedAt: now,
+              photoURL: 'https://example.com/ana.jpg',
             ),
             PlayerEmbed(
               id: 'p2',
@@ -107,6 +108,7 @@ void main() {
       expect(firstPlayer['id'], 'p1');
       expect(firstPlayer['displayName'], 'Ana');
       expect(firstPlayer['totalScore'], 12);
+      expect(firstPlayer['photoURL'], 'https://example.com/ana.jpg');
     });
 
     test('maps closed round document', () {

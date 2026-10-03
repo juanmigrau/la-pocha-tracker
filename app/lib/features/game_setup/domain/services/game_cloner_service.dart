@@ -28,6 +28,7 @@ class GameClonerService {
               seatOrder: player.seatOrder,
               totalScore: 0,
               joinedAt: now,
+              photoURL: player.photoURL,
             ),
           )
           .toList(),

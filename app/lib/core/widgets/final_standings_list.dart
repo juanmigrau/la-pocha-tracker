@@ -61,9 +61,10 @@ class FinalStandingsList extends StatelessWidget {
                   ),
                 _FinalStandingRow(
                   entry: entries[index],
-                  photoURL: entries[index].player.userId == currentUserId
-                      ? currentUserPhotoUrl
-                      : null,
+                  photoURL: entries[index].player.photoURL ??
+                      (entries[index].player.userId == currentUserId
+                          ? currentUserPhotoUrl
+                          : null),
                   displayName: resolveDisplayName(
                     storedName: entries[index].player.displayName,
                     storedUserId: entries[index].player.userId,

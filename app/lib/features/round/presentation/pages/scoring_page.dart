@@ -294,9 +294,10 @@ class _LoadedBodyState extends State<_LoadedBody> {
                             child: ScoringPlayerRow(
                               player: player,
                               index: index,
-                              photoURL: player.userId == currentUser?.uid
-                                  ? currentUser?.photoUrl
-                                  : null,
+                              photoURL: player.photoURL ??
+                                  (player.userId == currentUser?.uid
+                                      ? currentUser?.photoUrl
+                                      : null),
                               status: rowStatus,
                               tricks: state.confirmedTricks[playerId],
                               isDealer: playerId == state.round.dealerPlayerId,

@@ -94,6 +94,7 @@ class FinishedGameFirestoreReader {
       seatOrder: data['seatOrder'] as int,
       totalScore: data['totalScore'] as int? ?? 0,
       joinedAt: _readTimestamp(data['joinedAt']) ?? DateTime.now(),
+      photoURL: data['photoURL'] as String?,
     );
   }
 

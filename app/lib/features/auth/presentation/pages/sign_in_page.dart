@@ -61,11 +61,7 @@ class _SignInPageState extends State<SignInPage> {
           showLinkAccountPasswordDialog(context, email: state.email);
         }
         if (state is Authenticated) {
-          if (context.canPop()) {
-            context.pop();
-          } else {
-            context.go('/');
-          }
+          context.go('/');
         }
       },
       child: Scaffold(

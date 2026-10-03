@@ -55,6 +55,7 @@ class AddRegisteredPlayerUseCase {
       seatOrder: game.players.length,
       totalScore: 0,
       joinedAt: now,
+      photoURL: user.photoUrl,
     );
 
     final updatedPlayers = [...game.players, player];

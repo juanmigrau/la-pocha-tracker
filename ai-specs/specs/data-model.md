@@ -153,6 +153,7 @@ Jugadores **dentro de una partida concreta**, modelados como array embebido en `
 | `seatOrder` | number | sí | Orden en mesa (0…n−1) |
 | `totalScore` | number | sí | Puntuación acumulada al cierre |
 | `joinedAt` | timestamp | sí | Alta en el roster |
+| `photoURL` | string | no | URL de avatar denormalizada (p. ej. foto de Google) al añadir desde búsqueda |
 
 **Reglas de negocio *(borrador)*:**
 
