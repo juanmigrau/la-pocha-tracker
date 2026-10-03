@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:la_pocha/core/utils/player_display_name.dart';
 import 'package:la_pocha/core/widgets/player_initial_avatar.dart';
 import 'package:la_pocha/features/round/domain/entities/ranking_entry.dart';
 
@@ -8,11 +9,13 @@ class FinalStandingsList extends StatelessWidget {
     required this.entries,
     this.currentUserId,
     this.currentUserPhotoUrl,
+    this.currentDisplayName,
   });
 
   final List<RankingEntry> entries;
   final String? currentUserId;
   final String? currentUserPhotoUrl;
+  final String? currentDisplayName;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +64,12 @@ class FinalStandingsList extends StatelessWidget {
                   photoURL: entries[index].player.userId == currentUserId
                       ? currentUserPhotoUrl
                       : null,
+                  displayName: resolveDisplayName(
+                    storedName: entries[index].player.displayName,
+                    storedUserId: entries[index].player.userId,
+                    currentUserId: currentUserId,
+                    currentDisplayName: currentDisplayName,
+                  ),
                 ),
               ],
             ],
@@ -72,9 +81,14 @@ class FinalStandingsList extends StatelessWidget {
 }
 
 class _FinalStandingRow extends StatelessWidget {
-  const _FinalStandingRow({required this.entry, this.photoURL});
+  const _FinalStandingRow({
+    required this.entry,
+    required this.displayName,
+    this.photoURL,
+  });
 
   final RankingEntry entry;
+  final String displayName;
   final String? photoURL;
 
   @override
@@ -105,7 +119,7 @@ class _FinalStandingRow extends StatelessWidget {
               child: Row(
                 children: [
                   PlayerInitialAvatar(
-                    name: player.displayName,
+                    name: displayName,
                     colorIndex: player.seatOrder,
                     photoURL: photoURL,
                     radius: 14,
@@ -113,7 +127,7 @@ class _FinalStandingRow extends StatelessWidget {
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
-                      player.displayName,
+                      displayName,
                       style: textTheme.bodyMedium,
                       overflow: TextOverflow.ellipsis,
                     ),

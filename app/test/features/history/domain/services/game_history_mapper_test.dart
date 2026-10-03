@@ -3,6 +3,7 @@ import 'package:la_pocha/features/game_setup/domain/entities/game.dart';
 import 'package:la_pocha/features/game_setup/domain/entities/game_status.dart';
 import 'package:la_pocha/features/game_setup/domain/entities/player_embed.dart';
 import 'package:la_pocha/features/game_setup/domain/entities/round_definition.dart';
+import 'package:la_pocha/features/history/domain/entities/game_history_item.dart';
 import 'package:la_pocha/features/history/domain/entities/game_history_source.dart';
 import 'package:la_pocha/features/history/domain/services/game_history_mapper.dart';
 import 'package:la_pocha/features/sync/domain/entities/sync_status.dart';
@@ -61,8 +62,13 @@ void main() {
       expect(item.source, GameHistorySource.local);
       expect(item.playerCount, 2);
       expect(item.winnerName, 'Ana');
+      expect(item.winnerUserId, isNull);
       expect(item.winnerScore, 42);
       expect(item.displayLabel, '4 jul 2026, 22:05 — Ana, Carlos');
+      expect(item.players, [
+        const GameHistoryPlayerRef(displayName: 'Ana'),
+        const GameHistoryPlayerRef(displayName: 'Carlos'),
+      ]);
     });
 
     test('maps syncStatus and needsSyncRetry for pending', () {

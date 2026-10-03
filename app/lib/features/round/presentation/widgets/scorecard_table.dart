@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:la_pocha/core/theme/app_theme.dart';
 import 'package:la_pocha/core/utils/player_colors.dart';
+import 'package:la_pocha/core/utils/player_display_name.dart';
 import 'package:la_pocha/features/game_setup/domain/entities/player_embed.dart';
 import 'package:la_pocha/features/round/domain/entities/scorecard_row.dart';
 import 'package:linked_scroll_controller/linked_scroll_controller.dart';
@@ -10,10 +11,14 @@ class ScorecardTable extends StatefulWidget {
     super.key,
     required this.players,
     required this.rows,
+    this.currentUserId,
+    this.currentDisplayName,
   });
 
   final List<PlayerEmbed> players;
   final List<ScorecardRow> rows;
+  final String? currentUserId;
+  final String? currentDisplayName;
 
   @override
   State<ScorecardTable> createState() => _ScorecardTableState();
@@ -142,7 +147,14 @@ class _ScorecardTableState extends State<ScorecardTable> {
                         _PlayerHeader(
                           width: _playerBlockWidth,
                           colorIndex: i,
-                          shortName: _shortName(widget.players[i].displayName),
+                          shortName: _shortName(
+                            resolveDisplayName(
+                              storedName: widget.players[i].displayName,
+                              storedUserId: widget.players[i].userId,
+                              currentUserId: widget.currentUserId,
+                              currentDisplayName: widget.currentDisplayName,
+                            ),
+                          ),
                           style: headerStyle,
                           showRightDivider: i < widget.players.length - 1,
                           dividerColor: dividerColor,

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:la_pocha/core/di/injection.dart';
 import 'package:la_pocha/core/errors/user_facing_error_mapper.dart';
 import 'package:la_pocha/core/widgets/pocha_app_bar.dart';
+import 'package:la_pocha/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:la_pocha/features/round/domain/entities/game_stats.dart';
 import 'package:la_pocha/features/round/domain/entities/scorecard_row.dart';
 import 'package:la_pocha/features/round/domain/usecases/get_game_scorecard_usecase.dart';
@@ -68,6 +70,9 @@ class _ScorecardPageState extends State<ScorecardPage> {
 
   @override
   Widget build(BuildContext context) {
+    final authState = context.watch<AuthBloc>().state;
+    final currentUser = authState is Authenticated ? authState.user : null;
+
     return DefaultTabController(
       length: 3,
       child: Scaffold(
@@ -129,6 +134,8 @@ class _ScorecardPageState extends State<ScorecardPage> {
                                 child: ScorecardTable(
                                   players: scorecard.players,
                                   rows: scorecard.rows,
+                                  currentUserId: currentUser?.uid,
+                                  currentDisplayName: currentUser?.displayName,
                                 ),
                               ),
                         GameStatsTab(stats: stats),

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:la_pocha/core/theme/app_theme.dart';
+import 'package:la_pocha/features/auth/domain/entities/user_profile.dart';
+import 'package:la_pocha/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:la_pocha/features/history/domain/entities/game_history_item.dart';
 import 'package:la_pocha/features/history/domain/entities/game_history_source.dart';
 import 'package:la_pocha/features/history/presentation/bloc/history_list_bloc.dart';
@@ -12,6 +14,8 @@ import 'package:mocktail/mocktail.dart';
 
 class MockHistoryListBloc extends MockBloc<HistoryListEvent, HistoryListState>
     implements HistoryListBloc {}
+
+class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
 
 void main() {
   final item = GameHistoryItem(
@@ -29,20 +33,30 @@ void main() {
     required VoidCallback onTap,
     HistoryListBloc? bloc,
     HistoryListState? state,
+    AuthState authState = const Unauthenticated(),
   }) {
     final historyBloc = bloc ?? MockHistoryListBloc();
+    final authBloc = MockAuthBloc();
     final loadedState = state ?? HistoryListLoaded(items: [tileItem]);
     whenListen(
       historyBloc,
       Stream.value(loadedState),
       initialState: loadedState,
     );
+    whenListen(
+      authBloc,
+      Stream.value(authState),
+      initialState: authState,
+    );
 
     return MaterialApp(
       theme: AppTheme.light,
       home: Scaffold(
-        body: BlocProvider<HistoryListBloc>.value(
-          value: historyBloc,
+        body: MultiBlocProvider(
+          providers: [
+            BlocProvider<HistoryListBloc>.value(value: historyBloc),
+            BlocProvider<AuthBloc>.value(value: authBloc),
+          ],
           child: GameHistoryTile(item: tileItem, onTap: onTap),
         ),
       ),
@@ -58,6 +72,49 @@ void main() {
     expect(find.text('Local'), findsOneWidget);
     expect(find.byIcon(Icons.phone_android), findsOneWidget);
   });
+
+  testWidgets(
+    'shows current display name for the authenticated player',
+    (tester) async {
+      final historicalItem = GameHistoryItem(
+        id: 'game-1',
+        source: GameHistorySource.local,
+        finishedAt: DateTime(2026, 7, 4, 22, 0),
+        playerCount: 2,
+        displayLabel: '4 jul 2026, 22:00 — OldName, Carlos',
+        players: const [
+          GameHistoryPlayerRef(displayName: 'OldName', userId: 'uid-1'),
+          GameHistoryPlayerRef(displayName: 'Carlos'),
+        ],
+        winnerName: 'OldName',
+        winnerUserId: 'uid-1',
+        winnerScore: 42,
+      );
+
+      await tester.pumpWidget(
+        wrapTile(
+          tileItem: historicalItem,
+          onTap: () {},
+          authState: Authenticated(
+            UserProfile(
+              uid: 'uid-1',
+              displayName: 'NewName',
+              email: 'a@b.com',
+              createdAt: DateTime(2026),
+              updatedAt: DateTime(2026),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('NewName, Carlos'), findsOneWidget);
+      expect(
+        find.text('2 jugadores · Ganador: NewName (42 pts)'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('OldName'), findsNothing);
+    },
+  );
 
   testWidgets('does not show overflow menu', (tester) async {
     await tester.pumpWidget(wrapTile(tileItem: item, onTap: () {}));
@@ -108,28 +165,7 @@ void main() {
       winnerScore: 42,
     );
 
-    final historyBloc = MockHistoryListBloc();
-    final loadedState = HistoryListLoaded(items: [longNamesItem]);
-    whenListen(
-      historyBloc,
-      Stream.value(loadedState),
-      initialState: loadedState,
-    );
-
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light,
-        home: Scaffold(
-          body: SizedBox(
-            width: 360,
-            child: BlocProvider<HistoryListBloc>.value(
-              value: historyBloc,
-              child: GameHistoryTile(item: longNamesItem, onTap: () {}),
-            ),
-          ),
-        ),
-      ),
-    );
+    await tester.pumpWidget(wrapTile(tileItem: longNamesItem, onTap: () {}));
 
     expect(find.text(playerNames), findsOneWidget);
     expect(tester.takeException(), isNull);

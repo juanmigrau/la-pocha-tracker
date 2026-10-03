@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:la_pocha/core/theme/app_theme.dart';
+import 'package:la_pocha/core/utils/player_display_name.dart';
+import 'package:la_pocha/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:la_pocha/features/history/domain/entities/game_history_item.dart';
 import 'package:la_pocha/features/history/domain/entities/game_history_source.dart';
 import 'package:la_pocha/features/history/presentation/bloc/history_list_bloc.dart';
@@ -18,15 +20,35 @@ class GameHistoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final authState = context.watch<AuthBloc>().state;
+    final currentUser = authState is Authenticated ? authState.user : null;
     final parts = item.displayLabel.split(_labelSeparator);
     final formattedDate = parts.first;
-    final playerNames = parts.length > 1
-        ? parts.sublist(1).join(_labelSeparator)
-        : '';
+    final playerNames = item.players.isNotEmpty
+        ? item.players
+            .map(
+              (player) => resolveDisplayName(
+                storedName: player.displayName,
+                storedUserId: player.userId,
+                currentUserId: currentUser?.uid,
+                currentDisplayName: currentUser?.displayName,
+              ),
+            )
+            .join(', ')
+        : (parts.length > 1 ? parts.sublist(1).join(_labelSeparator) : '');
 
-    final summaryText = item.winnerName != null
+    final resolvedWinnerName = item.winnerName == null
+        ? null
+        : resolveDisplayName(
+            storedName: item.winnerName!,
+            storedUserId: item.winnerUserId,
+            currentUserId: currentUser?.uid,
+            currentDisplayName: currentUser?.displayName,
+          );
+
+    final summaryText = resolvedWinnerName != null
         ? '${item.playerCount} jugadores · '
-              'Ganador: ${item.winnerName} (${item.winnerScore ?? 0} pts)'
+              'Ganador: $resolvedWinnerName (${item.winnerScore ?? 0} pts)'
         : '${item.playerCount} jugadores · Sin ganador';
 
     return Material(

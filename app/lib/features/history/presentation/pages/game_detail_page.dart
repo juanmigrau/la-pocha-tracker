@@ -7,6 +7,7 @@ import 'package:la_pocha/core/utils/snack_bar_helper.dart';
 import 'package:la_pocha/core/widgets/final_standings_list.dart';
 import 'package:la_pocha/core/widgets/pocha_app_bar.dart';
 import 'package:la_pocha/core/widgets/winner_card.dart';
+import 'package:la_pocha/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:la_pocha/features/history/domain/entities/game_detail.dart';
 import 'package:la_pocha/features/history/domain/entities/game_history_source.dart';
 import 'package:la_pocha/features/history/domain/services/game_history_mapper.dart';
@@ -149,6 +150,8 @@ class _LoadedBody extends StatelessWidget {
         : '—';
     final colorScheme = Theme.of(context).colorScheme;
     final ranking = detail.finalRanking;
+    final authState = context.watch<AuthBloc>().state;
+    final currentUser = authState is Authenticated ? authState.user : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -188,10 +191,24 @@ class _LoadedBody extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             children: [
-              if (ranking.isNotEmpty) ...[WinnerCard(entry: ranking.first)],
+              if (ranking.isNotEmpty) ...[
+                WinnerCard(
+                  entry: ranking.first,
+                  photoURL: ranking.first.player.userId == currentUser?.uid
+                      ? currentUser?.photoUrl
+                      : null,
+                  currentUserId: currentUser?.uid,
+                  currentDisplayName: currentUser?.displayName,
+                ),
+              ],
               if (ranking.length > 1) ...[
                 const SizedBox(height: 16),
-                FinalStandingsList(entries: ranking.skip(1).toList()),
+                FinalStandingsList(
+                  entries: ranking.skip(1).toList(),
+                  currentUserId: currentUser?.uid,
+                  currentUserPhotoUrl: currentUser?.photoUrl,
+                  currentDisplayName: currentUser?.displayName,
+                ),
               ],
             ],
           ),
