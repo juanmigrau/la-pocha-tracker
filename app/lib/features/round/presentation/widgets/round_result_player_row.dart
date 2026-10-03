@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:la_pocha/core/utils/player_display_name.dart';
 import 'package:la_pocha/core/widgets/player_initial_avatar.dart';
 import 'package:la_pocha/features/round/domain/entities/ranking_entry.dart';
 
 class RoundResultPlayerRow extends StatelessWidget {
-  const RoundResultPlayerRow({super.key, required this.entry, this.photoURL});
+  const RoundResultPlayerRow({
+    super.key,
+    required this.entry,
+    this.photoURL,
+    this.currentUserId,
+    this.currentDisplayName,
+  });
 
   final RankingEntry entry;
   final String? photoURL;
+  final String? currentUserId;
+  final String? currentDisplayName;
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +24,12 @@ class RoundResultPlayerRow extends StatelessWidget {
     final roundScore = entry.roundScore;
     final roundScoreLabel = '${roundScore >= 0 ? '+' : ''}$roundScore';
     final positionDelta = entry.positionDelta;
+    final displayName = resolveDisplayName(
+      storedName: entry.player.displayName,
+      storedUserId: entry.player.userId,
+      currentUserId: currentUserId,
+      currentDisplayName: currentDisplayName,
+    );
 
     return SizedBox(
       height: 52,
@@ -27,7 +42,7 @@ class RoundResultPlayerRow extends StatelessWidget {
               child: Row(
                 children: [
                   PlayerInitialAvatar(
-                    name: entry.player.displayName,
+                    name: displayName,
                     colorIndex: entry.player.seatOrder,
                     photoURL: photoURL,
                     radius: 14,
@@ -35,7 +50,7 @@ class RoundResultPlayerRow extends StatelessWidget {
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
-                      entry.player.displayName,
+                      displayName,
                       style: textTheme.bodyMedium,
                       overflow: TextOverflow.ellipsis,
                     ),

@@ -170,6 +170,8 @@ class _LoadedBody extends StatelessWidget {
                         data.entries.first.player.userId == currentUser?.uid
                         ? currentUser?.photoUrl
                         : null,
+                    currentUserId: currentUser?.uid,
+                    currentDisplayName: currentUser?.displayName,
                   ),
                 ],
                 if (data.entries.length > 1) ...[
@@ -178,6 +180,7 @@ class _LoadedBody extends StatelessWidget {
                     entries: data.entries.skip(1).toList(),
                     currentUserId: currentUser?.uid,
                     currentUserPhotoUrl: currentUser?.photoUrl,
+                    currentDisplayName: currentUser?.displayName,
                   ),
                 ],
               ],

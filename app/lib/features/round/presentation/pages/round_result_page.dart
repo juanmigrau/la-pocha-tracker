@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:la_pocha/core/di/injection.dart';
+import 'package:la_pocha/core/utils/player_display_name.dart';
 import 'package:la_pocha/core/widgets/primary_button.dart';
 import 'package:la_pocha/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:la_pocha/features/round/domain/entities/round_result.dart';
@@ -172,6 +173,17 @@ class _LoadedBody extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final authState = context.watch<AuthBloc>().state;
     final currentUser = authState is Authenticated ? authState.user : null;
+    final dealerIndex = result.game.players.indexWhere(
+      (player) => player.id == result.round.dealerPlayerId,
+    );
+    final dealerPlayer =
+        dealerIndex >= 0 ? result.game.players[dealerIndex] : null;
+    final dealerDisplayName = resolveDisplayName(
+      storedName: result.dealerDisplayName,
+      storedUserId: dealerPlayer?.userId,
+      currentUserId: currentUser?.uid,
+      currentDisplayName: currentUser?.displayName,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -183,7 +195,7 @@ class _LoadedBody extends StatelessWidget {
               Icon(Icons.style, color: colorScheme.primary, size: 16),
               const SizedBox(width: 8),
               Text(
-                result.dealerDisplayName,
+                dealerDisplayName,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onSurface,
@@ -252,6 +264,8 @@ class _LoadedBody extends StatelessWidget {
                                 currentUser?.uid
                             ? currentUser?.photoUrl
                             : null,
+                        currentUserId: currentUser?.uid,
+                        currentDisplayName: currentUser?.displayName,
                       ),
                     ],
                   ],

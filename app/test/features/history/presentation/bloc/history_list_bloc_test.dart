@@ -32,6 +32,16 @@ void main() {
     ),
   ];
 
+  final cloudItem = GameHistoryItem(
+    id: 'cloud-1',
+    source: GameHistorySource.cloud,
+    finishedAt: DateTime(2026, 7, 5),
+    playerCount: 4,
+    displayLabel: '5 jul 2026 — Nube',
+    winnerName: 'Luis',
+    winnerScore: 10,
+  );
+
   final pendingItems = [
     GameHistoryItem(
       id: 'game-1',
@@ -55,6 +65,35 @@ void main() {
     ),
   ];
 
+  void stubLocalFirst({
+    required List<GameHistoryItem> local,
+    required GameHistoryLoadResult enrichResult,
+  }) {
+    when(getGameHistory.watchLocal()).thenAnswer((_) => Stream.value(local));
+    when(getGameHistory.enrichWithCloud(local)).thenAnswer(
+      (_) async => enrichResult,
+    );
+    when(
+      getGameHistory.mergeLocalWithCloud(
+        localItems: anyNamed('localItems'),
+        cloudItems: anyNamed('cloudItems'),
+        cloudError: anyNamed('cloudError'),
+      ),
+    ).thenAnswer((invocation) async {
+      final localItems =
+          invocation.namedArguments[#localItems] as List<GameHistoryItem>;
+      final cloudItems =
+          invocation.namedArguments[#cloudItems] as List<GameHistoryItem>;
+      final cloudError =
+          invocation.namedArguments[#cloudError] as bool? ?? false;
+      return GameHistoryLoadResult(
+        items: [...localItems, ...cloudItems],
+        cloudError: cloudError,
+        cloudItems: cloudItems,
+      );
+    });
+  }
+
   setUp(() {
     getGameHistory = MockGetGameHistoryUseCase();
     retryPendingUploads = MockRetryPendingUploadsUseCase();
@@ -67,76 +106,99 @@ void main() {
       );
 
   blocTest<HistoryListBloc, HistoryListState>(
-    'emits loaded when history has items',
+    'emits local first then enriched result',
     build: buildBloc,
     setUp: () {
-      when(getGameHistory.watch()).thenAnswer(
-        (_) => Stream.value(GameHistoryLoadResult(items: items)),
-      );
-    },
-    act: (bloc) => bloc.add(const HistoryListStarted()),
-    wait: const Duration(milliseconds: 10),
-    expect: () => [
-      const HistoryListLoading(),
-      HistoryListLoaded(items: items),
-    ],
-  );
-
-  blocTest<HistoryListBloc, HistoryListState>(
-    'emits loaded with cloudError when cloud load failed',
-    build: buildBloc,
-    setUp: () {
-      when(getGameHistory.watch()).thenAnswer(
-        (_) => Stream.value(
-          GameHistoryLoadResult(items: items, cloudError: true),
+      stubLocalFirst(
+        local: items,
+        enrichResult: GameHistoryLoadResult(
+          items: [...items, cloudItem],
+          cloudItems: [cloudItem],
         ),
       );
     },
     act: (bloc) => bloc.add(const HistoryListStarted()),
-    wait: const Duration(milliseconds: 10),
+    wait: const Duration(milliseconds: 30),
     expect: () => [
       const HistoryListLoading(),
-      HistoryListLoaded(items: items, cloudError: true),
+      HistoryListLoaded(items: items, isCloudLoading: true),
+      HistoryListLoaded(
+        items: [...items, cloudItem],
+        isCloudLoading: false,
+      ),
     ],
   );
 
   blocTest<HistoryListBloc, HistoryListState>(
-    'emits empty when history has no items',
+    'emits loaded with cloudError when enrich fails offline',
     build: buildBloc,
     setUp: () {
-      when(getGameHistory.watch()).thenAnswer(
-        (_) => Stream.value(const GameHistoryLoadResult(items: [])),
+      stubLocalFirst(
+        local: items,
+        enrichResult: GameHistoryLoadResult(
+          items: items,
+          cloudError: true,
+        ),
       );
     },
     act: (bloc) => bloc.add(const HistoryListStarted()),
-    wait: const Duration(milliseconds: 10),
+    wait: const Duration(milliseconds: 30),
     expect: () => [
       const HistoryListLoading(),
+      HistoryListLoaded(items: items, isCloudLoading: true),
+      HistoryListLoaded(
+        items: items,
+        cloudError: true,
+        isCloudLoading: false,
+      ),
+    ],
+  );
+
+  blocTest<HistoryListBloc, HistoryListState>(
+    'emits empty when local and cloud have no items',
+    build: buildBloc,
+    setUp: () {
+      stubLocalFirst(
+        local: const [],
+        enrichResult: const GameHistoryLoadResult(items: []),
+      );
+    },
+    act: (bloc) => bloc.add(const HistoryListStarted()),
+    wait: const Duration(milliseconds: 30),
+    expect: () => [
+      const HistoryListLoading(),
+      const HistoryListLoaded(items: [], isCloudLoading: true),
       const HistoryListEmpty(),
     ],
   );
 
   blocTest<HistoryListBloc, HistoryListState>(
-    'reloads items on refresh without loading state',
+    'reloads local then enrich on refresh',
     build: buildBloc,
     setUp: () {
-      when(getGameHistory()).thenAnswer(
+      when(getGameHistory.getLocal()).thenAnswer((_) async => items);
+      when(getGameHistory.enrichWithCloud(items)).thenAnswer(
         (_) async => GameHistoryLoadResult(items: items),
       );
     },
     seed: () => HistoryListLoaded(items: items),
     act: (bloc) => bloc.add(const HistoryListRefreshed()),
-    expect: () => [],
+    wait: const Duration(milliseconds: 30),
+    expect: () => [
+      HistoryListLoaded(items: items, isCloudLoading: true),
+      HistoryListLoaded(items: items, isCloudLoading: false),
+    ],
     verify: (_) {
-      verify(getGameHistory()).called(1);
+      verify(getGameHistory.getLocal()).called(1);
+      verify(getGameHistory.enrichWithCloud(items)).called(1);
     },
   );
 
   blocTest<HistoryListBloc, HistoryListState>(
-    'emits failure without DEBUG details when watch stream errors',
+    'emits failure without DEBUG details when local watch errors',
     build: buildBloc,
     setUp: () {
-      when(getGameHistory.watch()).thenAnswer(
+      when(getGameHistory.watchLocal()).thenAnswer(
         (_) => Stream.error(Exception('network error')),
       );
     },
@@ -149,26 +211,6 @@ void main() {
         'message',
         isNot(contains('[DEBUG]')),
       ),
-    ],
-  );
-
-  blocTest<HistoryListBloc, HistoryListState>(
-    'updates list when watch emits again after a deletion',
-    build: buildBloc,
-    setUp: () {
-      when(getGameHistory.watch()).thenAnswer(
-        (_) => Stream.fromIterable([
-          GameHistoryLoadResult(items: items),
-          const GameHistoryLoadResult(items: []),
-        ]),
-      );
-    },
-    act: (bloc) => bloc.add(const HistoryListStarted()),
-    wait: const Duration(milliseconds: 10),
-    expect: () => [
-      const HistoryListLoading(),
-      HistoryListLoaded(items: items),
-      const HistoryListEmpty(),
     ],
   );
 
@@ -222,11 +264,9 @@ void main() {
     build: buildBloc,
     seed: () => HistoryListLoaded(items: pendingItems),
     setUp: () {
-      when(retryPendingUploads(gameId: 'game-1'))
-          .thenAnswer((_) async => 1);
+      when(retryPendingUploads(gameId: 'game-1')).thenAnswer((_) async => 1);
     },
-    act: (bloc) =>
-        bloc.add(const SyncRetryRequested(gameId: 'game-1')),
+    act: (bloc) => bloc.add(const SyncRetryRequested(gameId: 'game-1')),
     expect: () => [
       HistoryListLoaded(
         items: pendingItems,
@@ -247,11 +287,9 @@ void main() {
     build: buildBloc,
     seed: () => HistoryListLoaded(items: pendingItems),
     setUp: () {
-      when(retryPendingUploads(gameId: 'game-1'))
-          .thenAnswer((_) async => 0);
+      when(retryPendingUploads(gameId: 'game-1')).thenAnswer((_) async => 0);
     },
-    act: (bloc) =>
-        bloc.add(const SyncRetryRequested(gameId: 'game-1')),
+    act: (bloc) => bloc.add(const SyncRetryRequested(gameId: 'game-1')),
     expect: () => [
       HistoryListLoaded(
         items: pendingItems,
@@ -304,6 +342,30 @@ void main() {
         items: pendingItems,
         syncRetryFeedback: HistorySyncRetryFeedback.failure,
       ),
+    ],
+  );
+
+  blocTest<HistoryListBloc, HistoryListState>(
+    'does not await retry before emitting local history',
+    build: buildBloc,
+    setUp: () {
+      when(retryPendingUploads()).thenAnswer(
+        (_) => Future.delayed(
+          const Duration(milliseconds: 200),
+          () => 0,
+        ),
+      );
+      stubLocalFirst(
+        local: items,
+        enrichResult: GameHistoryLoadResult(items: items),
+      );
+    },
+    act: (bloc) => bloc.add(const HistoryListStarted()),
+    wait: const Duration(milliseconds: 40),
+    expect: () => [
+      const HistoryListLoading(),
+      HistoryListLoaded(items: items, isCloudLoading: true),
+      HistoryListLoaded(items: items, isCloudLoading: false),
     ],
   );
 }

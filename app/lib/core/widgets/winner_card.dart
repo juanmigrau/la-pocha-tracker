@@ -1,18 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:la_pocha/core/utils/player_display_name.dart';
 import 'package:la_pocha/core/widgets/player_initial_avatar.dart';
 import 'package:la_pocha/features/round/domain/entities/ranking_entry.dart';
 
 class WinnerCard extends StatelessWidget {
-  const WinnerCard({super.key, required this.entry, this.photoURL});
+  const WinnerCard({
+    super.key,
+    required this.entry,
+    this.photoURL,
+    this.currentUserId,
+    this.currentDisplayName,
+  });
 
   final RankingEntry entry;
   final String? photoURL;
+  final String? currentUserId;
+  final String? currentDisplayName;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
     final player = entry.player;
+    final displayName = resolveDisplayName(
+      storedName: player.displayName,
+      storedUserId: player.userId,
+      currentUserId: currentUserId,
+      currentDisplayName: currentDisplayName,
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -25,7 +40,7 @@ class WinnerCard extends StatelessWidget {
           const Text('🏆', style: TextStyle(fontSize: 32)),
           const SizedBox(width: 12),
           PlayerInitialAvatar(
-            name: player.displayName,
+            name: displayName,
             colorIndex: player.seatOrder,
             photoURL: photoURL,
             radius: 28,
@@ -36,7 +51,7 @@ class WinnerCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  player.displayName,
+                  displayName,
                   style: textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.onPrimaryContainer,

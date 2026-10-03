@@ -100,10 +100,37 @@ class _HistoryListView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              PochaAppBar(
-                title: 'Historial',
-                expanded: true,
-                onBack: () => context.pop(),
+              BlocBuilder<HistoryListBloc, HistoryListState>(
+                buildWhen: (previous, current) {
+                  final prevLoading = previous is HistoryListLoaded &&
+                      previous.isCloudLoading;
+                  final currLoading = current is HistoryListLoaded &&
+                      current.isCloudLoading;
+                  return prevLoading != currLoading;
+                },
+                builder: (context, state) {
+                  final isCloudLoading =
+                      state is HistoryListLoaded && state.isCloudLoading;
+                  return PochaAppBar(
+                    title: 'Historial',
+                    expanded: true,
+                    onBack: () => context.pop(),
+                    actions: [
+                      if (isCloudLoading)
+                        const Padding(
+                          padding: EdgeInsets.only(right: 16),
+                          child: SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
               ),
               BlocBuilder<AuthBloc, AuthState>(
                 builder: (context, authState) {
@@ -124,7 +151,8 @@ class _HistoryListView extends StatelessWidget {
                             .where((item) => item.needsSyncRetry)
                             .length;
                         return previous.cloudError != current.cloudError ||
-                            previousPending != currentPending;
+                            previousPending != currentPending ||
+                            previous.isCloudLoading != current.isCloudLoading;
                       }
                       return false;
                     },
@@ -168,39 +196,52 @@ class _HistoryListView extends StatelessWidget {
                           ),
                         ),
                       ),
-                      HistoryListLoaded(:final items) => RefreshIndicator(
-                        onRefresh: () async {
-                          context.read<HistoryListBloc>().add(
-                            const HistoryListRefreshed(),
-                          );
-                          await context
-                              .read<HistoryListBloc>()
-                              .stream
-                              .firstWhere(
-                                (state) =>
-                                    state is HistoryListLoaded ||
-                                    state is HistoryListEmpty ||
-                                    state is HistoryListFailure,
-                              );
-                        },
-                        child: ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                          itemCount: items.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(height: 12),
-                          itemBuilder: (context, index) {
-                            final item = items[index];
-                            return DeleteGameSlidable(
-                              item: item,
-                              onTap: () => context.push(
-                                '/history/${item.id}?source=${item.source.name}',
+                      HistoryListLoaded(
+                        :final items,
+                        :final isCloudLoading,
+                      ) =>
+                        items.isEmpty && isCloudLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : RefreshIndicator(
+                                onRefresh: () async {
+                                  context.read<HistoryListBloc>().add(
+                                    const HistoryListRefreshed(),
+                                  );
+                                  await context
+                                      .read<HistoryListBloc>()
+                                      .stream
+                                      .firstWhere(
+                                        (state) =>
+                                            (state is HistoryListLoaded &&
+                                                !state.isCloudLoading) ||
+                                            state is HistoryListEmpty ||
+                                            state is HistoryListFailure,
+                                      );
+                                },
+                                child: ListView.separated(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    0,
+                                    16,
+                                    16,
+                                  ),
+                                  itemCount: items.length,
+                                  separatorBuilder: (_, _) =>
+                                      const SizedBox(height: 12),
+                                  itemBuilder: (context, index) {
+                                    final item = items[index];
+                                    return DeleteGameSlidable(
+                                      item: item,
+                                      onTap: () => context.push(
+                                        '/history/${item.id}'
+                                        '?source=${item.source.name}',
+                                      ),
+                                      onDeleteRequested: () =>
+                                          _requestDelete(context, item),
+                                    );
+                                  },
+                                ),
                               ),
-                              onDeleteRequested: () =>
-                                  _requestDelete(context, item),
-                            );
-                          },
-                        ),
-                      ),
                     };
                   },
                 ),

@@ -37,6 +37,16 @@ void main() {
     updatedAt: DateTime(2026, 1, 1),
   );
 
+  void stubRecent({
+    List<GameHistoryItem> primed = const [],
+    Stream<List<GameHistoryItem>>? watch,
+  }) {
+    when(getRecentGames.getOnce()).thenAnswer((_) async => primed);
+    when(getRecentGames()).thenAnswer(
+      (_) => watch ?? Stream.value(primed),
+    );
+  }
+
   setUp(() {
     getRecentGames = MockGetRecentGamesUseCase();
   });
@@ -53,21 +63,25 @@ void main() {
   }
 
   blocTest<HomeBloc, HomeState>(
-    'emits loaded when there are recent games',
+    'emits loaded from Drift priming then keeps watch updates',
     build: buildBloc,
     setUp: () {
-      when(getRecentGames()).thenAnswer((_) => Stream.value(items));
+      stubRecent(primed: items);
     },
     act: (bloc) => bloc.add(const HomeStarted()),
     wait: const Duration(milliseconds: 10),
     expect: () => [const HomeLoading(), HomeLoaded(recentGames: items)],
+    verify: (_) {
+      verify(getRecentGames.getOnce()).called(1);
+      verify(getRecentGames()).called(1);
+    },
   );
 
   blocTest<HomeBloc, HomeState>(
-    'emits empty when there are no recent games',
+    'emits empty when primed list is empty',
     build: buildBloc,
     setUp: () {
-      when(getRecentGames()).thenAnswer((_) => Stream.value([]));
+      stubRecent(primed: const []);
     },
     act: (bloc) => bloc.add(const HomeStarted()),
     wait: const Duration(milliseconds: 10),
@@ -75,15 +89,12 @@ void main() {
   );
 
   blocTest<HomeBloc, HomeState>(
-    'emits failure when the use case stream errors',
+    'emits failure when priming fails',
     build: buildBloc,
     setUp: () {
-      when(getRecentGames()).thenAnswer(
-        (_) => Stream.error(Exception('network error')),
-      );
+      when(getRecentGames.getOnce()).thenThrow(Exception('db error'));
     },
     act: (bloc) => bloc.add(const HomeStarted()),
-    wait: const Duration(milliseconds: 10),
     expect: () => [
       const HomeLoading(),
       isA<HomeFailure>().having(
@@ -98,8 +109,9 @@ void main() {
     'updates list when watch emits again after a deletion',
     build: buildBloc,
     setUp: () {
-      when(getRecentGames()).thenAnswer(
-        (_) => Stream.fromIterable([
+      stubRecent(
+        primed: items,
+        watch: Stream.fromIterable([
           items,
           <GameHistoryItem>[],
         ]),
@@ -132,7 +144,7 @@ void main() {
         initialAuthState: Authenticated(user),
       ),
       setUp: () {
-        when(getRecentGames()).thenAnswer((_) => Stream.value(items));
+        stubRecent(primed: items);
       },
       act: (bloc) async {
         authStates.add(const Unauthenticated());
@@ -141,7 +153,7 @@ void main() {
       wait: const Duration(milliseconds: 30),
       expect: () => [const HomeLoading(), HomeLoaded(recentGames: items)],
       verify: (_) {
-        verify(getRecentGames()).called(1);
+        verify(getRecentGames.getOnce()).called(1);
       },
     );
 
@@ -152,7 +164,7 @@ void main() {
         initialAuthState: const Unauthenticated(),
       ),
       setUp: () {
-        when(getRecentGames()).thenAnswer((_) => Stream.value(items));
+        stubRecent(primed: items);
       },
       act: (bloc) async {
         authStates.add(const Unauthenticated());
@@ -160,7 +172,7 @@ void main() {
       },
       expect: () => <HomeState>[],
       verify: (_) {
-        verifyNever(getRecentGames());
+        verifyNever(getRecentGames.getOnce());
       },
     );
   });

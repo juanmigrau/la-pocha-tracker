@@ -1,9 +1,14 @@
+import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:la_pocha/core/theme/app_theme.dart';
+import 'package:la_pocha/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:la_pocha/features/history/domain/entities/game_history_item.dart';
 import 'package:la_pocha/features/history/domain/entities/game_history_source.dart';
 import 'package:la_pocha/features/home/presentation/widgets/recent_game_tile.dart';
+
+class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
 
 void main() {
   final item = GameHistoryItem(
@@ -18,14 +23,27 @@ void main() {
 
   final now = DateTime(2026, 8, 13, 22);
 
-  testWidgets('renders relative date, player names and winner', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light,
-        home: Scaffold(
-          body: RecentGameTile(item: item, now: now, onTap: () {}),
+  Widget wrapTile(Widget child) {
+    final authBloc = MockAuthBloc();
+    whenListen(
+      authBloc,
+      Stream.value(const Unauthenticated()),
+      initialState: const Unauthenticated(),
+    );
+    return MaterialApp(
+      theme: AppTheme.light,
+      home: Scaffold(
+        body: BlocProvider<AuthBloc>.value(
+          value: authBloc,
+          child: child,
         ),
       ),
+    );
+  }
+
+  testWidgets('renders relative date, player names and winner', (tester) async {
+    await tester.pumpWidget(
+      wrapTile(RecentGameTile(item: item, now: now, onTap: () {})),
     );
 
     expect(find.text('Hoy, 20:14'), findsOneWidget);
@@ -38,11 +56,8 @@ void main() {
     var tapCount = 0;
 
     await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light,
-        home: Scaffold(
-          body: RecentGameTile(item: item, now: now, onTap: () => tapCount++),
-        ),
+      wrapTile(
+        RecentGameTile(item: item, now: now, onTap: () => tapCount++),
       ),
     );
 
@@ -62,12 +77,7 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(
-        theme: AppTheme.light,
-        home: Scaffold(
-          body: RecentGameTile(item: withoutWinner, now: now, onTap: () {}),
-        ),
-      ),
+      wrapTile(RecentGameTile(item: withoutWinner, now: now, onTap: () {})),
     );
 
     expect(find.text('Ayer, 19:02'), findsOneWidget);

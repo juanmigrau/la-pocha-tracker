@@ -46,6 +46,14 @@ class UploadFinishedGameUseCase {
       return UploadFinishedGameOutcome.skippedAlreadySynced;
     }
 
+    // Ensure retryable state before attempting upload (covers leftover `local`).
+    if (game.syncStatus == SyncStatus.local) {
+      await _gameLocalDatasource.updateSyncMetadata(
+        gameId: gameId,
+        syncStatus: SyncStatus.pending.toStorageString(),
+      );
+    }
+
     if (!await _hasConnectivity()) {
       await _gameLocalDatasource.updateSyncMetadata(
         gameId: gameId,

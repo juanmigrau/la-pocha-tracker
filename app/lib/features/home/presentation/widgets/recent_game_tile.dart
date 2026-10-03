@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:la_pocha/core/theme/app_theme.dart';
+import 'package:la_pocha/core/utils/player_display_name.dart';
+import 'package:la_pocha/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:la_pocha/features/history/domain/entities/game_history_item.dart';
 import 'package:la_pocha/features/history/domain/services/game_history_mapper.dart';
 
@@ -23,12 +26,32 @@ class RecentGameTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final authState = context.watch<AuthBloc>().state;
+    final currentUser = authState is Authenticated ? authState.user : null;
     final formattedDate = mapper.formatRelativeFinishedAt(
       item.finishedAt,
       now: now,
     );
-    final playerNames = _playerNamesFromLabel(item.displayLabel);
-    final winnerName = item.winnerName;
+    final playerNames = item.players.isNotEmpty
+        ? item.players
+            .map(
+              (player) => resolveDisplayName(
+                storedName: player.displayName,
+                storedUserId: player.userId,
+                currentUserId: currentUser?.uid,
+                currentDisplayName: currentUser?.displayName,
+              ),
+            )
+            .join(', ')
+        : _playerNamesFromLabel(item.displayLabel);
+    final winnerName = item.winnerName == null
+        ? null
+        : resolveDisplayName(
+            storedName: item.winnerName!,
+            storedUserId: item.winnerUserId,
+            currentUserId: currentUser?.uid,
+            currentDisplayName: currentUser?.displayName,
+          );
 
     return Material(
       color: Colors.white,

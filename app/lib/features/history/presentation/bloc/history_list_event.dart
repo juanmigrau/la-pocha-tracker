@@ -37,8 +37,17 @@ class SyncAllPendingRequested extends HistoryListEvent {
   const SyncAllPendingRequested();
 }
 
-class _HistoryListWatchData extends HistoryListEvent {
-  const _HistoryListWatchData(this.result);
+class _HistoryListLocalData extends HistoryListEvent {
+  const _HistoryListLocalData(this.items);
+
+  final List<GameHistoryItem> items;
+
+  @override
+  List<Object?> get props => [items];
+}
+
+class _HistoryListCloudEnriched extends HistoryListEvent {
+  const _HistoryListCloudEnriched(this.result);
 
   final GameHistoryLoadResult result;
 

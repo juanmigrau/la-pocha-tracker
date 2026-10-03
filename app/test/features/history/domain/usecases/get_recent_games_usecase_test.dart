@@ -51,4 +51,15 @@ void main() {
     expect(result, items);
     verify(repository.watchRecentFinishedGames(limit: 1)).called(1);
   });
+
+  test('getOnce reads recent finished games once from repository', () async {
+    when(
+      repository.getRecentFinishedGames(limit: 3),
+    ).thenAnswer((_) async => items);
+
+    final result = await useCase.getOnce();
+
+    expect(result, items);
+    verify(repository.getRecentFinishedGames(limit: 3)).called(1);
+  });
 }

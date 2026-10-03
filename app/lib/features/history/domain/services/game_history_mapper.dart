@@ -38,6 +38,8 @@ class GameHistoryMapper {
     );
     final winner = ranking.isNotEmpty ? ranking.first : null;
 
+    final playerRefs = _sortedPlayerRefs(game);
+
     return GameHistoryItem(
       id: game.id,
       source: GameHistorySource.cloud,
@@ -45,9 +47,12 @@ class GameHistoryMapper {
       playerCount: game.playerCount,
       displayLabel: buildDisplayLabel(
         finishedAt: game.finishedAt!,
-        playerDisplayNames: _sortedPlayerNames(game),
+        playerDisplayNames:
+            playerRefs.map((player) => player.displayName).toList(),
       ),
+      players: playerRefs,
       winnerName: winner?.player.displayName,
+      winnerUserId: winner?.player.userId,
       winnerScore: winner?.totalScore,
       cloudGameId: game.id,
     );
@@ -64,6 +69,7 @@ class GameHistoryMapper {
       includePositionDelta: false,
     );
     final winner = ranking.isNotEmpty ? ranking.first : null;
+    final playerRefs = _sortedPlayerRefs(game);
 
     return GameHistoryItem(
       id: game.id,
@@ -72,19 +78,29 @@ class GameHistoryMapper {
       playerCount: game.playerCount,
       displayLabel: buildDisplayLabel(
         finishedAt: game.finishedAt!,
-        playerDisplayNames: _sortedPlayerNames(game),
+        playerDisplayNames:
+            playerRefs.map((player) => player.displayName).toList(),
       ),
+      players: playerRefs,
       winnerName: winner?.player.displayName,
+      winnerUserId: winner?.player.userId,
       winnerScore: winner?.totalScore,
       cloudGameId: game.cloudGameId,
       syncStatus: game.syncStatus,
     );
   }
 
-  List<String> _sortedPlayerNames(Game game) {
+  List<GameHistoryPlayerRef> _sortedPlayerRefs(Game game) {
     final sortedPlayers = List.of(game.players)
       ..sort((a, b) => a.seatOrder.compareTo(b.seatOrder));
-    return sortedPlayers.map((player) => player.displayName).toList();
+    return sortedPlayers
+        .map(
+          (player) => GameHistoryPlayerRef(
+            displayName: player.displayName,
+            userId: player.userId,
+          ),
+        )
+        .toList();
   }
 
   String buildDisplayLabel({

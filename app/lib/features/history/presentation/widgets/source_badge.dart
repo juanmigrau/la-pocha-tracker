@@ -1,40 +1,89 @@
 import 'package:flutter/material.dart';
 import 'package:la_pocha/core/theme/app_theme.dart';
 import 'package:la_pocha/features/history/domain/entities/game_history_source.dart';
+import 'package:la_pocha/features/sync/domain/entities/sync_status.dart';
 
 class SourceBadge extends StatelessWidget {
-  const SourceBadge({super.key, required this.source});
+  const SourceBadge({super.key, required this.source, this.syncStatus});
 
   final GameHistorySource source;
+  final SyncStatus? syncStatus;
 
   @override
   Widget build(BuildContext context) {
-    final isLocal = source == GameHistorySource.local;
+    final appearance = _resolveAppearance();
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: isLocal ? const Color(0xFFD7ECE0) : const Color(0xFFE8F0FE),
+        color: appearance.background,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            isLocal ? Icons.smartphone : Icons.cloud,
-            size: 16,
-            color: isLocal ? AppTheme.primary : const Color(0xFF1A73E8),
-          ),
+          Icon(appearance.icon, size: 16, color: appearance.foreground),
           const SizedBox(width: 4),
           Text(
-            isLocal ? 'Local' : 'Nube',
+            appearance.label,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: isLocal ? AppTheme.primary : const Color(0xFF1A73E8),
-                  fontWeight: FontWeight.w600,
-                ),
+              color: appearance.foreground,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
     );
   }
+
+  _BadgeAppearance _resolveAppearance() {
+    if (source == GameHistorySource.cloud ||
+        syncStatus == SyncStatus.synced) {
+      return const _BadgeAppearance(
+        label: 'Nube',
+        icon: Icons.cloud,
+        background: Color(0xFFE8F0FE),
+        foreground: Color(0xFF1A73E8),
+      );
+    }
+
+    if (syncStatus == SyncStatus.pending) {
+      return const _BadgeAppearance(
+        label: 'Pendiente',
+        icon: Icons.cloud_upload_outlined,
+        background: Color(0xFFFFF3E0),
+        foreground: Color(0xFFE65100),
+      );
+    }
+
+    if (syncStatus == SyncStatus.failed) {
+      return const _BadgeAppearance(
+        label: 'Error sync',
+        icon: Icons.cloud_off_outlined,
+        background: Color(0xFFFFEBEE),
+        foreground: Color(0xFFC62828),
+      );
+    }
+
+    return const _BadgeAppearance(
+      label: 'Local',
+      icon: Icons.smartphone,
+      background: Color(0xFFD7ECE0),
+      foreground: AppTheme.primary,
+    );
+  }
+}
+
+class _BadgeAppearance {
+  const _BadgeAppearance({
+    required this.label,
+    required this.icon,
+    required this.background,
+    required this.foreground,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color background;
+  final Color foreground;
 }

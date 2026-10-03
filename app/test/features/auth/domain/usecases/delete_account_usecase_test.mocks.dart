@@ -341,6 +341,90 @@ class MockHistoryRepository extends _i1.Mock implements _i9.HistoryRepository {
           as _i7.Stream<_i4.GameHistoryLoadResult>);
 
   @override
+  _i7.Future<List<_i10.GameHistoryItem>> getLocalFinishedGames() =>
+      (super.noSuchMethod(
+            Invocation.method(#getLocalFinishedGames, []),
+            returnValue: _i7.Future<List<_i10.GameHistoryItem>>.value(
+              <_i10.GameHistoryItem>[],
+            ),
+            returnValueForMissingStub:
+                _i7.Future<List<_i10.GameHistoryItem>>.value(
+                  <_i10.GameHistoryItem>[],
+                ),
+          )
+          as _i7.Future<List<_i10.GameHistoryItem>>);
+
+  @override
+  _i7.Stream<List<_i10.GameHistoryItem>> watchLocalFinishedGames() =>
+      (super.noSuchMethod(
+            Invocation.method(#watchLocalFinishedGames, []),
+            returnValue: _i7.Stream<List<_i10.GameHistoryItem>>.empty(),
+            returnValueForMissingStub:
+                _i7.Stream<List<_i10.GameHistoryItem>>.empty(),
+          )
+          as _i7.Stream<List<_i10.GameHistoryItem>>);
+
+  @override
+  _i7.Future<_i4.GameHistoryLoadResult> enrichGameHistoryWithCloud(
+    List<_i10.GameHistoryItem>? localItems,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#enrichGameHistoryWithCloud, [localItems]),
+            returnValue: _i7.Future<_i4.GameHistoryLoadResult>.value(
+              _FakeGameHistoryLoadResult_2(
+                this,
+                Invocation.method(#enrichGameHistoryWithCloud, [localItems]),
+              ),
+            ),
+            returnValueForMissingStub:
+                _i7.Future<_i4.GameHistoryLoadResult>.value(
+                  _FakeGameHistoryLoadResult_2(
+                    this,
+                    Invocation.method(#enrichGameHistoryWithCloud, [
+                      localItems,
+                    ]),
+                  ),
+                ),
+          )
+          as _i7.Future<_i4.GameHistoryLoadResult>);
+
+  @override
+  _i7.Future<_i4.GameHistoryLoadResult> mergeLocalWithCloud({
+    required List<_i10.GameHistoryItem>? localItems,
+    required List<_i10.GameHistoryItem>? cloudItems,
+    bool? cloudError = false,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#mergeLocalWithCloud, [], {
+              #localItems: localItems,
+              #cloudItems: cloudItems,
+              #cloudError: cloudError,
+            }),
+            returnValue: _i7.Future<_i4.GameHistoryLoadResult>.value(
+              _FakeGameHistoryLoadResult_2(
+                this,
+                Invocation.method(#mergeLocalWithCloud, [], {
+                  #localItems: localItems,
+                  #cloudItems: cloudItems,
+                  #cloudError: cloudError,
+                }),
+              ),
+            ),
+            returnValueForMissingStub:
+                _i7.Future<_i4.GameHistoryLoadResult>.value(
+                  _FakeGameHistoryLoadResult_2(
+                    this,
+                    Invocation.method(#mergeLocalWithCloud, [], {
+                      #localItems: localItems,
+                      #cloudItems: cloudItems,
+                      #cloudError: cloudError,
+                    }),
+                  ),
+                ),
+          )
+          as _i7.Future<_i4.GameHistoryLoadResult>);
+
+  @override
   _i7.Future<List<_i10.GameHistoryItem>> getRecentFinishedGames({
     int? limit = 3,
   }) =>

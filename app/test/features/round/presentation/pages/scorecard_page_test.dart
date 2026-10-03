@@ -1,10 +1,13 @@
+import 'package:bloc_test/bloc_test.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:la_pocha/core/theme/app_theme.dart';
+import 'package:la_pocha/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:la_pocha/features/game_setup/domain/entities/player_embed.dart';
 import 'package:la_pocha/features/game_setup/domain/usecases/cancel_game_usecase.dart';
 import 'package:la_pocha/features/game_setup/presentation/bloc/cancel_game_cubit.dart';
@@ -26,6 +29,8 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
 import 'scorecard_page_test.mocks.dart';
+
+class MockAuthBloc extends MockBloc<AuthEvent, AuthState> implements AuthBloc {}
 
 class StubGetGameStatsUseCase implements GetGameStatsUseCase {
   StubGetGameStatsUseCase(this._stats);
@@ -51,7 +56,22 @@ void main() {
   late StubGetGameStatsUseCase getGameStats;
   late MockCancelGameUseCase cancelGame;
   late MockRepeatRoundUseCase repeatRound;
+  late MockAuthBloc authBloc;
   final getIt = GetIt.instance;
+
+  provideDummy<AuthState>(const Unauthenticated());
+
+  Widget wrapScorecardPage(Widget page) {
+    whenListen(
+      authBloc,
+      Stream.value(const Unauthenticated()),
+      initialState: const Unauthenticated(),
+    );
+    return BlocProvider<AuthBloc>.value(
+      value: authBloc,
+      child: page,
+    );
+  }
 
   final players = [
     PlayerEmbed(
@@ -225,6 +245,7 @@ void main() {
     getGameStats = StubGetGameStatsUseCase(richStats());
     cancelGame = MockCancelGameUseCase();
     repeatRound = MockRepeatRoundUseCase();
+    authBloc = MockAuthBloc();
     when(getGameScorecard(gameId: anyNamed('gameId')))
         .thenAnswer((_) async => scorecard);
     getIt.registerFactory<GetGameScorecardUseCase>(() => getGameScorecard);
@@ -254,7 +275,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
-        home: const ScorecardPage(gameId: 'game-1'),
+        home: wrapScorecardPage(const ScorecardPage(gameId: 'game-1')),
       ),
     );
     await tester.pumpAndSettle();
@@ -275,7 +296,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
-        home: const ScorecardPage(gameId: 'game-1'),
+        home: wrapScorecardPage(const ScorecardPage(gameId: 'game-1')),
       ),
     );
     await tester.pumpAndSettle();
@@ -296,7 +317,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
-        home: const ScorecardPage(gameId: 'game-1'),
+        home: wrapScorecardPage(const ScorecardPage(gameId: 'game-1')),
       ),
     );
     await tester.pumpAndSettle();
@@ -315,7 +336,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
-        home: const ScorecardPage(gameId: 'game-1'),
+        home: wrapScorecardPage(const ScorecardPage(gameId: 'game-1')),
       ),
     );
     await tester.pumpAndSettle();
@@ -344,7 +365,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
-        home: const ScorecardPage(gameId: 'game-1'),
+        home: wrapScorecardPage(const ScorecardPage(gameId: 'game-1')),
       ),
     );
     await tester.pumpAndSettle();
@@ -407,7 +428,7 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: AppTheme.light,
-        home: const ScorecardPage(gameId: 'game-wide'),
+        home: wrapScorecardPage(const ScorecardPage(gameId: 'game-wide')),
       ),
     );
     await tester.pumpAndSettle();

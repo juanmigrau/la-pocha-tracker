@@ -21,18 +21,21 @@ class HistoryListLoaded extends HistoryListState {
   const HistoryListLoaded({
     required this.items,
     this.cloudError = false,
+    this.isCloudLoading = false,
     this.syncingGameIds = const {},
     this.syncRetryFeedback,
   });
 
   final List<GameHistoryItem> items;
   final bool cloudError;
+  final bool isCloudLoading;
   final Set<String> syncingGameIds;
   final HistorySyncRetryFeedback? syncRetryFeedback;
 
   HistoryListLoaded copyWith({
     List<GameHistoryItem>? items,
     bool? cloudError,
+    bool? isCloudLoading,
     Set<String>? syncingGameIds,
     HistorySyncRetryFeedback? syncRetryFeedback,
     bool clearSyncRetryFeedback = false,
@@ -40,6 +43,7 @@ class HistoryListLoaded extends HistoryListState {
     return HistoryListLoaded(
       items: items ?? this.items,
       cloudError: cloudError ?? this.cloudError,
+      isCloudLoading: isCloudLoading ?? this.isCloudLoading,
       syncingGameIds: syncingGameIds ?? this.syncingGameIds,
       syncRetryFeedback: clearSyncRetryFeedback
           ? null
@@ -51,6 +55,7 @@ class HistoryListLoaded extends HistoryListState {
   List<Object?> get props => [
         items,
         cloudError,
+        isCloudLoading,
         syncingGameIds,
         syncRetryFeedback,
       ];
