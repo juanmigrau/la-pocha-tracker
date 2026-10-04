@@ -8,11 +8,15 @@ class FavoritesChipSection extends StatelessWidget {
     super.key,
     required this.visibleFavorites,
     this.currentUser,
+    this.localSelf,
     this.onFavoriteTap,
   });
 
   final List<FavoritePlayer> visibleFavorites;
   final UserProfile? currentUser;
+
+  /// Local organizer chip when there is no Firebase session.
+  final FavoritePlayer? localSelf;
   final ValueChanged<FavoritePlayer>? onFavoriteTap;
 
   @override
@@ -20,7 +24,9 @@ class FavoritesChipSection extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
     final colors = Theme.of(context).colorScheme;
     final user = currentUser;
-    final hasChips = user != null || visibleFavorites.isNotEmpty;
+    final local = user == null ? localSelf : null;
+    final hasChips =
+        user != null || local != null || visibleFavorites.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -76,15 +82,31 @@ class FavoritesChipSection extends StatelessWidget {
                     ),
                   ),
                 ),
+              if (local != null)
+                FilterChip(
+                  key: const Key('localSelfFavoriteChip'),
+                  label: Text(
+                    local.displayName,
+                    style: textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  backgroundColor: colors.primaryContainer,
+                  showCheckmark: false,
+                  onSelected: (_) => onFavoriteTap?.call(local),
+                ),
               ...visibleFavorites.asMap().entries.map((entry) {
                 final index = entry.key;
                 final favorite = entry.value;
+                final showAvatar = favorite.userId != null;
                 return FilterChip(
-                  avatar: _chipAvatar(
-                    name: favorite.displayName,
-                    colorIndex: index + 1,
-                    photoURL: favorite.photoURL,
-                  ),
+                  avatar: showAvatar
+                      ? _chipAvatar(
+                          name: favorite.displayName,
+                          colorIndex: index + 1,
+                          photoURL: favorite.photoURL,
+                        )
+                      : null,
                   label: Text(favorite.displayName),
                   showCheckmark: false,
                   onSelected: (_) => onFavoriteTap?.call(favorite),

@@ -33,6 +33,7 @@ void main() {
     WidgetTester tester, {
     List<FavoritePlayer> visibleFavorites = const [],
     UserProfile? currentUser,
+    FavoritePlayer? localSelf,
     ValueChanged<FavoritePlayer>? onFavoriteTap,
   }) {
     return tester.pumpWidget(
@@ -41,6 +42,7 @@ void main() {
           body: FavoritesChipSection(
             visibleFavorites: visibleFavorites,
             currentUser: currentUser,
+            localSelf: localSelf,
             onFavoriteTap: onFavoriteTap,
           ),
         ),
@@ -125,5 +127,50 @@ void main() {
     );
     expect(avatar.photoURL, 'https://example.com/luis.jpg');
     expect(avatar.name, 'Luis');
+  });
+
+  testWidgets('guest favorite chip does not show avatar', (tester) async {
+    await pumpSection(tester, visibleFavorites: [favoriteAna]);
+
+    expect(find.text('Ana'), findsOneWidget);
+    expect(find.byType(PlayerInitialAvatar), findsNothing);
+  });
+
+  testWidgets('shows local self chip without avatar when provided', (
+    tester,
+  ) async {
+    final localSelf = FavoritePlayer(
+      id: 'local-1',
+      displayName: 'Juan',
+      userId: null,
+      createdAt: DateTime(2026),
+    );
+
+    await pumpSection(tester, localSelf: localSelf);
+
+    expect(find.byKey(const Key('localSelfFavoriteChip')), findsOneWidget);
+    expect(find.text('Juan'), findsOneWidget);
+    expect(find.byType(PlayerInitialAvatar), findsNothing);
+    expect(find.byIcon(Icons.account_circle), findsNothing);
+  });
+
+  testWidgets('prefers current user chip over local self', (tester) async {
+    final localSelf = FavoritePlayer(
+      id: 'local-1',
+      displayName: 'Local Juan',
+      userId: null,
+      createdAt: DateTime(2026),
+    );
+
+    await pumpSection(
+      tester,
+      currentUser: currentUser,
+      localSelf: localSelf,
+    );
+
+    expect(find.byKey(const Key('currentUserFavoriteChip')), findsOneWidget);
+    expect(find.byKey(const Key('localSelfFavoriteChip')), findsNothing);
+    expect(find.text('Juan'), findsOneWidget);
+    expect(find.text('Local Juan'), findsNothing);
   });
 }

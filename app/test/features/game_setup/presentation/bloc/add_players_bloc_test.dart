@@ -1,6 +1,7 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:la_pocha/core/services/local_user_service.dart';
 import 'package:la_pocha/features/auth/domain/entities/user_profile.dart';
 import 'package:la_pocha/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:la_pocha/features/favorites/domain/entities/favorite_player.dart';
@@ -147,6 +148,7 @@ class _FakeConnectivity implements Connectivity {
   MockSpec<GetGameByIdUseCase>(),
   MockSpec<GetFavoritesUseCase>(),
   MockSpec<GetCurrentUserUseCase>(),
+  MockSpec<LocalUserService>(),
   MockSpec<AddPlayerUseCase>(),
   MockSpec<AddPlayerFromFavoriteUseCase>(),
   MockSpec<RemovePlayerUseCase>(),
@@ -158,6 +160,7 @@ void main() {
   late MockGetGameByIdUseCase getGameById;
   late MockGetFavoritesUseCase getFavorites;
   late MockGetCurrentUserUseCase getCurrentUser;
+  late MockLocalUserService localUser;
   late MockAddPlayerUseCase addPlayer;
   late MockAddPlayerFromFavoriteUseCase addPlayerFromFavorite;
   late MockRemovePlayerUseCase removePlayer;
@@ -190,10 +193,18 @@ void main() {
     updatedAt: DateTime(2026),
   );
 
+  final localSelfFavorite = FavoritePlayer(
+    id: 'local-1',
+    displayName: 'Juan Local',
+    userId: null,
+    createdAt: DateTime.fromMillisecondsSinceEpoch(0),
+  );
+
   setUp(() {
     getGameById = MockGetGameByIdUseCase();
     getFavorites = MockGetFavoritesUseCase();
     getCurrentUser = MockGetCurrentUserUseCase();
+    localUser = MockLocalUserService();
     addPlayer = MockAddPlayerUseCase();
     addPlayerFromFavorite = MockAddPlayerFromFavoriteUseCase();
     removePlayer = MockRemovePlayerUseCase();
@@ -206,12 +217,15 @@ void main() {
     searchUsers = SearchUsersUseCase(userSearchRepository);
     addRegisteredPlayer = AddRegisteredPlayerUseCase(gameRepository);
     when(getCurrentUser()).thenAnswer((_) async => null);
+    when(localUser.getOrCreateLocalId()).thenAnswer((_) async => 'local-1');
+    when(localUser.getLocalName()).thenReturn('Juan Local');
   });
 
   AddPlayersBloc buildBloc() => AddPlayersBloc(
     getGameById: getGameById,
     getFavorites: getFavorites,
     getCurrentUser: getCurrentUser,
+    localUser: localUser,
     addPlayer: addPlayer,
     addPlayerFromFavorite: addPlayerFromFavorite,
     addRegisteredPlayer: addRegisteredPlayer,
@@ -246,6 +260,85 @@ void main() {
         players: [],
         favorites: [favoriteAna],
         currentUser: null,
+        localSelf: localSelfFavorite,
+        activeEditIndex: null,
+        isLoading: false,
+      ),
+    ],
+  );
+
+  blocTest<AddPlayersBloc, AddPlayersState>(
+    'preselects local user without adding them to the roster',
+    build: buildBloc,
+    setUp: () {
+      when(getGameById('game-1')).thenAnswer((_) async => baseGame);
+      when(getFavorites()).thenAnswer((_) async => const []);
+    },
+    act: (bloc) => bloc.add(const AddPlayersStarted(gameId: 'game-1')),
+    expect: () => [
+      const AddPlayersLoading(),
+      AddPlayersLoaded(
+        gameId: 'game-1',
+        playerCount: 4,
+        players: [],
+        favorites: const [],
+        currentUser: null,
+        localSelf: localSelfFavorite,
+        activeEditIndex: null,
+        isLoading: false,
+      ),
+    ],
+    verify: (bloc) {
+      final state = bloc.state as AddPlayersLoaded;
+      expect(state.players, isEmpty);
+      expect(state.localSelf?.id, 'local-1');
+      expect(state.localSelf?.displayName, 'Juan Local');
+    },
+  );
+
+  blocTest<AddPlayersBloc, AddPlayersState>(
+    'does not expose local self when already in roster',
+    build: buildBloc,
+    setUp: () {
+      when(getGameById('game-1')).thenAnswer(
+        (_) async => baseGame.copyWith(
+          players: [
+            PlayerEmbed(
+              id: 'p-local',
+              displayName: 'Juan Local',
+              isGuest: true,
+              userId: null,
+              localUserId: 'local-1',
+              seatOrder: 0,
+              totalScore: 0,
+              joinedAt: DateTime(2026),
+            ),
+          ],
+        ),
+      );
+      when(getFavorites()).thenAnswer((_) async => const []);
+    },
+    act: (bloc) => bloc.add(const AddPlayersStarted(gameId: 'game-1')),
+    expect: () => [
+      const AddPlayersLoading(),
+      AddPlayersLoaded(
+        gameId: 'game-1',
+        playerCount: 4,
+        players: [
+          PlayerEmbed(
+            id: 'p-local',
+            displayName: 'Juan Local',
+            isGuest: true,
+            userId: null,
+            localUserId: 'local-1',
+            seatOrder: 0,
+            totalScore: 0,
+            joinedAt: DateTime(2026),
+          ),
+        ],
+        favorites: const [],
+        currentUser: null,
+        localSelf: null,
         activeEditIndex: null,
         isLoading: false,
       ),
@@ -269,6 +362,76 @@ void main() {
         players: [],
         favorites: [favoriteAna],
         currentUser: currentUserProfile,
+        localSelf: null,
+        activeEditIndex: null,
+        isLoading: false,
+      ),
+    ],
+  );
+
+  blocTest<AddPlayersBloc, AddPlayersState>(
+    'adds local self from chip with localUserId and keeps roster otherwise empty',
+    build: buildBloc,
+    seed: () => AddPlayersLoaded(
+      gameId: 'game-1',
+      playerCount: 4,
+      players: [],
+      favorites: const [],
+      currentUser: null,
+      localSelf: localSelfFavorite,
+      activeEditIndex: null,
+      isLoading: false,
+    ),
+    setUp: () {
+      final player = PlayerEmbed(
+        id: 'p1',
+        displayName: 'Juan Local',
+        isGuest: true,
+        userId: null,
+        localUserId: 'local-1',
+        seatOrder: 0,
+        totalScore: 0,
+        joinedAt: DateTime(2026),
+      );
+      when(
+        addPlayerFromFavorite(
+          gameId: 'game-1',
+          favoriteId: 'local-1',
+          favorite: localSelfFavorite,
+          localUserId: 'local-1',
+        ),
+      ).thenAnswer((_) async => baseGame.copyWith(players: [player]));
+    },
+    act: (bloc) => bloc.add(FavoriteChipTapped(favorite: localSelfFavorite)),
+    expect: () => [
+      AddPlayersLoaded(
+        gameId: 'game-1',
+        playerCount: 4,
+        players: [],
+        favorites: const [],
+        currentUser: null,
+        localSelf: localSelfFavorite,
+        activeEditIndex: null,
+        isLoading: true,
+      ),
+      AddPlayersLoaded(
+        gameId: 'game-1',
+        playerCount: 4,
+        players: [
+          PlayerEmbed(
+            id: 'p1',
+            displayName: 'Juan Local',
+            isGuest: true,
+            userId: null,
+            localUserId: 'local-1',
+            seatOrder: 0,
+            totalScore: 0,
+            joinedAt: DateTime(2026),
+          ),
+        ],
+        favorites: const [],
+        currentUser: null,
+        localSelf: localSelfFavorite,
         activeEditIndex: null,
         isLoading: false,
       ),

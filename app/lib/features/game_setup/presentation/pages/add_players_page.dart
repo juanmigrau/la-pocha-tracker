@@ -104,6 +104,7 @@ class _AddPlayersView extends StatelessWidget {
                             FavoritesChipSection(
                               visibleFavorites: visibleFavorites,
                               currentUser: _visibleCurrentUser(state),
+                              localSelf: _visibleLocalSelf(state),
                               onFavoriteTap: (favorite) {
                                 context.read<AddPlayersBloc>().add(
                                   FavoriteChipTapped(favorite: favorite),
@@ -201,6 +202,24 @@ class _AddPlayersView extends StatelessWidget {
       }
     }
     return user;
+  }
+
+  FavoritePlayer? _visibleLocalSelf(AddPlayersLoaded state) {
+    final localSelf = state.localSelf;
+    if (localSelf == null) {
+      return null;
+    }
+    for (final player in state.players) {
+      if (player.localUserId == localSelf.id) {
+        return null;
+      }
+      if (player.userId == null &&
+          player.displayName.toLowerCase() ==
+              localSelf.displayName.toLowerCase()) {
+        return null;
+      }
+    }
+    return localSelf;
   }
 
   bool _playersContainsFavorite(

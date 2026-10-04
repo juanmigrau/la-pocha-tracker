@@ -20,6 +20,7 @@ class AddPlayerFromFavoriteUseCase {
     required String gameId,
     required String favoriteId,
     FavoritePlayer? favorite,
+    String? localUserId,
   }) async {
     FavoritePlayer? resolvedFavorite = favorite;
     if (resolvedFavorite == null) {
@@ -66,6 +67,7 @@ class AddPlayerFromFavoriteUseCase {
       displayName: selectedFavorite.displayName,
       isGuest: selectedFavorite.userId == null,
       userId: selectedFavorite.userId,
+      localUserId: localUserId,
       seatOrder: game.players.length,
       totalScore: 0,
       joinedAt: now,

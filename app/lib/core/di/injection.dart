@@ -529,7 +529,6 @@ Future<void> configureDependencies() async {
   getIt.registerFactory<CreateGameDraftUseCase>(
     () => CreateGameDraftUseCase(
       getIt<GameRepository>(),
-      getIt<LocalUserService>(),
       debugConfig: kDebugMode ? getIt<DebugConfigNotifier>() : null,
     ),
   );
@@ -614,6 +613,7 @@ Future<void> configureDependencies() async {
       getGameById: getIt<GetGameByIdUseCase>(),
       getFavorites: getIt<GetFavoritesUseCase>(),
       getCurrentUser: getIt<GetCurrentUserUseCase>(),
+      localUser: getIt<LocalUserService>(),
       addPlayer: getIt<AddPlayerUseCase>(),
       addPlayerFromFavorite: getIt<AddPlayerFromFavoriteUseCase>(),
       addRegisteredPlayer: getIt<AddRegisteredPlayerUseCase>(),

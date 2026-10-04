@@ -24,6 +24,7 @@ class AddPlayersLoaded extends AddPlayersState {
     required this.activeEditIndex,
     required this.isLoading,
     this.currentUser,
+    this.localSelf,
     this.errorMessage,
     this.isUserSearchActive = false,
     this.userSearchQuery = '',
@@ -37,6 +38,9 @@ class AddPlayersLoaded extends AddPlayersState {
   final List<PlayerEmbed> players;
   final List<FavoritePlayer> favorites;
   final UserProfile? currentUser;
+
+  /// Local organizer shown as a preselected favorite chip (no Firebase session).
+  final FavoritePlayer? localSelf;
   final int? activeEditIndex;
   final bool isLoading;
   final String? errorMessage;
@@ -65,6 +69,8 @@ class AddPlayersLoaded extends AddPlayersState {
     List<PlayerEmbed>? players,
     List<FavoritePlayer>? favorites,
     UserProfile? currentUser,
+    FavoritePlayer? localSelf,
+    bool clearLocalSelf = false,
     int? activeEditIndex,
     bool clearActiveEditIndex = false,
     bool? isLoading,
@@ -84,6 +90,7 @@ class AddPlayersLoaded extends AddPlayersState {
       players: players ?? this.players,
       favorites: favorites ?? this.favorites,
       currentUser: currentUser ?? this.currentUser,
+      localSelf: clearLocalSelf ? null : (localSelf ?? this.localSelf),
       activeEditIndex: clearActiveEditIndex
           ? null
           : (activeEditIndex ?? this.activeEditIndex),
@@ -114,6 +121,7 @@ class AddPlayersLoaded extends AddPlayersState {
     players,
     favorites,
     currentUser,
+    localSelf,
     activeEditIndex,
     isLoading,
     errorMessage,

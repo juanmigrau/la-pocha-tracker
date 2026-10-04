@@ -1,26 +1,19 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:la_pocha/core/database/app_database.dart';
-import 'package:la_pocha/core/services/local_user_service.dart';
 import 'package:la_pocha/features/game_setup/data/datasources/game_local_datasource.dart';
 import 'package:la_pocha/features/game_setup/data/repositories/game_repository_impl.dart';
 import 'package:la_pocha/features/game_setup/domain/entities/game_status.dart';
 import 'package:la_pocha/features/game_setup/domain/usecases/create_game_draft_usecase.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   late AppDatabase database;
   late CreateGameDraftUseCase useCase;
 
   setUp(() async {
-    SharedPreferences.setMockInitialValues({
-      'local_user_id': 'local-test',
-      'local_user_name': 'Tester',
-    });
     database = AppDatabase.forTesting();
     final datasource = GameLocalDatasource(database);
     final repository = GameRepositoryImpl(datasource);
-    final prefs = await SharedPreferences.getInstance();
-    useCase = CreateGameDraftUseCase(repository, LocalUserService(prefs));
+    useCase = CreateGameDraftUseCase(repository);
   });
 
   tearDown(() async {
@@ -40,7 +33,6 @@ void main() {
     expect(stored.maxCardsPerRound, 8);
     expect(stored.roundSequence.length, 19);
     expect(game.status, GameStatus.setup);
-    expect(game.players, hasLength(1));
-    expect(game.players.single.localUserId, 'local-test');
+    expect(game.players, isEmpty);
   });
 }

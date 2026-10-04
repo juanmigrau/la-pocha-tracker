@@ -4,6 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:la_pocha/core/errors/user_facing_error_mapper.dart';
+import 'package:la_pocha/core/services/local_user_service.dart';
 import 'package:la_pocha/features/auth/domain/entities/user_profile.dart';
 import 'package:la_pocha/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:la_pocha/features/favorites/domain/entities/favorite_player.dart';
@@ -28,6 +29,7 @@ class AddPlayersBloc extends Bloc<AddPlayersEvent, AddPlayersState> {
     required this._getGameById,
     required this._getFavorites,
     required this._getCurrentUser,
+    required this._localUser,
     required this._addPlayer,
     required this._addPlayerFromFavorite,
     required this._addRegisteredPlayer,
@@ -69,6 +71,7 @@ class AddPlayersBloc extends Bloc<AddPlayersEvent, AddPlayersState> {
   final GetGameByIdUseCase _getGameById;
   final GetFavoritesUseCase _getFavorites;
   final GetCurrentUserUseCase _getCurrentUser;
+  final LocalUserService _localUser;
   final AddPlayerUseCase _addPlayer;
   final AddPlayerFromFavoriteUseCase _addPlayerFromFavorite;
   final AddRegisteredPlayerUseCase _addRegisteredPlayer;
@@ -88,6 +91,7 @@ class AddPlayersBloc extends Bloc<AddPlayersEvent, AddPlayersState> {
       final gameFuture = _getGameById(event.gameId);
       final favoritesFuture = _getFavorites();
       final currentUserFuture = _getCurrentUser();
+      final localIdFuture = _localUser.getOrCreateLocalId();
       final game = await gameFuture;
       if (game == null) {
         emit(AddPlayersFailure(message: 'Partida no encontrada'));
@@ -95,6 +99,13 @@ class AddPlayersBloc extends Bloc<AddPlayersEvent, AddPlayersState> {
       }
       final favorites = await favoritesFuture;
       final currentUser = await currentUserFuture;
+      final localId = await localIdFuture;
+      final localSelf = _resolveLocalSelf(
+        currentUser: currentUser,
+        localId: localId,
+        localName: _localUser.getLocalName(),
+        players: game.players,
+      );
       emit(
         AddPlayersLoaded(
           gameId: game.id,
@@ -102,6 +113,7 @@ class AddPlayersBloc extends Bloc<AddPlayersEvent, AddPlayersState> {
           players: game.players,
           favorites: favorites,
           currentUser: currentUser,
+          localSelf: localSelf,
           activeEditIndex: null,
           isLoading: false,
         ),
@@ -132,11 +144,16 @@ class AddPlayersBloc extends Bloc<AddPlayersEvent, AddPlayersState> {
         event.favorite,
         current.currentUser,
       );
-      final game = isCurrentUserChip
+      final isLocalSelfChip = _isLocalSelfFavorite(
+        event.favorite,
+        current.localSelf,
+      );
+      final game = (isCurrentUserChip || isLocalSelfChip)
           ? await _addPlayerFromFavorite(
               gameId: current.gameId,
               favoriteId: event.favorite.id,
               favorite: event.favorite,
+              localUserId: isLocalSelfChip ? event.favorite.id : null,
             )
           : await _addPlayerFromFavorite(
               gameId: current.gameId,
@@ -573,6 +590,43 @@ class AddPlayersBloc extends Bloc<AddPlayersEvent, AddPlayersState> {
       return false;
     }
     return favorite.userId == currentUser.uid;
+  }
+
+  bool _isLocalSelfFavorite(
+    FavoritePlayer favorite,
+    FavoritePlayer? localSelf,
+  ) {
+    if (localSelf == null) {
+      return false;
+    }
+    return favorite.id == localSelf.id;
+  }
+
+  FavoritePlayer? _resolveLocalSelf({
+    required UserProfile? currentUser,
+    required String localId,
+    required String? localName,
+    required List<PlayerEmbed> players,
+  }) {
+    // Firebase session already exposes the self chip via [currentUser].
+    if (currentUser != null) {
+      return null;
+    }
+    for (final player in players) {
+      if (player.localUserId == localId) {
+        return null;
+      }
+    }
+    final trimmed = localName?.trim();
+    final displayName = (trimmed == null || trimmed.isEmpty)
+        ? 'Jugador'
+        : trimmed;
+    return FavoritePlayer(
+      id: localId,
+      displayName: displayName,
+      userId: null,
+      createdAt: DateTime.fromMillisecondsSinceEpoch(0),
+    );
   }
 
   FavoritePlayer? _findFavoriteForPlayer({
