@@ -92,8 +92,8 @@ class PochaAppBar extends StatelessWidget implements PreferredSizeWidget {
     final bar = Container(
       decoration: const BoxDecoration(color: AppTheme.primary),
       padding: expanded
-          ? EdgeInsets.fromLTRB(4, 24 + statusBarHeight, 24, 24)
-          : EdgeInsets.fromLTRB(4, 16 + statusBarHeight, 8, 16),
+          ? EdgeInsets.fromLTRB(16, 24 + statusBarHeight, 24, 24)
+          : EdgeInsets.fromLTRB(16, 16 + statusBarHeight, 8, 16),
       child: Row(
         crossAxisAlignment: subtitle != null
             ? CrossAxisAlignment.start

@@ -129,7 +129,7 @@ class _HomeViewState extends State<_HomeView> {
                             name: user.displayName,
                             colorIndex: 0,
                             photoURL: photoURL,
-                            radius: 16,
+                            radius: 20,
                           )
                         : const Icon(
                             Icons.account_circle_outlined,
