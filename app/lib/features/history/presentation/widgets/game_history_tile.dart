@@ -6,6 +6,7 @@ import 'package:la_pocha/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:la_pocha/features/history/domain/entities/game_history_item.dart';
 import 'package:la_pocha/features/history/domain/entities/game_history_source.dart';
 import 'package:la_pocha/features/history/presentation/bloc/history_list_bloc.dart';
+import 'package:la_pocha/features/history/presentation/widgets/source_badge.dart';
 import 'package:la_pocha/features/sync/domain/entities/sync_status.dart';
 
 class GameHistoryTile extends StatelessWidget {
@@ -124,8 +125,9 @@ class _SyncStatusChip extends StatelessWidget {
         syncStatus == SyncStatus.synced ||
         item.cloudGameId != null;
 
-    return _SourceChip(
+    return SourceBadge(
       source: showAsCloud ? GameHistorySource.cloud : GameHistorySource.local,
+      syncStatus: showAsCloud ? SyncStatus.synced : null,
     );
   }
 }
@@ -215,43 +217,3 @@ class _PendingSyncControls extends StatelessWidget {
   }
 }
 
-class _SourceChip extends StatelessWidget {
-  const _SourceChip({required this.source});
-
-  final GameHistorySource source;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final isLocal = source == GameHistorySource.local;
-    final foreground = isLocal
-        ? colorScheme.onSurfaceVariant
-        : colorScheme.onPrimaryContainer;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: isLocal ? colorScheme.surface : colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            isLocal ? Icons.phone_android : Icons.cloud_done,
-            size: 14,
-            color: foreground,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            isLocal ? 'Local' : 'Nube',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: foreground,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

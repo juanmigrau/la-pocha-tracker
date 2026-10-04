@@ -8,6 +8,8 @@ class Favorites extends Table {
 
   TextColumn get userId => text().nullable()();
 
+  TextColumn get photoURL => text().named('photo_url').nullable()();
+
   DateTimeColumn get createdAt => dateTime()();
 
   @override

@@ -1772,6 +1772,17 @@ class $FavoritesTable extends Favorites
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _photoURLMeta = const VerificationMeta(
+    'photoURL',
+  );
+  @override
+  late final GeneratedColumn<String> photoURL = GeneratedColumn<String>(
+    'photo_url',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -1784,7 +1795,13 @@ class $FavoritesTable extends Favorites
     requiredDuringInsert: true,
   );
   @override
-  List<GeneratedColumn> get $columns => [id, displayName, userId, createdAt];
+  List<GeneratedColumn> get $columns => [
+    id,
+    displayName,
+    userId,
+    photoURL,
+    createdAt,
+  ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1819,6 +1836,12 @@ class $FavoritesTable extends Favorites
         userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
       );
     }
+    if (data.containsKey('photo_url')) {
+      context.handle(
+        _photoURLMeta,
+        photoURL.isAcceptableOrUnknown(data['photo_url']!, _photoURLMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -1848,6 +1871,10 @@ class $FavoritesTable extends Favorites
         DriftSqlType.string,
         data['${effectivePrefix}user_id'],
       ),
+      photoURL: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}photo_url'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -1865,11 +1892,13 @@ class FavoriteEntry extends DataClass implements Insertable<FavoriteEntry> {
   final String id;
   final String displayName;
   final String? userId;
+  final String? photoURL;
   final DateTime createdAt;
   const FavoriteEntry({
     required this.id,
     required this.displayName,
     this.userId,
+    this.photoURL,
     required this.createdAt,
   });
   @override
@@ -1879,6 +1908,9 @@ class FavoriteEntry extends DataClass implements Insertable<FavoriteEntry> {
     map['display_name'] = Variable<String>(displayName);
     if (!nullToAbsent || userId != null) {
       map['user_id'] = Variable<String>(userId);
+    }
+    if (!nullToAbsent || photoURL != null) {
+      map['photo_url'] = Variable<String>(photoURL);
     }
     map['created_at'] = Variable<DateTime>(createdAt);
     return map;
@@ -1891,6 +1923,9 @@ class FavoriteEntry extends DataClass implements Insertable<FavoriteEntry> {
       userId: userId == null && nullToAbsent
           ? const Value.absent()
           : Value(userId),
+      photoURL: photoURL == null && nullToAbsent
+          ? const Value.absent()
+          : Value(photoURL),
       createdAt: Value(createdAt),
     );
   }
@@ -1904,6 +1939,7 @@ class FavoriteEntry extends DataClass implements Insertable<FavoriteEntry> {
       id: serializer.fromJson<String>(json['id']),
       displayName: serializer.fromJson<String>(json['displayName']),
       userId: serializer.fromJson<String?>(json['userId']),
+      photoURL: serializer.fromJson<String?>(json['photoURL']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
     );
   }
@@ -1914,6 +1950,7 @@ class FavoriteEntry extends DataClass implements Insertable<FavoriteEntry> {
       'id': serializer.toJson<String>(id),
       'displayName': serializer.toJson<String>(displayName),
       'userId': serializer.toJson<String?>(userId),
+      'photoURL': serializer.toJson<String?>(photoURL),
       'createdAt': serializer.toJson<DateTime>(createdAt),
     };
   }
@@ -1922,11 +1959,13 @@ class FavoriteEntry extends DataClass implements Insertable<FavoriteEntry> {
     String? id,
     String? displayName,
     Value<String?> userId = const Value.absent(),
+    Value<String?> photoURL = const Value.absent(),
     DateTime? createdAt,
   }) => FavoriteEntry(
     id: id ?? this.id,
     displayName: displayName ?? this.displayName,
     userId: userId.present ? userId.value : this.userId,
+    photoURL: photoURL.present ? photoURL.value : this.photoURL,
     createdAt: createdAt ?? this.createdAt,
   );
   FavoriteEntry copyWithCompanion(FavoritesCompanion data) {
@@ -1936,6 +1975,7 @@ class FavoriteEntry extends DataClass implements Insertable<FavoriteEntry> {
           ? data.displayName.value
           : this.displayName,
       userId: data.userId.present ? data.userId.value : this.userId,
+      photoURL: data.photoURL.present ? data.photoURL.value : this.photoURL,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -1946,13 +1986,14 @@ class FavoriteEntry extends DataClass implements Insertable<FavoriteEntry> {
           ..write('id: $id, ')
           ..write('displayName: $displayName, ')
           ..write('userId: $userId, ')
+          ..write('photoURL: $photoURL, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, displayName, userId, createdAt);
+  int get hashCode => Object.hash(id, displayName, userId, photoURL, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1960,6 +2001,7 @@ class FavoriteEntry extends DataClass implements Insertable<FavoriteEntry> {
           other.id == this.id &&
           other.displayName == this.displayName &&
           other.userId == this.userId &&
+          other.photoURL == this.photoURL &&
           other.createdAt == this.createdAt);
 }
 
@@ -1967,12 +2009,14 @@ class FavoritesCompanion extends UpdateCompanion<FavoriteEntry> {
   final Value<String> id;
   final Value<String> displayName;
   final Value<String?> userId;
+  final Value<String?> photoURL;
   final Value<DateTime> createdAt;
   final Value<int> rowid;
   const FavoritesCompanion({
     this.id = const Value.absent(),
     this.displayName = const Value.absent(),
     this.userId = const Value.absent(),
+    this.photoURL = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -1980,6 +2024,7 @@ class FavoritesCompanion extends UpdateCompanion<FavoriteEntry> {
     required String id,
     required String displayName,
     this.userId = const Value.absent(),
+    this.photoURL = const Value.absent(),
     required DateTime createdAt,
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -1989,6 +2034,7 @@ class FavoritesCompanion extends UpdateCompanion<FavoriteEntry> {
     Expression<String>? id,
     Expression<String>? displayName,
     Expression<String>? userId,
+    Expression<String>? photoURL,
     Expression<DateTime>? createdAt,
     Expression<int>? rowid,
   }) {
@@ -1996,6 +2042,7 @@ class FavoritesCompanion extends UpdateCompanion<FavoriteEntry> {
       if (id != null) 'id': id,
       if (displayName != null) 'display_name': displayName,
       if (userId != null) 'user_id': userId,
+      if (photoURL != null) 'photo_url': photoURL,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -2005,6 +2052,7 @@ class FavoritesCompanion extends UpdateCompanion<FavoriteEntry> {
     Value<String>? id,
     Value<String>? displayName,
     Value<String?>? userId,
+    Value<String?>? photoURL,
     Value<DateTime>? createdAt,
     Value<int>? rowid,
   }) {
@@ -2012,6 +2060,7 @@ class FavoritesCompanion extends UpdateCompanion<FavoriteEntry> {
       id: id ?? this.id,
       displayName: displayName ?? this.displayName,
       userId: userId ?? this.userId,
+      photoURL: photoURL ?? this.photoURL,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -2029,6 +2078,9 @@ class FavoritesCompanion extends UpdateCompanion<FavoriteEntry> {
     if (userId.present) {
       map['user_id'] = Variable<String>(userId.value);
     }
+    if (photoURL.present) {
+      map['photo_url'] = Variable<String>(photoURL.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -2044,6 +2096,7 @@ class FavoritesCompanion extends UpdateCompanion<FavoriteEntry> {
           ..write('id: $id, ')
           ..write('displayName: $displayName, ')
           ..write('userId: $userId, ')
+          ..write('photoURL: $photoURL, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -2916,6 +2969,7 @@ typedef $$FavoritesTableCreateCompanionBuilder =
       required String id,
       required String displayName,
       Value<String?> userId,
+      Value<String?> photoURL,
       required DateTime createdAt,
       Value<int> rowid,
     });
@@ -2924,6 +2978,7 @@ typedef $$FavoritesTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> displayName,
       Value<String?> userId,
+      Value<String?> photoURL,
       Value<DateTime> createdAt,
       Value<int> rowid,
     });
@@ -2949,6 +3004,11 @@ class $$FavoritesTableFilterComposer
 
   ColumnFilters<String> get userId => $composableBuilder(
     column: $table.userId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get photoURL => $composableBuilder(
+    column: $table.photoURL,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2982,6 +3042,11 @@ class $$FavoritesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get photoURL => $composableBuilder(
+    column: $table.photoURL,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -3007,6 +3072,9 @@ class $$FavoritesTableAnnotationComposer
 
   GeneratedColumn<String> get userId =>
       $composableBuilder(column: $table.userId, builder: (column) => column);
+
+  GeneratedColumn<String> get photoURL =>
+      $composableBuilder(column: $table.photoURL, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -3046,12 +3114,14 @@ class $$FavoritesTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> displayName = const Value.absent(),
                 Value<String?> userId = const Value.absent(),
+                Value<String?> photoURL = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => FavoritesCompanion(
                 id: id,
                 displayName: displayName,
                 userId: userId,
+                photoURL: photoURL,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -3060,12 +3130,14 @@ class $$FavoritesTableTableManager
                 required String id,
                 required String displayName,
                 Value<String?> userId = const Value.absent(),
+                Value<String?> photoURL = const Value.absent(),
                 required DateTime createdAt,
                 Value<int> rowid = const Value.absent(),
               }) => FavoritesCompanion.insert(
                 id: id,
                 displayName: displayName,
                 userId: userId,
+                photoURL: photoURL,
                 createdAt: createdAt,
                 rowid: rowid,
               ),

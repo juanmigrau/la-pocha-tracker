@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:la_pocha/core/widgets/player_initial_avatar.dart';
 import 'package:la_pocha/features/auth/domain/entities/user_profile.dart';
 import 'package:la_pocha/features/favorites/domain/entities/favorite_player.dart';
 import 'package:la_pocha/features/game_setup/presentation/widgets/favorites_chip_section.dart';
@@ -17,6 +18,14 @@ void main() {
     id: 'fav-ana',
     displayName: 'Ana',
     userId: null,
+    createdAt: DateTime(2026),
+  );
+
+  final favoriteRegistered = FavoritePlayer(
+    id: 'fav-registered',
+    displayName: 'Luis',
+    userId: 'uid-luis',
+    photoURL: 'https://example.com/luis.jpg',
     createdAt: DateTime(2026),
   );
 
@@ -104,5 +113,17 @@ void main() {
     expect(tapped!.id, 'uid-1');
     expect(tapped!.displayName, 'Juan');
     expect(tapped!.userId, 'uid-1');
+  });
+
+  testWidgets('registered favorite chip passes photoURL to avatar', (
+    tester,
+  ) async {
+    await pumpSection(tester, visibleFavorites: [favoriteRegistered]);
+
+    final avatar = tester.widget<PlayerInitialAvatar>(
+      find.byType(PlayerInitialAvatar).first,
+    );
+    expect(avatar.photoURL, 'https://example.com/luis.jpg');
+    expect(avatar.name, 'Luis');
   });
 }

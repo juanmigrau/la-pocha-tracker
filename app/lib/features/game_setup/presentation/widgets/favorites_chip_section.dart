@@ -48,18 +48,16 @@ class FavoritesChipSection extends StatelessWidget {
               if (user != null)
                 FilterChip(
                   key: const Key('currentUserFavoriteChip'),
-                  avatar: user.photoUrl != null && user.photoUrl!.isNotEmpty
-                      ? PlayerInitialAvatar(
-                          name: user.displayName,
-                          colorIndex: 0,
-                          photoURL: user.photoUrl,
-                          radius: 12,
-                        )
-                      : Icon(
-                          Icons.account_circle,
-                          color: colors.primary,
-                          size: 18,
-                        ),
+                  avatar: _chipAvatar(
+                    name: user.displayName,
+                    colorIndex: 0,
+                    photoURL: user.photoUrl,
+                    fallbackIcon: Icon(
+                      Icons.account_circle,
+                      color: colors.primary,
+                      size: 18,
+                    ),
+                  ),
                   label: Text(
                     user.displayName,
                     style: textTheme.bodySmall?.copyWith(
@@ -73,19 +71,53 @@ class FavoritesChipSection extends StatelessWidget {
                       id: user.uid,
                       displayName: user.displayName,
                       userId: user.uid,
+                      photoURL: user.photoUrl,
                       createdAt: DateTime.fromMillisecondsSinceEpoch(0),
                     ),
                   ),
                 ),
-              ...visibleFavorites.map(
-                (favorite) => FilterChip(
+              ...visibleFavorites.asMap().entries.map((entry) {
+                final index = entry.key;
+                final favorite = entry.value;
+                return FilterChip(
+                  avatar: _chipAvatar(
+                    name: favorite.displayName,
+                    colorIndex: index + 1,
+                    photoURL: favorite.photoURL,
+                  ),
                   label: Text(favorite.displayName),
+                  showCheckmark: false,
                   onSelected: (_) => onFavoriteTap?.call(favorite),
-                ),
-              ),
+                );
+              }),
             ],
           ),
       ],
+    );
+  }
+
+  Widget _chipAvatar({
+    required String name,
+    required int colorIndex,
+    String? photoURL,
+    Widget? fallbackIcon,
+  }) {
+    final url = photoURL;
+    if (url != null && url.isNotEmpty) {
+      return PlayerInitialAvatar(
+        name: name,
+        colorIndex: colorIndex,
+        photoURL: url,
+        radius: 12,
+      );
+    }
+    if (fallbackIcon != null) {
+      return fallbackIcon;
+    }
+    return PlayerInitialAvatar(
+      name: name,
+      colorIndex: colorIndex,
+      radius: 12,
     );
   }
 }

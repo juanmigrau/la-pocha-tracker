@@ -78,7 +78,9 @@ void main() {
     build: buildBloc,
     seed: () => FavoritesLoaded(favorites: [favorites.first]),
     setUp: () {
-      when(addFavorite(displayName: 'Luis', userId: null)).thenAnswer(
+      when(
+        addFavorite(displayName: 'Luis', userId: null, photoURL: null),
+      ).thenAnswer(
         (_) async => FavoritePlayer(
           id: 'fav-3',
           displayName: 'Luis',

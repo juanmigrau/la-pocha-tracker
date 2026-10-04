@@ -75,7 +75,6 @@ class _CreateGameView extends StatelessWidget {
                 child: BlocBuilder<CreateGameBloc, CreateGameState>(
                   builder: (context, state) {
                     final preview = _resolvePreview(state);
-                    final isSubmitting = state is CreateGameSubmitting;
 
                     return SingleChildScrollView(
                       padding: const EdgeInsets.all(20),
@@ -103,19 +102,26 @@ class _CreateGameView extends StatelessWidget {
                               ),
                             ),
                           ],
-                          const SizedBox(height: 32),
-                          PrimaryButton(
-                            label: 'Continuar',
-                            isLoading: isSubmitting,
-                            onPressed: () => context.read<CreateGameBloc>().add(
-                              const CreateGameConfirmed(),
-                            ),
-                          ),
                         ],
                       ),
                     );
                   },
                 ),
+              ),
+              BlocBuilder<CreateGameBloc, CreateGameState>(
+                builder: (context, state) {
+                  final isSubmitting = state is CreateGameSubmitting;
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                    child: PrimaryButton(
+                      label: 'Continuar',
+                      isLoading: isSubmitting,
+                      onPressed: () => context.read<CreateGameBloc>().add(
+                        const CreateGameConfirmed(),
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),

@@ -61,6 +61,9 @@ class AddPlayersBloc extends Bloc<AddPlayersEvent, AddPlayersState> {
   static const searchTimeoutMessage =
       'La búsqueda tardó demasiado. Inténtalo de nuevo.';
 
+  static const authRequiredSearchMessage =
+      'Inicia sesión para buscar jugadores registrados';
+
   static const Duration searchDebounce = Duration(milliseconds: 300);
 
   final GetGameByIdUseCase _getGameById;
@@ -183,6 +186,7 @@ class AddPlayersBloc extends Bloc<AddPlayersEvent, AddPlayersState> {
         final createdFavorite = await _addFavorite(
           displayName: player.displayName,
           userId: player.userId,
+          photoURL: player.photoURL,
         );
         updatedFavorites.add(createdFavorite);
       } else {
@@ -423,6 +427,17 @@ class AddPlayersBloc extends Bloc<AddPlayersEvent, AddPlayersState> {
     if (afterDelay is! AddPlayersLoaded ||
         !afterDelay.isUserSearchActive ||
         afterDelay.userSearchQuery != event.query) {
+      return;
+    }
+
+    if (afterDelay.currentUser == null) {
+      emit(
+        afterDelay.copyWith(
+          userSearchLoading: false,
+          userSearchResults: const [],
+          clearUserSearchError: true,
+        ),
+      );
       return;
     }
 

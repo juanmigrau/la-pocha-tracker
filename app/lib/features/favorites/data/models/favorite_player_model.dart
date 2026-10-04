@@ -8,12 +8,14 @@ class FavoritePlayerModel {
     required this.displayName,
     required this.userId,
     required this.createdAt,
+    this.photoURL,
   });
 
   final String id;
   final String displayName;
   final String? userId;
   final DateTime createdAt;
+  final String? photoURL;
 
   factory FavoritePlayerModel.fromEntry(FavoriteEntry entry) {
     return FavoritePlayerModel(
@@ -21,6 +23,7 @@ class FavoritePlayerModel {
       displayName: entry.displayName,
       userId: entry.userId,
       createdAt: entry.createdAt,
+      photoURL: entry.photoURL,
     );
   }
 
@@ -30,6 +33,7 @@ class FavoritePlayerModel {
       displayName: displayName,
       userId: userId,
       createdAt: createdAt,
+      photoURL: photoURL,
     );
   }
 
@@ -38,6 +42,7 @@ class FavoritePlayerModel {
       id: id,
       displayName: displayName,
       userId: Value(userId),
+      photoURL: Value(photoURL),
       createdAt: createdAt,
     );
   }

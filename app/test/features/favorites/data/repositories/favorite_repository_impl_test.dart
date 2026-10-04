@@ -25,6 +25,21 @@ void main() {
     expect(favorites.first.id, isNotEmpty);
     expect(favorites.first.displayName, 'Ana');
     expect(favorites.first.userId, isNull);
+    expect(favorites.first.photoURL, isNull);
+  });
+
+  test('addFavorite persists photoURL for registered users', () async {
+    await repository.addFavorite(
+      displayName: 'Ana',
+      userId: 'user-1',
+      photoURL: 'https://example.com/ana.jpg',
+    );
+
+    final favorites = await repository.getFavorites();
+
+    expect(favorites, hasLength(1));
+    expect(favorites.first.userId, 'user-1');
+    expect(favorites.first.photoURL, 'https://example.com/ana.jpg');
   });
 
   test('removeFavorite deletes favorite', () async {

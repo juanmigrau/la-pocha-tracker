@@ -52,6 +52,7 @@ class FavoritesBloc extends Bloc<FavoritesEvent, FavoritesState> {
       final favorite = await _addFavorite(
         displayName: event.displayName,
         userId: event.userId,
+        photoURL: event.photoURL,
       );
 
       if (current is FavoritesEmpty) {

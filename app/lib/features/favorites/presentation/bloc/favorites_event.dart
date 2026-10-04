@@ -15,13 +15,15 @@ class FavoriteAdded extends FavoritesEvent {
   const FavoriteAdded({
     required this.displayName,
     this.userId,
+    this.photoURL,
   });
 
   final String displayName;
   final String? userId;
+  final String? photoURL;
 
   @override
-  List<Object?> get props => [displayName, userId];
+  List<Object?> get props => [displayName, userId, photoURL];
 }
 
 class FavoriteRemoved extends FavoritesEvent {

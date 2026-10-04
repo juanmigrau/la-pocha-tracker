@@ -49,7 +49,13 @@ void main() {
     final result = await addFavorite(displayName: 'Ana');
 
     expect(result, favorites.first);
-    verify(repository.addFavorite(displayName: 'Ana', userId: null)).called(1);
+    verify(
+      repository.addFavorite(
+        displayName: 'Ana',
+        userId: null,
+        photoURL: null,
+      ),
+    ).called(1);
   });
 
   test('removeFavorite delegates to repository', () async {

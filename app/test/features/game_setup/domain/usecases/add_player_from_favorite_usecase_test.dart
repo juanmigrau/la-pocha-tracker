@@ -56,6 +56,7 @@ void main() {
     final favorite = await favoriteRepository.addFavorite(
       displayName: 'Carlos',
       userId: 'user-1',
+      photoURL: 'https://example.com/carlos.jpg',
     );
 
     final updated = await useCase(gameId: game.id, favoriteId: favorite.id);
@@ -65,6 +66,7 @@ void main() {
     expect(added.displayName, 'Carlos');
     expect(added.isGuest, isFalse);
     expect(added.userId, 'user-1');
+    expect(added.photoURL, 'https://example.com/carlos.jpg');
   });
 
   test(

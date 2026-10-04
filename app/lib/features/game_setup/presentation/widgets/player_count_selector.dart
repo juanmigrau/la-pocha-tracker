@@ -27,40 +27,72 @@ class PlayerCountSelector extends StatelessWidget {
               ),
         ),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        GridView.count(
+          crossAxisCount: 3,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 8,
+          crossAxisSpacing: 8,
+          childAspectRatio: 1,
           children: [
             for (final count in options)
               Semantics(
                 label: '$count jugadores',
                 selected: selectedCount == count,
                 button: true,
-                child: ChoiceChip(
-                  label: Text(
-                    '$count',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: selectedCount == count
-                          ? Colors.white
-                          : AppTheme.onSurfaceVariant,
-                    ),
-                  ),
+                child: _PlayerCountButton(
+                  count: count,
                   selected: selectedCount == count,
-                  showCheckmark: false,
-                  selectedColor: AppTheme.primary,
-                  backgroundColor: Colors.white,
-                  side: BorderSide(
-                    color: selectedCount == count
-                        ? AppTheme.primary
-                        : AppTheme.onSurfaceVariant.withValues(alpha: 0.3),
-                  ),
-                  onSelected: (_) => onCountSelected(count),
+                  onTap: () => onCountSelected(count),
                 ),
               ),
           ],
         ),
       ],
+    );
+  }
+}
+
+class _PlayerCountButton extends StatelessWidget {
+  const _PlayerCountButton({
+    required this.count,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final int count;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final borderColor = selected
+        ? AppTheme.primary
+        : AppTheme.onSurfaceVariant.withValues(alpha: 0.3);
+
+    return Material(
+      color: selected ? AppTheme.primary : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: borderColor),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 56, minHeight: 56),
+          child: Center(
+            child: Text(
+              '$count',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                color: selected ? Colors.white : AppTheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

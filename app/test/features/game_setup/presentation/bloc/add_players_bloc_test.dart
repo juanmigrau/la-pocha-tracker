@@ -357,6 +357,7 @@ void main() {
         addFavorite(
           displayName: anyNamed('displayName'),
           userId: anyNamed('userId'),
+          photoURL: anyNamed('photoURL'),
         ),
       );
     },
@@ -444,7 +445,7 @@ void main() {
     ),
     setUp: () {
       when(
-        addFavorite(displayName: 'Ana', userId: null),
+        addFavorite(displayName: 'Ana', userId: null, photoURL: null),
       ).thenAnswer((_) async => favoriteAna);
       when(removeFavorite('fav-ana')).thenAnswer((_) async {});
     },
@@ -951,14 +952,15 @@ void main() {
   blocTest<AddPlayersBloc, AddPlayersState>(
     'UserSearchQueryChanged shows offline message without crashing',
     build: buildBloc,
-    seed: () => const AddPlayersLoaded(
+    seed: () => AddPlayersLoaded(
       gameId: 'game-1',
       playerCount: 4,
-      players: [],
-      favorites: [],
+      players: const [],
+      favorites: const [],
       activeEditIndex: null,
       isLoading: false,
       isUserSearchActive: true,
+      currentUser: currentUserProfile,
     ),
     setUp: () {
       connectivity.results = [ConnectivityResult.none];
@@ -972,6 +974,32 @@ void main() {
         'error',
         AddPlayersBloc.offlineSearchMessage,
       ),
+    ],
+    verify: (_) {
+      expect(userSearchRepository.callCount, 0);
+    },
+  );
+
+  blocTest<AddPlayersBloc, AddPlayersState>(
+    'UserSearchQueryChanged without session skips search without error',
+    build: buildBloc,
+    seed: () => const AddPlayersLoaded(
+      gameId: 'game-1',
+      playerCount: 4,
+      players: [],
+      favorites: [],
+      activeEditIndex: null,
+      isLoading: false,
+      isUserSearchActive: true,
+    ),
+    act: (bloc) => bloc.add(const UserSearchQueryChanged(query: 'an')),
+    wait: const Duration(milliseconds: 350),
+    expect: () => [
+      isA<AddPlayersLoaded>()
+          .having((s) => s.userSearchQuery, 'query', 'an')
+          .having((s) => s.userSearchLoading, 'loading', false)
+          .having((s) => s.userSearchResults, 'results', isEmpty)
+          .having((s) => s.userSearchError, 'error', isNull),
     ],
     verify: (_) {
       expect(userSearchRepository.callCount, 0);

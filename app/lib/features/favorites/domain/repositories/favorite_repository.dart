@@ -6,6 +6,7 @@ abstract class FavoriteRepository {
   Future<FavoritePlayer> addFavorite({
     required String displayName,
     String? userId,
+    String? photoURL,
   });
 
   Future<void> removeFavorite(String id);

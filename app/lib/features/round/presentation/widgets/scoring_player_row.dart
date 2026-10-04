@@ -55,7 +55,7 @@ class ScoringPlayerRow extends StatelessWidget {
           vertical: isExpanded ? 12 : 8,
         ),
         child: SizedBox(
-          height: isExpanded ? 56 : 36,
+          height: isExpanded ? 56 : 40,
           child: Row(
             children: [
               PlayerInitialAvatar(
@@ -92,14 +92,14 @@ class ScoringPlayerRow extends StatelessWidget {
               ),
               if (status == ScoringPlayerRowStatus.completed)
                 CircleAvatar(
-                  radius: 14,
+                  radius: 18,
                   backgroundColor: const Color(0xFFD7ECE0),
                   child: Text(
                     '$tricks',
                     style: const TextStyle(
                       color: AppTheme.primary,
                       fontWeight: FontWeight.bold,
-                      fontSize: 13,
+                      fontSize: 16,
                     ),
                   ),
                 ),

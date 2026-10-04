@@ -38,6 +38,23 @@ void main() {
     expect(find.text('Local'), findsNothing);
   });
 
+  testWidgets('Nube badge uses theme primaryContainer colors', (tester) async {
+    await tester.pumpWidget(
+      wrap(const SourceBadge(source: GameHistorySource.cloud)),
+    );
+
+    final container = tester.widget<Container>(
+      find
+          .descendant(
+            of: find.byType(SourceBadge),
+            matching: find.byType(Container),
+          )
+          .first,
+    );
+    final decoration = container.decoration! as BoxDecoration;
+    expect(decoration.color, AppTheme.light.colorScheme.primaryContainer);
+  });
+
   testWidgets('shows Pendiente when syncStatus is pending', (tester) async {
     await tester.pumpWidget(
       wrap(

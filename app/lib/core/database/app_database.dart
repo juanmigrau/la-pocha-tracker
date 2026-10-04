@@ -23,7 +23,7 @@ class AppDatabase extends _$AppDatabase {
   factory AppDatabase.forTesting() => AppDatabase(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -66,6 +66,11 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 8) {
             // localUserId lives inside the players JSON TEXT; no SQL column.
+          }
+          if (from < 9) {
+            await migrator.database.customStatement(
+              'ALTER TABLE favorites ADD COLUMN photo_url TEXT',
+            );
           }
         },
       );

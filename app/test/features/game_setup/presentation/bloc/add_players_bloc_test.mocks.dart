@@ -242,11 +242,13 @@ class MockAddFavoriteUseCase extends _i1.Mock
   _i5.Future<_i3.FavoritePlayer> call({
     required String? displayName,
     String? userId,
+    String? photoURL,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#call, [], {
               #displayName: displayName,
               #userId: userId,
+              #photoURL: photoURL,
             }),
             returnValue: _i5.Future<_i3.FavoritePlayer>.value(
               _FakeFavoritePlayer_1(
@@ -254,6 +256,7 @@ class MockAddFavoriteUseCase extends _i1.Mock
                 Invocation.method(#call, [], {
                   #displayName: displayName,
                   #userId: userId,
+                  #photoURL: photoURL,
                 }),
               ),
             ),
@@ -263,6 +266,7 @@ class MockAddFavoriteUseCase extends _i1.Mock
                 Invocation.method(#call, [], {
                   #displayName: displayName,
                   #userId: userId,
+                  #photoURL: photoURL,
                 }),
               ),
             ),

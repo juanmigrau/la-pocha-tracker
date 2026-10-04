@@ -21,6 +21,7 @@ class FavoriteRepositoryImpl implements FavoriteRepository {
   Future<FavoritePlayer> addFavorite({
     required String displayName,
     String? userId,
+    String? photoURL,
   }) async {
     final trimmedName = displayName.trim();
     if (trimmedName.isEmpty) {
@@ -62,6 +63,7 @@ class FavoriteRepositoryImpl implements FavoriteRepository {
       id: _uuid.v4(),
       displayName: trimmedName,
       userId: userId,
+      photoURL: photoURL,
       createdAt: DateTime.now(),
     );
 

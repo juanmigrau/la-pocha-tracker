@@ -69,6 +69,7 @@ class AddPlayerFromFavoriteUseCase {
       seatOrder: game.players.length,
       totalScore: 0,
       joinedAt: now,
+      photoURL: selectedFavorite.photoURL,
     );
 
     final updatedPlayers = [...game.players, player];

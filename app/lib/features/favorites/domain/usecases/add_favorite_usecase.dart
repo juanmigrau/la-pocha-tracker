@@ -9,7 +9,12 @@ class AddFavoriteUseCase {
   Future<FavoritePlayer> call({
     required String displayName,
     String? userId,
+    String? photoURL,
   }) {
-    return _repository.addFavorite(displayName: displayName, userId: userId);
+    return _repository.addFavorite(
+      displayName: displayName,
+      userId: userId,
+      photoURL: photoURL,
+    );
   }
 }

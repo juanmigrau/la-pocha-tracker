@@ -244,6 +244,7 @@ class _UserSearchBody extends StatelessWidget {
     final bloc = context.read<AddPlayersBloc>();
     final query = state.userSearchQuery.trim();
     final showEmptyMessage =
+        state.currentUser != null &&
         !state.userSearchLoading &&
         state.userSearchError == null &&
         query.length >= 2 &&
@@ -268,6 +269,13 @@ class _UserSearchBody extends StatelessWidget {
   }
 
   Widget _buildResults(BuildContext context, {required bool showEmptyMessage}) {
+    if (state.currentUser == null) {
+      return _SearchInfoState(
+        icon: Icons.login,
+        message: AddPlayersBloc.authRequiredSearchMessage,
+      );
+    }
+
     if (state.userSearchError != null) {
       return Padding(
         padding: const EdgeInsets.all(24),
@@ -284,13 +292,9 @@ class _UserSearchBody extends StatelessWidget {
     }
 
     if (showEmptyMessage) {
-      return Padding(
-        padding: const EdgeInsets.all(24),
-        child: Text(
-          'No se encontraron usuarios con ese nombre.',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
+      return const _SearchInfoState(
+        icon: Icons.person_search_outlined,
+        message: 'No se encontraron usuarios con ese nombre.',
       );
     }
 
@@ -309,6 +313,42 @@ class _UserSearchBody extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _SearchInfoState extends StatelessWidget {
+  const _SearchInfoState({
+    required this.icon,
+    required this.message,
+  });
+
+  final IconData icon;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 48, color: colors.onSurfaceVariant),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: textTheme.bodyLarge?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -59,8 +59,10 @@ class PlayersRosterSection extends StatelessWidget {
           child: Column(
             children: List.generate(playerCount, (index) {
               final player = index < players.length ? players[index] : null;
-              final showFavoriteButton =
-                  player == null || player.userId != currentUserId;
+              // Favorites are local; only hide the star for the signed-in self.
+              final showFavoriteButton = player == null ||
+                  currentUserId == null ||
+                  player.userId != currentUserId;
               final slot = PlayerSlot(
                 index: index,
                 player: player,

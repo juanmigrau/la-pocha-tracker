@@ -11,7 +11,7 @@ class SourceBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final appearance = _resolveAppearance();
+    final appearance = _resolveAppearance(context);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -36,14 +36,16 @@ class SourceBadge extends StatelessWidget {
     );
   }
 
-  _BadgeAppearance _resolveAppearance() {
+  _BadgeAppearance _resolveAppearance(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     if (source == GameHistorySource.cloud ||
         syncStatus == SyncStatus.synced) {
-      return const _BadgeAppearance(
+      return _BadgeAppearance(
         label: 'Nube',
         icon: Icons.cloud,
-        background: Color(0xFFE8F0FE),
-        foreground: Color(0xFF1A73E8),
+        background: colorScheme.primaryContainer,
+        foreground: colorScheme.onPrimaryContainer,
       );
     }
 

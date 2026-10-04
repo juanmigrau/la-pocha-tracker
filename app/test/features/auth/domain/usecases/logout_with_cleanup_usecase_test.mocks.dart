@@ -537,11 +537,13 @@ class MockFavoriteRepository extends _i1.Mock
   _i8.Future<_i6.FavoritePlayer> addFavorite({
     required String? displayName,
     String? userId,
+    String? photoURL,
   }) =>
       (super.noSuchMethod(
             Invocation.method(#addFavorite, [], {
               #displayName: displayName,
               #userId: userId,
+              #photoURL: photoURL,
             }),
             returnValue: _i8.Future<_i6.FavoritePlayer>.value(
               _FakeFavoritePlayer_4(
@@ -549,6 +551,7 @@ class MockFavoriteRepository extends _i1.Mock
                 Invocation.method(#addFavorite, [], {
                   #displayName: displayName,
                   #userId: userId,
+                  #photoURL: photoURL,
                 }),
               ),
             ),
@@ -558,6 +561,7 @@ class MockFavoriteRepository extends _i1.Mock
                 Invocation.method(#addFavorite, [], {
                   #displayName: displayName,
                   #userId: userId,
+                  #photoURL: photoURL,
                 }),
               ),
             ),

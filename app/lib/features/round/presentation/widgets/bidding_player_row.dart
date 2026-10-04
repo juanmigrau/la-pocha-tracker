@@ -59,7 +59,7 @@ class BiddingPlayerRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SizedBox(
-              height: isExpanded ? 56 : 36,
+              height: isExpanded ? 56 : 40,
               child: Row(
                 children: [
                   PlayerInitialAvatar(
@@ -96,14 +96,14 @@ class BiddingPlayerRow extends StatelessWidget {
                   ),
                   if (status == BiddingPlayerRowStatus.completed)
                     CircleAvatar(
-                      radius: 14,
+                      radius: 18,
                       backgroundColor: const Color(0xFFD7ECE0),
                       child: Text(
                         '$bid',
                         style: const TextStyle(
                           color: AppTheme.primary,
                           fontWeight: FontWeight.bold,
-                          fontSize: 13,
+                          fontSize: 16,
                         ),
                       ),
                     ),
