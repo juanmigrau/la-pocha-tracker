@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:la_pocha/core/config/debug_config_notifier.dart';
 import 'package:la_pocha/core/database/app_database.dart';
+import 'package:la_pocha/core/services/local_user_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:la_pocha/features/game_setup/data/datasources/game_local_datasource.dart';
 import 'package:la_pocha/features/game_setup/data/datasources/round_local_datasource.dart';
 import 'package:la_pocha/features/game_setup/data/repositories/game_repository_impl.dart';
@@ -114,6 +116,12 @@ Future<void> configureDependencies() async {
   }
 
   getIt.registerLazySingleton<AppDatabase>(AppDatabase.defaults);
+
+  final prefs = await SharedPreferences.getInstance();
+  getIt.registerSingleton<SharedPreferences>(prefs);
+  getIt.registerLazySingleton<LocalUserService>(
+    () => LocalUserService(getIt<SharedPreferences>()),
+  );
 
   if (kDebugMode) {
     getIt.registerLazySingleton<DebugConfigNotifier>(DebugConfigNotifier.new);

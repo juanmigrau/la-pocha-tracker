@@ -1,6 +1,9 @@
 import 'package:go_router/go_router.dart';
+import 'package:la_pocha/core/di/injection.dart';
 import 'package:la_pocha/core/router/auth_refresh_notifier.dart';
+import 'package:la_pocha/core/services/local_user_service.dart';
 import 'package:la_pocha/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:la_pocha/features/auth/presentation/pages/onboarding_page.dart';
 import 'package:la_pocha/features/auth/presentation/pages/profile_page.dart';
 import 'package:la_pocha/features/auth/presentation/pages/sign_in_page.dart';
 import 'package:la_pocha/features/auth/presentation/pages/sign_up_page.dart';
@@ -31,14 +34,24 @@ GoRouter createAppRouter({
     initialLocation: '/',
     refreshListenable: refreshListenable,
     redirect: (context, state) {
+      final location = state.matchedLocation;
+      final localUserService = getIt<LocalUserService>();
+
+      // Local identity takes priority over resume and Firebase auth.
+      if (!localUserService.hasLocalId()) {
+        return location == '/onboarding' ? null : '/onboarding';
+      }
+      if (location == '/onboarding') {
+        return '/';
+      }
+
       if (!initialRedirectDone) {
         initialRedirectDone = true;
-        if (resumeLocation != null && state.matchedLocation != resumeLocation) {
+        if (resumeLocation != null && location != resumeLocation) {
           return resumeLocation;
         }
       }
 
-      final location = state.matchedLocation;
       final isAuthenticated = authBloc.state is Authenticated;
 
       if (!isAuthenticated && location == '/profile') {
@@ -51,6 +64,10 @@ GoRouter createAppRouter({
     },
     routes: [
       GoRoute(path: '/', builder: (context, state) => const HomePage()),
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingPage(),
+      ),
       GoRoute(
         path: '/auth/sign-in',
         builder: (context, state) => const SignInPage(),
