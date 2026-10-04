@@ -160,6 +160,13 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> signOut() => _authDatasource.signOut();
 
   @override
+  Future<void> linkLocalId({
+    required String firebaseUid,
+    required String localId,
+  }) =>
+      _userDatasource.linkLocalId(uid: firebaseUid, localId: localId);
+
+  @override
   Future<void> sendPasswordReset({required String email}) async {
     try {
       await _authDatasource.sendPasswordResetEmail(email);

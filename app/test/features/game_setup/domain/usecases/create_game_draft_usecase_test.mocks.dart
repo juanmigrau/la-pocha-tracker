@@ -5,6 +5,7 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i6;
 
+import 'package:la_pocha/core/services/local_user_service.dart' as _i8;
 import 'package:la_pocha/features/game_setup/domain/entities/game.dart' as _i2;
 import 'package:la_pocha/features/game_setup/domain/entities/player_embed.dart'
     as _i7;
@@ -14,6 +15,7 @@ import 'package:la_pocha/features/game_setup/domain/entities/start_game_result.d
 import 'package:la_pocha/features/game_setup/domain/repositories/game_repository.dart'
     as _i5;
 import 'package:mockito/mockito.dart' as _i1;
+import 'package:mockito/src/dummies.dart' as _i9;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -279,6 +281,75 @@ class MockGameRepository extends _i1.Mock implements _i5.GameRepository {
   _i6.Future<void> deleteGame(String? gameId) =>
       (super.noSuchMethod(
             Invocation.method(#deleteGame, [gameId]),
+            returnValue: _i6.Future<void>.value(),
+            returnValueForMissingStub: _i6.Future<void>.value(),
+          )
+          as _i6.Future<void>);
+
+  @override
+  _i6.Future<int> countUnsyncedGames() =>
+      (super.noSuchMethod(
+            Invocation.method(#countUnsyncedGames, []),
+            returnValue: _i6.Future<int>.value(0),
+            returnValueForMissingStub: _i6.Future<int>.value(0),
+          )
+          as _i6.Future<int>);
+
+  @override
+  _i6.Future<void> clearAllLocalData() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearAllLocalData, []),
+            returnValue: _i6.Future<void>.value(),
+            returnValueForMissingStub: _i6.Future<void>.value(),
+          )
+          as _i6.Future<void>);
+}
+
+/// A class which mocks [LocalUserService].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockLocalUserService extends _i1.Mock implements _i8.LocalUserService {
+  @override
+  bool hasLocalId() =>
+      (super.noSuchMethod(
+            Invocation.method(#hasLocalId, []),
+            returnValue: false,
+            returnValueForMissingStub: false,
+          )
+          as bool);
+
+  @override
+  _i6.Future<String> getOrCreateLocalId() =>
+      (super.noSuchMethod(
+            Invocation.method(#getOrCreateLocalId, []),
+            returnValue: _i6.Future<String>.value(
+              _i9.dummyValue<String>(
+                this,
+                Invocation.method(#getOrCreateLocalId, []),
+              ),
+            ),
+            returnValueForMissingStub: _i6.Future<String>.value(
+              _i9.dummyValue<String>(
+                this,
+                Invocation.method(#getOrCreateLocalId, []),
+              ),
+            ),
+          )
+          as _i6.Future<String>);
+
+  @override
+  _i6.Future<void> setLocalName(String? name) =>
+      (super.noSuchMethod(
+            Invocation.method(#setLocalName, [name]),
+            returnValue: _i6.Future<void>.value(),
+            returnValueForMissingStub: _i6.Future<void>.value(),
+          )
+          as _i6.Future<void>);
+
+  @override
+  _i6.Future<void> clearAll() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearAll, []),
             returnValue: _i6.Future<void>.value(),
             returnValueForMissingStub: _i6.Future<void>.value(),
           )

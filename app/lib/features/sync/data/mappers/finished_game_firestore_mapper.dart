@@ -75,6 +75,7 @@ class FinishedGameFirestoreMapper {
       'totalScore': player.totalScore,
       'joinedAt': Timestamp.fromDate(player.joinedAt),
       'photoURL': player.photoURL,
+      'localUserId': player.localUserId,
     };
   }
 }

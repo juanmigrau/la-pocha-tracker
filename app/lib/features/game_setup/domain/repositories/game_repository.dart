@@ -42,4 +42,10 @@ abstract class GameRepository {
   });
 
   Future<void> deleteGame(String gameId);
+
+  /// Counts local games that have not been uploaded (`cloudGameId` is null).
+  Future<int> countUnsyncedGames();
+
+  /// Deletes all local games and rounds.
+  Future<void> clearAllLocalData();
 }

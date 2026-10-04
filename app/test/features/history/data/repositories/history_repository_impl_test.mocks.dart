@@ -438,6 +438,24 @@ class MockGameRepository extends _i1.Mock implements _i10.GameRepository {
             returnValueForMissingStub: _i6.Future<void>.value(),
           )
           as _i6.Future<void>);
+
+  @override
+  _i6.Future<int> countUnsyncedGames() =>
+      (super.noSuchMethod(
+            Invocation.method(#countUnsyncedGames, []),
+            returnValue: _i6.Future<int>.value(0),
+            returnValueForMissingStub: _i6.Future<int>.value(0),
+          )
+          as _i6.Future<int>);
+
+  @override
+  _i6.Future<void> clearAllLocalData() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearAllLocalData, []),
+            returnValue: _i6.Future<void>.value(),
+            returnValueForMissingStub: _i6.Future<void>.value(),
+          )
+          as _i6.Future<void>);
 }
 
 /// A class which mocks [Connectivity].

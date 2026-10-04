@@ -160,6 +160,21 @@ class MockAuthRepository extends _i1.Mock implements _i3.AuthRepository {
           as _i4.Future<void>);
 
   @override
+  _i4.Future<void> linkLocalId({
+    required String? firebaseUid,
+    required String? localId,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#linkLocalId, [], {
+              #firebaseUid: firebaseUid,
+              #localId: localId,
+            }),
+            returnValue: _i4.Future<void>.value(),
+            returnValueForMissingStub: _i4.Future<void>.value(),
+          )
+          as _i4.Future<void>);
+
+  @override
   _i4.Future<void> sendPasswordReset({required String? email}) =>
       (super.noSuchMethod(
             Invocation.method(#sendPasswordReset, [], {#email: email}),

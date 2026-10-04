@@ -22,6 +22,12 @@ abstract class AuthRepository {
 
   Future<void> signOut();
 
+  /// Merges the device local identity into the Firestore user document.
+  Future<void> linkLocalId({
+    required String firebaseUid,
+    required String localId,
+  });
+
   Future<void> sendPasswordReset({required String email});
 
   Future<UserProfile?> getCurrentUser();

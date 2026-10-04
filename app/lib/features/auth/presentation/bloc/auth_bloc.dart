@@ -6,10 +6,11 @@ import 'package:la_pocha/features/auth/domain/entities/user_profile.dart';
 import 'package:la_pocha/features/auth/domain/failures/auth_failure.dart' as domain;
 import 'package:la_pocha/features/auth/domain/repositories/auth_repository.dart';
 import 'package:la_pocha/features/auth/domain/usecases/link_google_account_with_password_usecase.dart';
+import 'package:la_pocha/features/auth/domain/usecases/link_local_to_firebase_usecase.dart';
+import 'package:la_pocha/features/auth/domain/usecases/logout_with_cleanup_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/send_password_reset_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
-import 'package:la_pocha/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/sign_up_usecase.dart';
 
 part 'auth_event.dart';
@@ -22,7 +23,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this._signUp,
     required this._signInWithGoogle,
     required this._linkGoogleAccountWithPassword,
-    required this._signOut,
+    required this._logoutWithCleanup,
+    required this._linkLocalToFirebase,
     required this._sendPasswordReset,
   }) : super(const AuthInitial()) {
     on<AuthStarted>(_onStarted);
@@ -41,7 +43,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final SignUpUseCase _signUp;
   final SignInWithGoogleUseCase _signInWithGoogle;
   final LinkGoogleAccountWithPasswordUseCase _linkGoogleAccountWithPassword;
-  final SignOutUseCase _signOut;
+  final LogoutWithCleanupUseCase _logoutWithCleanup;
+  final LinkLocalToFirebaseUseCase _linkLocalToFirebase;
   final SendPasswordResetUseCase _sendPasswordReset;
   StreamSubscription<UserProfile?>? _authSubscription;
 
@@ -66,6 +69,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
+  Future<void> _emitAuthenticated(
+    UserProfile user,
+    Emitter<AuthState> emit,
+  ) async {
+    await _linkLocalToFirebase.execute(user.uid);
+    emit(Authenticated(user));
+  }
+
   Future<void> _onSignInSubmitted(
     SignInSubmitted event,
     Emitter<AuthState> emit,
@@ -73,7 +84,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     emit(const AuthLoading());
     try {
       final user = await _signIn(email: event.email, password: event.password);
-      emit(Authenticated(user));
+      await _emitAuthenticated(user, emit);
     } on domain.AuthFailure catch (error) {
       emit(AuthFailure(message: error.message));
       emit(const Unauthenticated());
@@ -91,7 +102,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         password: event.password,
         displayName: event.displayName,
       );
-      emit(Authenticated(user));
+      await _emitAuthenticated(user, emit);
     } on domain.GoogleAccountAlreadyExistsFailure {
       emit(const AuthGoogleAccountExists());
       emit(const Unauthenticated());
@@ -112,7 +123,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(const Unauthenticated());
         return;
       }
-      emit(Authenticated(user));
+      await _emitAuthenticated(user, emit);
     } on domain.AccountExistsWithDifferentCredentialFailure catch (error) {
       emit(AuthNeedsPasswordToLink(email: error.email));
     } on domain.AuthFailure catch (error) {
@@ -131,7 +142,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         email: event.email,
         password: event.password,
       );
-      emit(Authenticated(user));
+      await _emitAuthenticated(user, emit);
     } on domain.AuthFailure catch (error) {
       emit(AuthFailure(message: error.message));
       emit(const Unauthenticated());
@@ -144,7 +155,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(const AuthLoading());
     try {
-      await _signOut();
+      await _logoutWithCleanup.execute();
       emit(const Unauthenticated());
     } on domain.AuthFailure catch (error) {
       emit(AuthFailure(message: error.message));

@@ -8,6 +8,7 @@ class PlayerEmbedModel {
     required this.totalScore,
     required this.joinedAt,
     this.photoURL,
+    this.localUserId,
   });
 
   final String id;
@@ -18,6 +19,7 @@ class PlayerEmbedModel {
   final int totalScore;
   final DateTime joinedAt;
   final String? photoURL;
+  final String? localUserId;
 
   factory PlayerEmbedModel.fromJson(Map<String, dynamic> json) {
     return PlayerEmbedModel(
@@ -29,6 +31,7 @@ class PlayerEmbedModel {
       totalScore: json['totalScore'] as int,
       joinedAt: DateTime.parse(json['joinedAt'] as String),
       photoURL: json['photoURL'] as String?,
+      localUserId: json['localUserId'] as String?,
     );
   }
 
@@ -41,5 +44,6 @@ class PlayerEmbedModel {
         'totalScore': totalScore,
         'joinedAt': joinedAt.toIso8601String(),
         'photoURL': photoURL,
+        'localUserId': localUserId,
       };
 }

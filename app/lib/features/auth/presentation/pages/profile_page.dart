@@ -8,6 +8,7 @@ import 'package:la_pocha/core/widgets/player_initial_avatar.dart';
 import 'package:la_pocha/core/widgets/pocha_app_bar.dart';
 import 'package:la_pocha/features/auth/domain/entities/player_stats.dart';
 import 'package:la_pocha/features/auth/domain/entities/user_profile.dart';
+import 'package:la_pocha/features/auth/domain/usecases/logout_with_cleanup_usecase.dart';
 import 'package:la_pocha/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:la_pocha/features/auth/presentation/bloc/profile_bloc.dart';
 import 'package:la_pocha/features/auth/presentation/widgets/reauth_password_dialog.dart';
@@ -60,32 +61,48 @@ class _ProfileViewState extends State<_ProfileView> {
   }
 
   Future<void> _confirmSignOut() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Cerrar sesión'),
-          content: const Text('¿Seguro que quieres cerrar sesión?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancelar'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(dialogContext).colorScheme.error,
-              ),
-              child: const Text('Cerrar sesión'),
-            ),
-          ],
-        );
-      },
-    );
+    final logout = getIt<LogoutWithCleanupUseCase>();
+    final unsyncedCount = await logout.countUnsyncedGames();
 
-    if (confirmed == true && mounted) {
-      context.read<AuthBloc>().add(const SignOutRequested());
+    if (unsyncedCount > 0) {
+      if (!mounted) {
+        return;
+      }
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Cerrar sesión'),
+            content: Text(
+              'Tienes $unsyncedCount partidas sin sincronizar. '
+              '¿Cerrar sesión de todas formas?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: const Text('Cancelar'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(dialogContext).colorScheme.error,
+                ),
+                child: const Text('Cerrar sesión'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (confirmed != true || !mounted) {
+        return;
+      }
     }
+
+    if (!mounted) {
+      return;
+    }
+    context.read<AuthBloc>().add(const SignOutRequested());
   }
 
   Future<void> _confirmDeleteAccount() async {
@@ -140,7 +157,7 @@ class _ProfileViewState extends State<_ProfileView> {
               SnackBarHelper.showError(state.message);
             }
             if (state is Unauthenticated) {
-              context.go('/');
+              context.go('/onboarding');
             }
           },
         ),

@@ -1,18 +1,19 @@
 import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:la_pocha/features/auth/domain/entities/user_profile.dart';
 import 'package:la_pocha/features/auth/domain/failures/auth_failure.dart'
     as domain;
 import 'package:la_pocha/features/auth/domain/repositories/auth_repository.dart';
 import 'package:la_pocha/features/auth/domain/usecases/link_google_account_with_password_usecase.dart';
+import 'package:la_pocha/features/auth/domain/usecases/link_local_to_firebase_usecase.dart';
+import 'package:la_pocha/features/auth/domain/usecases/logout_with_cleanup_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/send_password_reset_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
-import 'package:la_pocha/features/auth/domain/usecases/sign_out_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/sign_up_usecase.dart';
 import 'package:la_pocha/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:flutter_test/flutter_test.dart';
 
 import 'auth_bloc_test.mocks.dart';
 
@@ -22,7 +23,8 @@ import 'auth_bloc_test.mocks.dart';
   MockSpec<SignUpUseCase>(),
   MockSpec<SignInWithGoogleUseCase>(),
   MockSpec<LinkGoogleAccountWithPasswordUseCase>(),
-  MockSpec<SignOutUseCase>(),
+  MockSpec<LogoutWithCleanupUseCase>(),
+  MockSpec<LinkLocalToFirebaseUseCase>(),
   MockSpec<SendPasswordResetUseCase>(),
 ])
 void main() {
@@ -31,7 +33,8 @@ void main() {
   late MockSignUpUseCase signUp;
   late MockSignInWithGoogleUseCase signInWithGoogle;
   late MockLinkGoogleAccountWithPasswordUseCase linkGoogleAccountWithPassword;
-  late MockSignOutUseCase signOut;
+  late MockLogoutWithCleanupUseCase logoutWithCleanup;
+  late MockLinkLocalToFirebaseUseCase linkLocalToFirebase;
   late MockSendPasswordResetUseCase sendPasswordReset;
 
   final profile = UserProfile(
@@ -57,7 +60,8 @@ void main() {
         signUp: signUp,
         signInWithGoogle: signInWithGoogle,
         linkGoogleAccountWithPassword: linkGoogleAccountWithPassword,
-        signOut: signOut,
+        logoutWithCleanup: logoutWithCleanup,
+        linkLocalToFirebase: linkLocalToFirebase,
         sendPasswordReset: sendPasswordReset,
       );
 
@@ -67,13 +71,16 @@ void main() {
     signUp = MockSignUpUseCase();
     signInWithGoogle = MockSignInWithGoogleUseCase();
     linkGoogleAccountWithPassword = MockLinkGoogleAccountWithPasswordUseCase();
-    signOut = MockSignOutUseCase();
+    logoutWithCleanup = MockLogoutWithCleanupUseCase();
+    linkLocalToFirebase = MockLinkLocalToFirebaseUseCase();
     sendPasswordReset = MockSendPasswordResetUseCase();
     when(authRepository.authStateChanges).thenAnswer((_) => const Stream.empty());
+    when(linkLocalToFirebase.execute(any)).thenAnswer((_) async {});
+    when(logoutWithCleanup.execute()).thenAnswer((_) async {});
   });
 
   blocTest<AuthBloc, AuthState>(
-    'emits Authenticated when sign in succeeds',
+    'emits Authenticated when sign in succeeds and links local id',
     build: buildBloc,
     setUp: () {
       when(signIn(email: 'ana@example.com', password: 'secret1'))
@@ -89,6 +96,9 @@ void main() {
       const AuthLoading(),
       Authenticated(profile),
     ],
+    verify: (_) {
+      verify(linkLocalToFirebase.execute('uid-1')).called(1);
+    },
   );
 
   blocTest<AuthBloc, AuthState>(
@@ -109,6 +119,9 @@ void main() {
       const AuthFailure(message: 'Email o contraseña incorrectos'),
       const Unauthenticated(),
     ],
+    verify: (_) {
+      verifyNever(linkLocalToFirebase.execute(any));
+    },
   );
 
   blocTest<AuthBloc, AuthState>(
@@ -134,6 +147,9 @@ void main() {
       const AuthLoading(),
       Authenticated(profile),
     ],
+    verify: (_) {
+      verify(linkLocalToFirebase.execute('uid-1')).called(1);
+    },
   );
 
   blocTest<AuthBloc, AuthState>(
@@ -173,6 +189,9 @@ void main() {
       const AuthLoading(),
       Authenticated(googleProfile),
     ],
+    verify: (_) {
+      verify(linkLocalToFirebase.execute('uid-google')).called(1);
+    },
   );
 
   blocTest<AuthBloc, AuthState>(
@@ -240,6 +259,9 @@ void main() {
       const AuthLoading(),
       Authenticated(profile),
     ],
+    verify: (_) {
+      verify(linkLocalToFirebase.execute('uid-1')).called(1);
+    },
   );
 
   blocTest<AuthBloc, AuthState>(
@@ -267,17 +289,17 @@ void main() {
   );
 
   blocTest<AuthBloc, AuthState>(
-    'emits Unauthenticated when sign out succeeds',
+    'emits Unauthenticated when logout with cleanup succeeds',
     build: buildBloc,
     seed: () => Authenticated(profile),
-    setUp: () {
-      when(signOut()).thenAnswer((_) async {});
-    },
     act: (bloc) => bloc.add(const SignOutRequested()),
     expect: () => [
       const AuthLoading(),
       const Unauthenticated(),
     ],
+    verify: (_) {
+      verify(logoutWithCleanup.execute()).called(1);
+    },
   );
 
   blocTest<AuthBloc, AuthState>(
