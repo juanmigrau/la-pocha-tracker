@@ -75,4 +75,10 @@ class GameRepositoryImpl implements GameRepository {
 
   @override
   Future<void> deleteGame(String gameId) => _localDatasource.deleteGame(gameId);
+
+  @override
+  Future<int> countUnsyncedGames() => _localDatasource.countUnsyncedGames();
+
+  @override
+  Future<void> clearAllLocalData() => _localDatasource.clearAllLocalData();
 }

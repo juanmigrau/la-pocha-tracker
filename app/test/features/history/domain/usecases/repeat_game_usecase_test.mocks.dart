@@ -330,6 +330,24 @@ class MockGameRepository extends _i1.Mock implements _i9.GameRepository {
             returnValueForMissingStub: _i7.Future<void>.value(),
           )
           as _i7.Future<void>);
+
+  @override
+  _i7.Future<int> countUnsyncedGames() =>
+      (super.noSuchMethod(
+            Invocation.method(#countUnsyncedGames, []),
+            returnValue: _i7.Future<int>.value(0),
+            returnValueForMissingStub: _i7.Future<int>.value(0),
+          )
+          as _i7.Future<int>);
+
+  @override
+  _i7.Future<void> clearAllLocalData() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearAllLocalData, []),
+            returnValue: _i7.Future<void>.value(),
+            returnValueForMissingStub: _i7.Future<void>.value(),
+          )
+          as _i7.Future<void>);
 }
 
 /// A class which mocks [GameClonerService].

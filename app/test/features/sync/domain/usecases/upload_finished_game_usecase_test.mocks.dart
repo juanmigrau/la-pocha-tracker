@@ -163,6 +163,21 @@ class MockAuthRepository extends _i1.Mock implements _i6.AuthRepository {
           as _i7.Future<void>);
 
   @override
+  _i7.Future<void> linkLocalId({
+    required String? firebaseUid,
+    required String? localId,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#linkLocalId, [], {
+              #firebaseUid: firebaseUid,
+              #localId: localId,
+            }),
+            returnValue: _i7.Future<void>.value(),
+            returnValueForMissingStub: _i7.Future<void>.value(),
+          )
+          as _i7.Future<void>);
+
+  @override
   _i7.Future<void> sendPasswordReset({required String? email}) =>
       (super.noSuchMethod(
             Invocation.method(#sendPasswordReset, [], {#email: email}),
@@ -416,6 +431,23 @@ class MockGameLocalDatasource extends _i1.Mock
   _i7.Future<void> deleteGame(String? gameId) =>
       (super.noSuchMethod(
             Invocation.method(#deleteGame, [gameId]),
+            returnValue: _i7.Future<void>.value(),
+            returnValueForMissingStub: _i7.Future<void>.value(),
+          )
+          as _i7.Future<void>);
+
+  @override
+  _i7.Future<int> countUnsyncedGames() =>
+      (super.noSuchMethod(
+            Invocation.method(#countUnsyncedGames, []),
+            returnValue: _i7.Future<int>.value(0),
+          )
+          as _i7.Future<int>);
+
+  @override
+  _i7.Future<void> clearAllLocalData() =>
+      (super.noSuchMethod(
+            Invocation.method(#clearAllLocalData, []),
             returnValue: _i7.Future<void>.value(),
             returnValueForMissingStub: _i7.Future<void>.value(),
           )

@@ -10,6 +10,7 @@ class PlayerEmbed extends Equatable {
     required this.totalScore,
     required this.joinedAt,
     this.photoURL,
+    this.localUserId,
   });
 
   final String id;
@@ -20,6 +21,7 @@ class PlayerEmbed extends Equatable {
   final int totalScore;
   final DateTime joinedAt;
   final String? photoURL;
+  final String? localUserId;
 
   factory PlayerEmbed.fromJson(Map<String, dynamic> json) {
     return PlayerEmbed(
@@ -31,6 +33,7 @@ class PlayerEmbed extends Equatable {
       totalScore: json['totalScore'] as int,
       joinedAt: DateTime.parse(json['joinedAt'] as String),
       photoURL: json['photoURL'] as String?,
+      localUserId: json['localUserId'] as String?,
     );
   }
 
@@ -43,6 +46,7 @@ class PlayerEmbed extends Equatable {
         'totalScore': totalScore,
         'joinedAt': joinedAt.toIso8601String(),
         'photoURL': photoURL,
+        'localUserId': localUserId,
       };
 
   PlayerEmbed copyWith({
@@ -54,6 +58,7 @@ class PlayerEmbed extends Equatable {
     int? totalScore,
     DateTime? joinedAt,
     String? photoURL,
+    String? localUserId,
   }) {
     return PlayerEmbed(
       id: id ?? this.id,
@@ -64,6 +69,7 @@ class PlayerEmbed extends Equatable {
       totalScore: totalScore ?? this.totalScore,
       joinedAt: joinedAt ?? this.joinedAt,
       photoURL: photoURL ?? this.photoURL,
+      localUserId: localUserId ?? this.localUserId,
     );
   }
 
@@ -77,5 +83,6 @@ class PlayerEmbed extends Equatable {
         totalScore,
         joinedAt,
         photoURL,
+        localUserId,
       ];
 }

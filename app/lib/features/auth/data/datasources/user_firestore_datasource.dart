@@ -124,6 +124,16 @@ class UserFirestoreDatasource {
     return _users.doc(uid).delete();
   }
 
+  Future<void> linkLocalId({
+    required String uid,
+    required String localId,
+  }) {
+    return _users.doc(uid).set({
+      'localId': localId,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  }
+
   /// Returns true when a Firestore profile for [email] looks like a Google
   /// account (photo from Google or `authProviders` contains `google.com`).
   ///

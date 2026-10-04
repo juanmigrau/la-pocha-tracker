@@ -5,7 +5,7 @@ void main() {
   final joinedAt = DateTime(2026, 3, 15, 12);
 
   group('PlayerEmbed serialization', () {
-    test('toJson/fromJson round-trips including photoURL', () {
+    test('toJson/fromJson round-trips including photoURL and localUserId', () {
       final player = PlayerEmbed(
         id: 'p1',
         displayName: 'Ana',
@@ -15,15 +15,17 @@ void main() {
         totalScore: 12,
         joinedAt: joinedAt,
         photoURL: 'https://example.com/ana.jpg',
+        localUserId: 'local-1',
       );
 
       final restored = PlayerEmbed.fromJson(player.toJson());
 
       expect(restored, player);
       expect(restored.photoURL, 'https://example.com/ana.jpg');
+      expect(restored.localUserId, 'local-1');
     });
 
-    test('fromJson treats missing photoURL as null (legacy rows)', () {
+    test('fromJson treats missing photoURL and localUserId as null', () {
       final restored = PlayerEmbed.fromJson({
         'id': 'p1',
         'displayName': 'Ana',
@@ -35,10 +37,11 @@ void main() {
       });
 
       expect(restored.photoURL, isNull);
+      expect(restored.localUserId, isNull);
       expect(restored.displayName, 'Ana');
     });
 
-    test('toJson includes null photoURL', () {
+    test('toJson includes null photoURL and localUserId', () {
       final player = PlayerEmbed(
         id: 'p1',
         displayName: 'Guest',
@@ -50,6 +53,7 @@ void main() {
       );
 
       expect(player.toJson()['photoURL'], isNull);
+      expect(player.toJson()['localUserId'], isNull);
     });
   });
 }

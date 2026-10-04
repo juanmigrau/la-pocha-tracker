@@ -93,6 +93,8 @@ import 'package:la_pocha/features/auth/domain/usecases/delete_account_usecase.da
 import 'package:la_pocha/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/get_player_stats_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/link_google_account_with_password_usecase.dart';
+import 'package:la_pocha/features/auth/domain/usecases/link_local_to_firebase_usecase.dart';
+import 'package:la_pocha/features/auth/domain/usecases/logout_with_cleanup_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/send_password_reset_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/sign_in_usecase.dart';
 import 'package:la_pocha/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
@@ -187,6 +189,22 @@ Future<void> configureDependencies() async {
     ),
   );
 
+  getIt.registerLazySingleton<LinkLocalToFirebaseUseCase>(
+    () => LinkLocalToFirebaseUseCase(
+      localUser: getIt<LocalUserService>(),
+      authRepository: getIt<AuthRepository>(),
+    ),
+  );
+
+  getIt.registerLazySingleton<LogoutWithCleanupUseCase>(
+    () => LogoutWithCleanupUseCase(
+      authRepository: getIt<AuthRepository>(),
+      gameRepository: getIt<GameRepository>(),
+      favoriteRepository: getIt<FavoriteRepository>(),
+      localUser: getIt<LocalUserService>(),
+    ),
+  );
+
   getIt.registerLazySingleton<GameFirestoreDatasource>(
     () => GameFirestoreDatasource(getIt<FirebaseFirestore>()),
   );
@@ -226,7 +244,8 @@ Future<void> configureDependencies() async {
       signInWithGoogle: getIt<SignInWithGoogleUseCase>(),
       linkGoogleAccountWithPassword:
           getIt<LinkGoogleAccountWithPasswordUseCase>(),
-      signOut: getIt<SignOutUseCase>(),
+      logoutWithCleanup: getIt<LogoutWithCleanupUseCase>(),
+      linkLocalToFirebase: getIt<LinkLocalToFirebaseUseCase>(),
       sendPasswordReset: getIt<SendPasswordResetUseCase>(),
     ),
   );
@@ -510,6 +529,7 @@ Future<void> configureDependencies() async {
   getIt.registerFactory<CreateGameDraftUseCase>(
     () => CreateGameDraftUseCase(
       getIt<GameRepository>(),
+      getIt<LocalUserService>(),
       debugConfig: kDebugMode ? getIt<DebugConfigNotifier>() : null,
     ),
   );

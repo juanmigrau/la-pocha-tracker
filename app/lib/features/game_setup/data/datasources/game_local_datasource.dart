@@ -208,6 +208,20 @@ class GameLocalDatasource {
     });
   }
 
+  Future<int> countUnsyncedGames() async {
+    final query = _database.select(_database.games)
+      ..where((table) => table.cloudGameId.isNull());
+    final rows = await query.get();
+    return rows.length;
+  }
+
+  Future<void> clearAllLocalData() async {
+    await _database.transaction(() async {
+      await _database.delete(_database.rounds).go();
+      await _database.delete(_database.games).go();
+    });
+  }
+
   Future<Game> updateSyncMetadata({
     required String gameId,
     String? cloudGameId,

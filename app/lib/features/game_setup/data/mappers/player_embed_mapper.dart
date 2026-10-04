@@ -14,6 +14,7 @@ class PlayerEmbedMapper {
       totalScore: model.totalScore,
       joinedAt: model.joinedAt,
       photoURL: model.photoURL,
+      localUserId: model.localUserId,
     );
   }
 
@@ -27,6 +28,7 @@ class PlayerEmbedMapper {
       totalScore: player.totalScore,
       joinedAt: player.joinedAt,
       photoURL: player.photoURL,
+      localUserId: player.localUserId,
     );
   }
 }

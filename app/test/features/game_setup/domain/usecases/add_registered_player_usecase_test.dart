@@ -79,6 +79,12 @@ class _FakeGameRepository implements GameRepository {
   }) async {
     throw UnimplementedError();
   }
+
+  @override
+  Future<int> countUnsyncedGames() async => 0;
+
+  @override
+  Future<void> clearAllLocalData() async {}
 }
 
 void main() {
