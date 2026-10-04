@@ -70,7 +70,7 @@ void main() {
     expect(find.text('Ana, Carlos'), findsOneWidget);
     expect(find.text('4 jugadores · Ganador: Ana (42 pts)'), findsOneWidget);
     expect(find.text('Local'), findsOneWidget);
-    expect(find.byIcon(Icons.phone_android), findsOneWidget);
+    expect(find.byIcon(Icons.smartphone), findsOneWidget);
   });
 
   testWidgets(
