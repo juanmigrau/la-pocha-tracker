@@ -12,7 +12,6 @@ class RoundHeader extends StatelessWidget {
     required this.cardsInRound,
     required this.subtitle,
     this.dealerName,
-    this.repeatRoundNumber,
     this.onBack,
   });
 
@@ -21,7 +20,6 @@ class RoundHeader extends StatelessWidget {
   final int? cardsInRound;
   final String subtitle;
   final String? dealerName;
-  final int? repeatRoundNumber;
   final VoidCallback? onBack;
 
   @override
@@ -67,10 +65,7 @@ class RoundHeader extends StatelessWidget {
               ],
             ),
           ),
-          GameOverflowMenu(
-            gameId: gameId,
-            repeatRoundNumber: repeatRoundNumber,
-          ),
+          GameOverflowMenu(gameId: gameId),
         ],
       ),
     );

@@ -472,9 +472,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.more_vert));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Ver tabla de puntos'));
+    await tester.tap(find.byIcon(Icons.bar_chart));
     await tester.pumpAndSettle();
 
     expect(find.text('Scorecard route'), findsOneWidget);

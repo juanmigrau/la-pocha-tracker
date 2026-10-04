@@ -10,6 +10,7 @@ import 'package:la_pocha/features/round/domain/usecases/revert_round_to_playing_
 import 'package:la_pocha/features/round/presentation/bloc/round_result_bloc.dart';
 import 'package:la_pocha/features/round/presentation/bloc/round_result_event.dart';
 import 'package:la_pocha/features/round/presentation/bloc/round_result_state.dart';
+import 'package:la_pocha/features/round/presentation/widgets/repeat_round_text_button.dart';
 import 'package:la_pocha/features/round/presentation/widgets/round_header.dart';
 import 'package:la_pocha/features/round/presentation/widgets/round_result_player_row.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -119,7 +120,6 @@ class _RoundResultView extends StatelessWidget {
                       roundNumber: roundNumber,
                       cardsInRound: cardsInRound,
                       subtitle: 'Resultado',
-                      repeatRoundNumber: readOnly ? null : roundNumber,
                       onBack: readOnly ? null : () => _goToScoring(context),
                     );
                   },
@@ -282,22 +282,35 @@ class _LoadedBody extends StatelessWidget {
                   icon: Icons.arrow_forward,
                   onPressed: () => context.pop(),
                 )
-              : PrimaryButton(
-                  label: result.isLastRound
-                      ? 'Ver resultado final'
-                      : 'Siguiente ronda',
-                  isLoading: isAdvancing,
-                  onPressed: () {
-                    if (result.isLastRound) {
-                      context.read<RoundResultBloc>().add(
-                        const FinishGameRequested(),
-                      );
-                    } else {
-                      context.read<RoundResultBloc>().add(
-                        const AdvanceToNextRoundRequested(),
-                      );
-                    }
-                  },
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: RepeatRoundTextButton(
+                        gameId: result.game.id,
+                        roundNumber: result.round.roundNumber,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    PrimaryButton(
+                      label: result.isLastRound
+                          ? 'Ver resultado final'
+                          : 'Siguiente ronda',
+                      isLoading: isAdvancing,
+                      onPressed: () {
+                        if (result.isLastRound) {
+                          context.read<RoundResultBloc>().add(
+                            const FinishGameRequested(),
+                          );
+                        } else {
+                          context.read<RoundResultBloc>().add(
+                            const AdvanceToNextRoundRequested(),
+                          );
+                        }
+                      },
+                    ),
+                  ],
                 ),
         ),
       ],

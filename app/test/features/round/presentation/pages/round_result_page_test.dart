@@ -175,6 +175,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Siguiente ronda'), findsOneWidget);
+    expect(find.text('Repetir esta ronda'), findsOneWidget);
     expect(find.text('Volver a apuestas'), findsNothing);
   });
 
@@ -185,5 +186,6 @@ void main() {
     expect(find.text('Volver a apuestas'), findsOneWidget);
     expect(find.byIcon(Icons.arrow_forward), findsOneWidget);
     expect(find.text('Siguiente ronda'), findsNothing);
+    expect(find.text('Repetir esta ronda'), findsNothing);
   });
 }

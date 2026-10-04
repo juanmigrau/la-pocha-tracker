@@ -5,30 +5,20 @@ import 'package:la_pocha/core/di/injection.dart';
 import 'package:la_pocha/core/utils/snack_bar_helper.dart';
 import 'package:la_pocha/features/game_setup/presentation/bloc/cancel_game_cubit.dart';
 import 'package:la_pocha/features/game_setup/presentation/widgets/cancel_game_dialog.dart';
-import 'package:la_pocha/features/round/presentation/bloc/repeat_round_cubit.dart';
-import 'package:la_pocha/features/round/presentation/widgets/repeat_round_dialog.dart';
 
 class GameOverflowMenu extends StatelessWidget {
   const GameOverflowMenu({
     super.key,
     required this.gameId,
-    this.repeatRoundNumber,
   });
 
   final String gameId;
-  final int? repeatRoundNumber;
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (_) => getIt<CancelGameCubit>()),
-        BlocProvider(create: (_) => getIt<RepeatRoundCubit>()),
-      ],
-      child: _GameOverflowMenuView(
-        gameId: gameId,
-        repeatRoundNumber: repeatRoundNumber,
-      ),
+    return BlocProvider(
+      create: (_) => getIt<CancelGameCubit>(),
+      child: _GameOverflowMenuView(gameId: gameId),
     );
   }
 }
@@ -36,11 +26,9 @@ class GameOverflowMenu extends StatelessWidget {
 class _GameOverflowMenuView extends StatelessWidget {
   const _GameOverflowMenuView({
     required this.gameId,
-    this.repeatRoundNumber,
   });
 
   final String gameId;
-  final int? repeatRoundNumber;
 
   Future<void> _confirmAndCancel(BuildContext context) async {
     final cubit = context.read<CancelGameCubit>();
@@ -52,71 +40,26 @@ class _GameOverflowMenuView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocListener(
-      listeners: [
-        BlocListener<CancelGameCubit, CancelGameState>(
-          listener: (context, state) {
-            if (state is CancelGameSuccess) {
-              context.go('/');
-            } else if (state is CancelGameFailure) {
-              SnackBarHelper.showError(state.message);
-            }
-          },
-        ),
-        BlocListener<RepeatRoundCubit, RepeatRoundState>(
-          listener: (context, state) {
-            if (state is RepeatRoundSuccess) {
-              context.go(
-                '/games/${state.gameId}/rounds/${state.roundNumber}/bids',
-              );
-            } else if (state is RepeatRoundFailure) {
-              SnackBarHelper.showError(state.message);
-            }
-          },
-        ),
-      ],
-      child: PopupMenuButton<String>(
-        icon: const Icon(Icons.more_vert, color: Colors.white),
-        onSelected: (value) async {
-          switch (value) {
-            case 'scorecard':
-              context.push('/games/$gameId/scorecard');
-            case 'repeat':
-              final roundNumber = repeatRoundNumber;
-              if (roundNumber == null) {
-                return;
-              }
-              final cubit = context.read<RepeatRoundCubit>();
-              final confirmed = await showRepeatRoundDialog(context);
-              if (confirmed) {
-                await cubit.repeat(
-                  gameId: gameId,
-                  roundNumber: roundNumber,
-                );
-              }
-            case 'cancel':
-              await _confirmAndCancel(context);
-          }
-        },
-        itemBuilder: (context) => [
-          const PopupMenuItem(
-            value: 'scorecard',
-            child: Text('Ver tabla de puntos'),
+    return BlocListener<CancelGameCubit, CancelGameState>(
+      listener: (context, state) {
+        if (state is CancelGameSuccess) {
+          context.go('/');
+        } else if (state is CancelGameFailure) {
+          SnackBarHelper.showError(state.message);
+        }
+      },
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            tooltip: 'Ver tabla de puntos',
+            onPressed: () => context.push('/games/$gameId/scorecard'),
+            icon: const Icon(Icons.bar_chart, color: Colors.white),
           ),
-          if (repeatRoundNumber != null)
-            const PopupMenuItem(
-              value: 'repeat',
-              child: Text(
-                'Repetir ronda',
-                style: TextStyle(color: Color(0xFFD9772E)),
-              ),
-            ),
-          const PopupMenuItem(
-            value: 'cancel',
-            child: Text(
-              'Cancelar partida',
-              style: TextStyle(color: Color(0xFFD9772E)),
-            ),
+          IconButton(
+            tooltip: 'Cancelar partida',
+            onPressed: () => _confirmAndCancel(context),
+            icon: const Icon(Icons.cancel_outlined, color: Colors.white),
           ),
         ],
       ),
