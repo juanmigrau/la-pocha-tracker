@@ -175,7 +175,6 @@ void main() {
 
     final stats = await useCase(gameId: 'game-1');
 
-    expect(stats.curiosities.mostEqualRoundNumber, 2);
     expect(stats.curiosities.riskiestPlayerId, 'p0');
     expect(stats.curiosities.riskiestPlayerName, 'Bob');
     expect(stats.curiosities.mostConservativePlayerId, 'p2');

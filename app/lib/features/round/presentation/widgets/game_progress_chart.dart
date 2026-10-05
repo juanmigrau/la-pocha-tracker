@@ -2,61 +2,49 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:la_pocha/core/utils/player_colors.dart';
 import 'package:la_pocha/features/round/domain/entities/game_stats.dart';
-import 'package:la_pocha/features/round/presentation/widgets/chart_mode_toggle.dart';
 
-class GameProgressChart extends StatefulWidget {
-  const GameProgressChart({super.key, required this.stats});
+class GameProgressChart extends StatelessWidget {
+  const GameProgressChart({
+    super.key,
+    required this.stats,
+    required this.cardsByRoundNumber,
+  });
 
   final GameStats stats;
+
+  /// Maps roundNumber → cardsInRound for X-axis labels.
+  final Map<int, int> cardsByRoundNumber;
 
   static const String emptyMessage =
       'Juega más rondas para ver la evolución';
 
   @override
-  State<GameProgressChart> createState() => _GameProgressChartState();
-}
-
-class _GameProgressChartState extends State<GameProgressChart> {
-  ChartMode _mode = ChartMode.points;
-
-  @override
   Widget build(BuildContext context) {
-    if (widget.stats.closedRoundCount < 2) {
+    if (stats.closedRoundCount < 2) {
       return const Center(
         child: Padding(
           padding: EdgeInsets.all(24),
           child: Text(
-            GameProgressChart.emptyMessage,
+            emptyMessage,
             textAlign: TextAlign.center,
           ),
         ),
       );
     }
 
-    final series = widget.stats.progressSeries;
-    final playerCount = series.length;
-    final isPosition = _mode == ChartMode.position;
+    final series = stats.progressSeries;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
       child: Column(
         children: [
-          ChartModeToggle(
-            mode: _mode,
-            onChanged: (mode) => setState(() => _mode = mode),
-          ),
-          const SizedBox(height: 8),
           Expanded(
             child: LineChart(
               LineChartData(
                 minX: 1,
-                maxX: widget.stats.closedRoundCount.toDouble(),
-                minY: isPosition
-                    ? 1
-                    : _minScore(series).toDouble() - 5,
-                maxY: isPosition
-                    ? playerCount.toDouble()
-                    : _maxScore(series).toDouble() + 5,
+                maxX: stats.closedRoundCount.toDouble(),
+                minY: _minScore(series).toDouble() - 5,
+                maxY: _maxScore(series).toDouble() + 5,
                 titlesData: FlTitlesData(
                   topTitles: const AxisTitles(
                     sideTitles: SideTitles(showTitles: false),
@@ -73,8 +61,10 @@ class _GameProgressChartState extends State<GameProgressChart> {
                         if (value != value.roundToDouble()) {
                           return const SizedBox.shrink();
                         }
+                        final roundNumber = value.toInt();
+                        final cards = cardsByRoundNumber[roundNumber];
                         return Text(
-                          'R${value.toInt()}',
+                          cards?.toString() ?? '$roundNumber',
                           style: Theme.of(context).textTheme.labelSmall,
                         );
                       },
@@ -84,26 +74,18 @@ class _GameProgressChartState extends State<GameProgressChart> {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 36,
-                      interval: isPosition ? 1 : null,
                       getTitlesWidget: (value, meta) {
-                        if (isPosition && value != value.roundToDouble()) {
-                          return const SizedBox.shrink();
-                        }
-                        final label = isPosition
-                            ? '${_chartYToPosition(value, playerCount)}º'
-                            : value.toInt().toString();
                         return Text(
-                          label,
+                          value.toInt().toString(),
                           style: Theme.of(context).textTheme.labelSmall,
                         );
                       },
                     ),
                   ),
                 ),
-                gridData: FlGridData(
+                gridData: const FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  horizontalInterval: isPosition ? 1 : null,
                 ),
                 borderData: FlBorderData(show: true),
                 lineTouchData: LineTouchData(
@@ -113,11 +95,13 @@ class _GameProgressChartState extends State<GameProgressChart> {
                       return touchedSpots.map((spot) {
                         final s = series[spot.barIndex];
                         final point = s.points[spot.spotIndex];
+                        final cards =
+                            cardsByRoundNumber[point.roundNumber];
                         return LineTooltipItem(
                           '${s.displayName}\n'
-                          'Ronda ${point.roundNumber}\n'
-                          'Puntos: ${point.cumulativeScore}\n'
-                          'Posición: ${point.position}º',
+                          'Ronda ${point.roundNumber}'
+                          '${cards != null ? ' · $cards cartas' : ''}\n'
+                          'Puntos: ${point.cumulativeScore}',
                           const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
@@ -135,12 +119,7 @@ class _GameProgressChartState extends State<GameProgressChart> {
                         for (final point in series[i].points)
                           FlSpot(
                             point.roundNumber.toDouble(),
-                            isPosition
-                                ? _positionToChartY(
-                                    point.position,
-                                    playerCount,
-                                  )
-                                : point.cumulativeScore.toDouble(),
+                            point.cumulativeScore.toDouble(),
                           ),
                       ],
                       isCurved: false,
@@ -158,13 +137,6 @@ class _GameProgressChartState extends State<GameProgressChart> {
       ),
     );
   }
-
-  /// Maps rank 1 → top of chart (high Y).
-  double _positionToChartY(int position, int playerCount) =>
-      (playerCount + 1 - position).toDouble();
-
-  int _chartYToPosition(double chartY, int playerCount) =>
-      playerCount + 1 - chartY.round();
 
   int _minScore(List<PlayerProgressSeries> series) {
     var min = series.first.points.first.cumulativeScore;
@@ -194,6 +166,8 @@ class _Legend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final useInitialOnly = series.length >= 6;
+
     return Wrap(
       spacing: 12,
       runSpacing: 4,
@@ -213,7 +187,9 @@ class _Legend extends StatelessWidget {
               ),
               const SizedBox(width: 4),
               Text(
-                '${_initial(s.displayName)} ${s.displayName}',
+                useInitialOnly
+                    ? _initial(s.displayName)
+                    : s.displayName,
                 style: Theme.of(context).textTheme.labelSmall,
               ),
             ],

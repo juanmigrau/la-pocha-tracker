@@ -68,7 +68,7 @@ class _ScorecardTableState extends State<ScorecardTable> {
   }
 
   Color _dividerColor(BuildContext context) =>
-      Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2);
+      Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.35);
 
   @override
   Widget build(BuildContext context) {
@@ -222,7 +222,7 @@ class _CardsCell extends StatelessWidget {
             : Colors.transparent,
         border: Border(
           right: BorderSide(color: dividerColor, width: 0.5),
-          bottom: BorderSide(color: Colors.black.withValues(alpha: 0.06)),
+          bottom: BorderSide(color: Colors.black.withValues(alpha: 0.18)),
         ),
       ),
       child: Text(
@@ -299,7 +299,7 @@ class _DataRow extends StatelessWidget {
             ? AppTheme.primary.withValues(alpha: 0.05)
             : Colors.transparent,
         border: Border(
-          bottom: BorderSide(color: Colors.black.withValues(alpha: 0.06)),
+          bottom: BorderSide(color: Colors.black.withValues(alpha: 0.18)),
         ),
       ),
       child: Row(
@@ -328,7 +328,7 @@ class _DataRow extends StatelessWidget {
                       _formatNullable(row.cumulative[players[i].id]),
                       textAlign: TextAlign.center,
                       style: style?.copyWith(
-                        color: _cumulativeColor(row.cumulative[players[i].id]),
+                        color: _bidOutcomeColor(players[i].id),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -343,16 +343,16 @@ class _DataRow extends StatelessWidget {
 
   String _formatNullable(int? value) => value == null ? '—' : '$value';
 
-  Color? _cumulativeColor(int? value) {
-    if (value == null) {
+  /// Green when bid hit tricks; red when missed. Independent of score sign.
+  Color? _bidOutcomeColor(String playerId) {
+    final bid = row.bids[playerId];
+    final tricks = row.tricks[playerId];
+    if (bid == null || tricks == null) {
       return AppTheme.onSurfaceVariant;
     }
-    if (value < 0) {
-      return const Color(0xFFB3261E);
+    if (bid == tricks) {
+      return const Color(0xFF43A047);
     }
-    if (value > 0) {
-      return AppTheme.primary;
-    }
-    return AppTheme.onSurface;
+    return const Color(0xFFE53935);
   }
 }

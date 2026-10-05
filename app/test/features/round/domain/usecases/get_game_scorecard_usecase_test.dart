@@ -74,6 +74,7 @@ void main() {
     required int number,
     required int cards,
     required Map<String, int> bids,
+    required Map<String, int> tricks,
     required Map<String, int> scoresDelta,
   }) {
     return Round(
@@ -84,6 +85,7 @@ void main() {
       dealerPlayerId: 'p0',
       status: RoundStatus.closed,
       bids: bids,
+      tricks: tricks,
       scoresDelta: scoresDelta,
       createdAt: DateTime(2026),
       closedAt: DateTime(2026),
@@ -102,12 +104,14 @@ void main() {
         number: 1,
         cards: 1,
         bids: const {'p0': 1, 'p1': 0, 'p2': 0},
+        tricks: const {'p0': 1, 'p1': 0, 'p2': 1},
         scoresDelta: const {'p0': 11, 'p1': -10, 'p2': -10},
       ),
       closedRound(
         number: 2,
         cards: 2,
         bids: const {'p0': 0, 'p1': 2, 'p2': 1},
+        tricks: const {'p0': 1, 'p1': 2, 'p2': 1},
         scoresDelta: const {'p0': -10, 'p1': 12, 'p2': 11},
       ),
       Round(
@@ -136,6 +140,7 @@ void main() {
     expect(row1.cardsInRound, 1);
     expect(row1.isCurrent, isFalse);
     expect(row1.bids, {'p0': 1, 'p1': 0, 'p2': 0});
+    expect(row1.tricks, {'p0': 1, 'p1': 0, 'p2': 1});
     expect(row1.cumulative, {'p0': 11, 'p1': -10, 'p2': -10});
 
     final row2 = scorecard.rows[1];
@@ -147,6 +152,7 @@ void main() {
     expect(row3.roundNumber, 3);
     expect(row3.isCurrent, isTrue);
     expect(row3.bids, {'p0': 1, 'p1': null, 'p2': null});
+    expect(row3.tricks, {'p0': null, 'p1': null, 'p2': null});
     expect(row3.cumulative, {'p0': null, 'p1': null, 'p2': null});
   });
 
@@ -174,12 +180,14 @@ void main() {
         number: 1,
         cards: 1,
         bids: const {'p0': 0, 'p1': 1, 'p2': 0},
+        tricks: const {'p0': 1, 'p1': 1, 'p2': 0},
         scoresDelta: const {'p0': -10, 'p1': 11, 'p2': -10},
       ),
       closedRound(
         number: 2,
         cards: 2,
         bids: const {'p0': 1, 'p1': 0, 'p2': 1},
+        tricks: const {'p0': 1, 'p1': 0, 'p2': 1},
         scoresDelta: const {'p0': 11, 'p1': -10, 'p2': 11},
       ),
     ];

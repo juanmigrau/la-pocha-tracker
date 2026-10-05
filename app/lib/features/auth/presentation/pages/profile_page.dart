@@ -447,32 +447,6 @@ class _StatsContent extends StatelessWidget {
             ),
           ],
         ),
-        if (stats.mostFrequentPartner != null) ...[
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.people_outlined,
-                  color: colorScheme.onPrimaryContainer,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Compañero frecuente: ${stats.mostFrequentPartner}',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ],
     );
   }

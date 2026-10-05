@@ -6,6 +6,7 @@ class ScorecardRow extends Equatable {
     required this.roundNumber,
     required this.cardsInRound,
     required this.bids,
+    required this.tricks,
     required this.cumulative,
     required this.isCurrent,
   });
@@ -13,6 +14,7 @@ class ScorecardRow extends Equatable {
   final int roundNumber;
   final int cardsInRound;
   final Map<String, int?> bids;
+  final Map<String, int?> tricks;
   final Map<String, int?> cumulative;
   final bool isCurrent;
 
@@ -21,6 +23,7 @@ class ScorecardRow extends Equatable {
         roundNumber,
         cardsInRound,
         bids,
+        tricks,
         cumulative,
         isCurrent,
       ];

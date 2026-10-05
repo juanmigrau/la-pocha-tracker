@@ -11,7 +11,6 @@ class PlayerStats extends Equatable {
     required this.worstScore,
     required this.currentWinStreak,
     required this.bestWinStreak,
-    this.mostFrequentPartner,
   });
 
   const PlayerStats.empty()
@@ -23,8 +22,7 @@ class PlayerStats extends Equatable {
         recordScore = 0,
         worstScore = 0,
         currentWinStreak = 0,
-        bestWinStreak = 0,
-        mostFrequentPartner = null;
+        bestWinStreak = 0;
 
   final int totalGames;
   final int wins;
@@ -35,7 +33,6 @@ class PlayerStats extends Equatable {
   final int worstScore;
   final int currentWinStreak;
   final int bestWinStreak;
-  final String? mostFrequentPartner;
 
   @override
   List<Object?> get props => [
@@ -48,6 +45,5 @@ class PlayerStats extends Equatable {
         worstScore,
         currentWinStreak,
         bestWinStreak,
-        mostFrequentPartner,
       ];
 }
