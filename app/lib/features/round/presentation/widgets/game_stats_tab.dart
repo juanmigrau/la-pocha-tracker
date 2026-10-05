@@ -25,6 +25,10 @@ class GameStatsTab extends StatelessWidget {
       );
     }
 
+    final playersById = {
+      for (final player in stats.players) player.id: player,
+    };
+
     return ListView(
       padding: const EdgeInsets.only(top: 4),
       children: [
@@ -37,10 +41,11 @@ class GameStatsTab extends StatelessWidget {
                 ),
           ),
         ),
-        for (var i = 0; i < stats.playerStats.length; i++)
+        for (final playerStats in stats.playerStats)
           PlayerStatsCard(
-            stats: stats.playerStats[i],
-            rank: i + 1,
+            stats: playerStats,
+            player: playersById[playerStats.playerId]!,
+            closedRoundCount: stats.closedRoundCount,
           ),
         GameCuriositiesSection(curiosities: stats.curiosities),
       ],

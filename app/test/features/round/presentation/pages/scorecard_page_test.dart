@@ -20,7 +20,6 @@ import 'package:la_pocha/features/round/domain/usecases/get_game_stats_usecase.d
 import 'package:la_pocha/features/round/domain/usecases/repeat_round_usecase.dart';
 import 'package:la_pocha/features/round/presentation/bloc/repeat_round_cubit.dart';
 import 'package:la_pocha/features/round/presentation/pages/scorecard_page.dart';
-import 'package:la_pocha/features/round/presentation/widgets/chart_mode_toggle.dart';
 import 'package:la_pocha/features/round/presentation/widgets/game_progress_chart.dart';
 import 'package:la_pocha/features/round/presentation/widgets/game_stats_tab.dart';
 import 'package:la_pocha/features/round/presentation/widgets/round_header.dart';
@@ -110,6 +109,7 @@ void main() {
         roundNumber: 1,
         cardsInRound: 1,
         bids: const {'p0': 1, 'p1': 0, 'p2': 0},
+        tricks: const {'p0': 1, 'p1': 0, 'p2': 1},
         cumulative: const {'p0': 11, 'p1': -10, 'p2': -10},
         isCurrent: false,
       ),
@@ -117,6 +117,7 @@ void main() {
         roundNumber: 2,
         cardsInRound: 2,
         bids: const {'p0': 0, 'p1': 2, 'p2': 1},
+        tricks: const {'p0': 1, 'p1': 2, 'p2': 1},
         cumulative: const {'p0': 1, 'p1': 2, 'p2': 1},
         isCurrent: false,
       ),
@@ -124,6 +125,7 @@ void main() {
         roundNumber: 3,
         cardsInRound: 3,
         bids: const {'p0': 1, 'p1': null, 'p2': null},
+        tricks: const {'p0': null, 'p1': null, 'p2': null},
         cumulative: const {'p0': null, 'p1': null, 'p2': null},
         isCurrent: true,
       ),
@@ -228,7 +230,6 @@ void main() {
         ),
       ],
       curiosities: const GameCuriosities(
-        mostEqualRoundNumber: 2,
         riskiestPlayerId: 'p0',
         riskiestPlayerName: 'Ana',
         mostConservativePlayerId: 'p2',
@@ -282,7 +283,7 @@ void main() {
 
     expect(find.text('Tabla de partida'), findsOneWidget);
     expect(find.text('Tabla'), findsOneWidget);
-    expect(find.text('Stats'), findsOneWidget);
+    expect(find.text('Estadísticas'), findsOneWidget);
     expect(find.text('Gráfica'), findsOneWidget);
     expect(find.byType(ScorecardTable), findsOneWidget);
     expect(find.text('ANA'), findsOneWidget);
@@ -301,7 +302,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Stats'));
+    await tester.tap(find.text('Estadísticas'));
     await tester.pumpAndSettle();
     expect(find.text(GameStatsTab.emptyMessage), findsOneWidget);
 
@@ -322,7 +323,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Stats'));
+    await tester.tap(find.text('Estadísticas'));
     await tester.pumpAndSettle();
     expect(find.text(GameStatsTab.emptyMessage), findsOneWidget);
 
@@ -341,11 +342,17 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Stats'));
+    await tester.tap(find.text('Estadísticas'));
     await tester.pumpAndSettle();
 
     expect(find.text('Clasificación por acierto'), findsOneWidget);
     expect(find.text('Ana'), findsWidgets);
+    expect(find.text('Bazas'), findsWidgets);
+    expect(find.text('Media pts'), findsWidgets);
+    expect(find.text('Media bazas'), findsWidgets);
+    expect(find.text('Mejor / Peor'), findsWidgets);
+    expect(find.textContaining('Racha'), findsNothing);
+    expect(find.text('Ronda más igualada'), findsNothing);
 
     await tester.scrollUntilVisible(
       find.text('Datos curiosos'),
@@ -358,7 +365,7 @@ void main() {
     expect(find.text('Jugador más arriesgado'), findsOneWidget);
   });
 
-  testWidgets('chart tab renders LineChart and toggles mode', (tester) async {
+  testWidgets('chart tab renders LineChart without position mode', (tester) async {
     await tester.binding.setSurfaceSize(const Size(844, 390));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -374,16 +381,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(LineChart), findsOneWidget);
-    expect(find.byType(ChartModeToggle), findsOneWidget);
-    expect(tester.takeException(), isNull);
-
-    await tester.tap(find.text('Posición'));
-    await tester.pumpAndSettle();
-    expect(tester.takeException(), isNull);
-    expect(find.byType(LineChart), findsOneWidget);
-
-    await tester.tap(find.text('Puntos'));
-    await tester.pumpAndSettle();
+    expect(find.text('Posición'), findsNothing);
+    expect(find.text('Puntos'), findsNothing);
+    expect(find.text('Ana'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -407,6 +407,7 @@ void main() {
         roundNumber: i + 1,
         cardsInRound: (i % 10) + 1,
         bids: {for (final p in widePlayers) p.id: i % 3},
+        tricks: {for (final p in widePlayers) p.id: i % 3},
         cumulative: {for (final p in widePlayers) p.id: i * 2},
         isCurrent: false,
       ),

@@ -135,20 +135,6 @@ class GetGameStatsUseCase {
     List<PlayerEmbed> players,
     List<Round> closed,
   ) {
-    int? mostEqualRoundNumber;
-    var smallestSpread = double.infinity;
-    for (final round in closed) {
-      final deltas = players
-          .map((p) => round.scoresDelta?[p.id] ?? 0)
-          .toList();
-      final spread = (deltas.reduce(math.max) - deltas.reduce(math.min))
-          .toDouble();
-      if (spread < smallestSpread) {
-        smallestSpread = spread;
-        mostEqualRoundNumber = round.roundNumber;
-      }
-    }
-
     final totalCards = closed.fold<int>(0, (sum, r) => sum + r.cardsInRound);
     String? riskiestId;
     String? riskiestName;
@@ -178,7 +164,6 @@ class GetGameStatsUseCase {
     }
 
     return GameCuriosities(
-      mostEqualRoundNumber: mostEqualRoundNumber,
       riskiestPlayerId: riskiestId,
       riskiestPlayerName: riskiestName,
       mostConservativePlayerId: conservativeId,

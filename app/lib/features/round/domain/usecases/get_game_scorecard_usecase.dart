@@ -49,6 +49,14 @@ class GetGameScorecardUseCase {
               : null,
       };
 
+      final tricks = <String, int?>{
+        for (final player in players)
+          player.id: round.tricks != null &&
+                  round.tricks!.containsKey(player.id)
+              ? round.tricks![player.id]
+              : null,
+      };
+
       Map<String, int?> cumulative;
       if (isCurrent) {
         cumulative = {for (final player in players) player.id: null};
@@ -70,6 +78,7 @@ class GetGameScorecardUseCase {
           roundNumber: round.roundNumber,
           cardsInRound: round.cardsInRound,
           bids: bids,
+          tricks: tricks,
           cumulative: cumulative,
           isCurrent: isCurrent,
         ),

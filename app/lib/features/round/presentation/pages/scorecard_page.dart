@@ -90,7 +90,7 @@ class _ScorecardPageState extends State<ScorecardPage> {
                 child: TabBar(
                   tabs: const [
                     Tab(text: 'Tabla'),
-                    Tab(text: 'Stats'),
+                    Tab(text: 'Estadísticas'),
                     Tab(text: 'Gráfica'),
                   ],
                   labelColor: Theme.of(context).colorScheme.primary,
@@ -121,6 +121,10 @@ class _ScorecardPageState extends State<ScorecardPage> {
                     final load = snapshot.data!;
                     final scorecard = load.scorecard;
                     final stats = load.stats;
+                    final cardsByRoundNumber = {
+                      for (final row in scorecard.rows)
+                        if (!row.isCurrent) row.roundNumber: row.cardsInRound,
+                    };
 
                     return TabBarView(
                       children: [
@@ -139,7 +143,10 @@ class _ScorecardPageState extends State<ScorecardPage> {
                                 ),
                               ),
                         GameStatsTab(stats: stats),
-                        GameProgressChart(stats: stats),
+                        GameProgressChart(
+                          stats: stats,
+                          cardsByRoundNumber: cardsByRoundNumber,
+                        ),
                       ],
                     );
                   },
