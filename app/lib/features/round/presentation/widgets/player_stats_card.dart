@@ -72,10 +72,6 @@ class PlayerStatsCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             _StatRow(
-              label: 'Bazas',
-              value: '${stats.totalBids} → ${stats.totalTricks}',
-            ),
-            _StatRow(
               label: 'Media pts',
               value: stats.averageScorePerRound == null
                   ? '—'
@@ -128,11 +124,6 @@ class PlayerStatsCard extends StatelessWidget {
                   title: '% acierto',
                   body:
                       'porcentaje de rondas en que tu apuesta coincidió exactamente con las bazas que ganaste.',
-                ),
-                _HelpLine(
-                  title: 'Bazas',
-                  body:
-                      'total de bazas apostadas → total de bazas reales conseguidas.',
                 ),
                 _HelpLine(
                   title: 'Media pts',

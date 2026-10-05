@@ -44,7 +44,6 @@ void main() {
     worstScore: 10,
     currentWinStreak: 1,
     bestWinStreak: 1,
-    mostFrequentPartner: 'Luis',
   );
 
   ProfileBloc buildBloc() => ProfileBloc(

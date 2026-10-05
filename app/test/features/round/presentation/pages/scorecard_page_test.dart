@@ -347,7 +347,7 @@ void main() {
 
     expect(find.text('Clasificación por acierto'), findsOneWidget);
     expect(find.text('Ana'), findsWidgets);
-    expect(find.text('Bazas'), findsWidgets);
+    expect(find.text('Bazas'), findsNothing);
     expect(find.text('Media pts'), findsWidgets);
     expect(find.text('Media bazas'), findsWidgets);
     expect(find.text('Mejor / Peor'), findsWidgets);

@@ -61,7 +61,6 @@ class GetPlayerStatsUseCase {
     var scoresInitialized = false;
     var accurateBids = 0;
     var closedRoundsCount = 0;
-    final partnerCounts = <String, _PartnerCount>{};
 
     for (final detail in sortedDesc) {
       final self = _findSelf(detail.game.players, userId)!;
@@ -92,22 +91,6 @@ class GetPlayerStatsUseCase {
           accurateBids++;
         }
       }
-
-      for (final player in detail.game.players) {
-        if (player.userId == userId) {
-          continue;
-        }
-        final key = player.userId ?? 'guest:${player.displayName}';
-        final existing = partnerCounts[key];
-        if (existing == null) {
-          partnerCounts[key] = _PartnerCount(player.displayName, 1);
-        } else {
-          partnerCounts[key] = _PartnerCount(
-            existing.displayName,
-            existing.count + 1,
-          );
-        }
-      }
     }
 
     final totalGames = sortedDesc.length;
@@ -116,15 +99,6 @@ class GetPlayerStatsUseCase {
     final bidAccuracyPercentage = closedRoundsCount == 0
         ? 0.0
         : (accurateBids / closedRoundsCount) * 100;
-
-    String? mostFrequentPartner;
-    var maxPartnerCount = 0;
-    for (final entry in partnerCounts.values) {
-      if (entry.count > maxPartnerCount) {
-        maxPartnerCount = entry.count;
-        mostFrequentPartner = entry.displayName;
-      }
-    }
 
     final winsByDateDesc = sortedDesc
         .map((d) => _rankFor(d, userId) == 1)
@@ -147,7 +121,6 @@ class GetPlayerStatsUseCase {
       worstScore: worstScore,
       currentWinStreak: currentWinStreak,
       bestWinStreak: bestWinStreak,
-      mostFrequentPartner: mostFrequentPartner,
     );
   }
 
@@ -223,11 +196,4 @@ class GetPlayerStatsUseCase {
     }
     return best;
   }
-}
-
-class _PartnerCount {
-  const _PartnerCount(this.displayName, this.count);
-
-  final String displayName;
-  final int count;
 }

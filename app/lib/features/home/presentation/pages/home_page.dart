@@ -12,7 +12,7 @@ import 'package:la_pocha/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:la_pocha/features/history/domain/entities/game_history_item.dart';
 import 'package:la_pocha/features/home/presentation/bloc/home_bloc.dart';
 import 'package:la_pocha/features/home/presentation/widgets/debug_config_panel.dart';
-import 'package:la_pocha/features/home/presentation/widgets/recent_game_tile.dart';
+import 'package:la_pocha/features/home/presentation/widgets/recent_games_section.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -211,10 +211,23 @@ class _HomeViewState extends State<_HomeView> {
                     HomeLoading() || HomeInitial() => const SizedBox(
                       height: 48,
                     ),
-                    HomeLoaded(:final recentGames) => _RecentGamesList(
-                      games: recentGames,
-                    ),
-                    HomeEmpty() => const _RecentGamesEmpty(),
+                    HomeLoaded() || HomeEmpty() =>
+                      BlocBuilder<AuthBloc, AuthState>(
+                        builder: (context, authState) {
+                          final games = switch (state) {
+                            HomeLoaded(:final recentGames) => recentGames,
+                            _ => const <GameHistoryItem>[],
+                          };
+                          return RecentGamesSection(
+                            games: games,
+                            isAuthenticated: authState is Authenticated,
+                            onViewAll: () => context.push('/history'),
+                            onGameTap: (item) => context.push(
+                              '/history/${item.id}?source=local',
+                            ),
+                          );
+                        },
+                      ),
                     HomeFailure(:final message) => Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       child: Text(
@@ -453,71 +466,6 @@ class _BenefitRow extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(text, style: theme.textTheme.bodyMedium),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RecentGamesList extends StatelessWidget {
-  const _RecentGamesList({required this.games});
-
-  final List<GameHistoryItem> games;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        for (var index = 0; index < games.length; index++) ...[
-          if (index > 0) const SizedBox(height: 8),
-          RecentGameTile(
-            item: games[index],
-            onTap: () =>
-                context.push('/history/${games[index].id}?source=local'),
-          ),
-        ],
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-            onPressed: () => context.push('/history'),
-            child: Text(
-              'Ver todas →',
-              style: Theme.of(
-                context,
-              ).textTheme.labelLarge?.copyWith(color: AppTheme.primary),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _RecentGamesEmpty extends StatelessWidget {
-  const _RecentGamesEmpty();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Column(
-        children: [
-          Icon(
-            Icons.style,
-            size: 56,
-            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Crea tu primera partida para empezar',
-            textAlign: TextAlign.center,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
           ),
         ],
       ),

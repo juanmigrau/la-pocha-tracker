@@ -128,36 +128,8 @@ void main() {
         expect(stats.worstScore, -10);
         expect(stats.currentWinStreak, 1);
         expect(stats.bestWinStreak, 1);
-        expect(stats.mostFrequentPartner, 'Luis');
       },
     );
-
-    test('excludes own userId from mostFrequentPartner', () async {
-      final finishedAt = DateTime(2026, 8, 5);
-      when(getGameHistory()).thenAnswer(
-        (_) async =>
-            GameHistoryLoadResult(items: [_historyItem('g1', finishedAt)]),
-      );
-      when(
-        getGameDetail(gameId: 'g1', source: GameHistorySource.local),
-      ).thenAnswer(
-        (_) async => _detail(
-          id: 'g1',
-          finishedAt: finishedAt,
-          selfScore: 40,
-          selfRank: 1,
-          partnerName: 'Bob',
-          partnerUserId: 'partner-bob',
-          bid: 1,
-          tricks: 1,
-        ),
-      );
-
-      final stats = await useCase(userId: userId);
-
-      expect(stats.mostFrequentPartner, 'Bob');
-      expect(stats.mostFrequentPartner, isNot('Me'));
-    });
 
     test('skips games where current user is not a player', () async {
       final finishedAt = DateTime(2026, 8, 5);
@@ -354,7 +326,6 @@ void main() {
         expect(stats.totalGames, 1);
         expect(stats.wins, 0);
         expect(stats.recordScore, 30);
-        expect(stats.mostFrequentPartner, 'Ana');
       },
     );
   });
