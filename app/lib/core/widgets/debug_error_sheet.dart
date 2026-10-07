@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Bottom sheet that surfaces full exception details for developers.
 ///
@@ -14,6 +15,22 @@ class DebugErrorSheet extends StatelessWidget {
 
   final Object error;
   final StackTrace? stackTrace;
+
+  /// Builds the full clipboard payload (type, message, optional stack).
+  @visibleForTesting
+  String buildClipboardText() {
+    final buffer = StringBuffer()
+      ..writeln('Type: ${error.runtimeType}')
+      ..writeln('Message: $error');
+    final stackText = stackTrace?.toString();
+    if (stackText != null && stackText.isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln('Stack trace:')
+        ..writeln(stackText);
+    }
+    return buffer.toString().trimRight();
+  }
 
   /// Shows the debug sheet when running in debug mode; no-op in release.
   static Future<void> showIfDebug(
@@ -40,6 +57,20 @@ class DebugErrorSheet extends StatelessWidget {
       builder: (sheetContext) {
         return DebugErrorSheet(error: error, stackTrace: stackTrace);
       },
+    );
+  }
+
+  Future<void> _copyToClipboard(BuildContext context) async {
+    await Clipboard.setData(ClipboardData(text: buildClipboardText()));
+    if (!context.mounted) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Traza copiada al portapapeles'),
+        duration: Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 
@@ -115,12 +146,19 @@ class DebugErrorSheet extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 16),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cerrar'),
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton.icon(
+                  onPressed: () => _copyToClipboard(context),
+                  icon: const Icon(Icons.copy_outlined),
+                  label: const Text('Copiar traza'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cerrar'),
+                ),
+              ],
             ),
           ],
         ),
