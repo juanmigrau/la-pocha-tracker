@@ -1,10 +1,21 @@
 sealed class AuthFailure implements Exception {
-  const AuthFailure(this.message);
+  const AuthFailure(this.message, {this.cause, this.stackTrace});
 
   final String message;
 
+  /// Original exception when this failure wraps a lower-level error.
+  final Object? cause;
+
+  /// Stack trace of [cause], when available.
+  final StackTrace? stackTrace;
+
   @override
-  String toString() => message;
+  String toString() {
+    if (cause == null) {
+      return message;
+    }
+    return '$message\nCaused by: $cause';
+  }
 }
 
 final class EmailAlreadyInUseFailure extends AuthFailure {
@@ -12,17 +23,15 @@ final class EmailAlreadyInUseFailure extends AuthFailure {
 }
 
 final class InvalidCredentialsFailure extends AuthFailure {
-  const InvalidCredentialsFailure() : super('Email o contraseña incorrectos');
+  const InvalidCredentialsFailure() : super('Contraseña incorrecta');
 }
 
 final class UserNotFoundFailure extends AuthFailure {
-  const UserNotFoundFailure()
-    : super('No hay ninguna cuenta asociada a este email.');
+  const UserNotFoundFailure() : super('Usuario no encontrado');
 }
 
 final class NetworkUnavailableFailure extends AuthFailure {
-  const NetworkUnavailableFailure()
-    : super('Comprueba tu conexión e inténtalo de nuevo.');
+  const NetworkUnavailableFailure() : super('Sin conexión a internet');
 }
 
 final class ValidationFailure extends AuthFailure {
@@ -30,7 +39,15 @@ final class ValidationFailure extends AuthFailure {
 }
 
 final class UnknownAuthFailure extends AuthFailure {
-  const UnknownAuthFailure([super.message = 'Ha ocurrido un error inesperado']);
+  const UnknownAuthFailure([
+    super.message = 'Ha ocurrido un error inesperado',
+  ]);
+
+  const UnknownAuthFailure.wrap(
+    super.message, {
+    required Object cause,
+    super.stackTrace,
+  }) : super(cause: cause);
 }
 
 final class RequiresRecentLoginFailure extends AuthFailure {

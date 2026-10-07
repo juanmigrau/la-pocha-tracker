@@ -57,7 +57,7 @@ class _RepeatRoundTextButtonView extends StatelessWidget {
             '/games/${state.gameId}/rounds/${state.roundNumber}/bids',
           );
         } else if (state is RepeatRoundFailure) {
-          SnackBarHelper.showError(state.message);
+          SnackBarHelper.showError(state.message, context: context);
         }
       },
       child: TextButton(

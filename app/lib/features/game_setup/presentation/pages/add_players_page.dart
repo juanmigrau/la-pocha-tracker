@@ -45,7 +45,7 @@ class _AddPlayersView extends StatelessWidget {
         if (errorMessage == null || errorMessage.isEmpty) {
           return;
         }
-        SnackBarHelper.showError(errorMessage);
+        SnackBarHelper.showError(errorMessage, context: context);
       },
       child: Scaffold(
         body: SafeArea(

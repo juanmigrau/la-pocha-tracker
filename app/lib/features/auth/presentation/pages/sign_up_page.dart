@@ -51,7 +51,12 @@ class _SignUpPageState extends State<SignUpPage> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthFailure) {
-          SnackBarHelper.showError(state.message);
+          SnackBarHelper.showError(
+            state.message,
+            error: state.error,
+            stackTrace: state.stackTrace,
+            context: context,
+          );
         }
         if (state is AuthGoogleAccountExists) {
           showGoogleAccountExistsDialog(context);

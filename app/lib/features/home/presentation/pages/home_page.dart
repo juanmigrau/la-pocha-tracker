@@ -78,7 +78,10 @@ class _HomeViewState extends State<_HomeView> {
     if (kDebugMode) {
       final committed = _debugPanelKey.currentState?.commitSequence() ?? true;
       if (!committed) {
-        SnackBarHelper.showError('Secuencia inválida. Revisa el formato.');
+        SnackBarHelper.showError(
+          'Secuencia inválida. Revisa el formato.',
+          context: context,
+        );
         return;
       }
     }

@@ -49,8 +49,12 @@ class AuthRepositoryImpl implements AuthRepository {
       rethrow;
     } on AuthFailure {
       rethrow;
-    } catch (_) {
-      throw const UnknownAuthFailure();
+    } catch (error, stackTrace) {
+      throw UnknownAuthFailure.wrap(
+        'Ha ocurrido un error inesperado',
+        cause: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -82,8 +86,12 @@ class AuthRepositoryImpl implements AuthRepository {
       return profile.toEntity();
     } on AuthFailure {
       rethrow;
-    } catch (_) {
-      throw const UnknownAuthFailure();
+    } catch (error, stackTrace) {
+      throw UnknownAuthFailure.wrap(
+        'Ha ocurrido un error inesperado',
+        cause: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -116,8 +124,12 @@ class AuthRepositoryImpl implements AuthRepository {
       return profile.toEntity();
     } on AuthFailure {
       rethrow;
-    } catch (_) {
-      throw const UnknownAuthFailure();
+    } catch (error, stackTrace) {
+      throw UnknownAuthFailure.wrap(
+        'Ha ocurrido un error inesperado',
+        cause: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -151,8 +163,12 @@ class AuthRepositoryImpl implements AuthRepository {
       return profile.toEntity();
     } on AuthFailure {
       rethrow;
-    } catch (_) {
-      throw const UnknownAuthFailure();
+    } catch (error, stackTrace) {
+      throw UnknownAuthFailure.wrap(
+        'Ha ocurrido un error inesperado',
+        cause: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -172,8 +188,12 @@ class AuthRepositoryImpl implements AuthRepository {
       await _authDatasource.sendPasswordResetEmail(email);
     } on AuthFailure {
       rethrow;
-    } catch (_) {
-      throw const UnknownAuthFailure();
+    } catch (error, stackTrace) {
+      throw UnknownAuthFailure.wrap(
+        'Ha ocurrido un error inesperado',
+        cause: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -202,8 +222,12 @@ class AuthRepositoryImpl implements AuthRepository {
       return profile.toEntity();
     } on AuthFailure {
       rethrow;
-    } catch (_) {
-      throw const UnknownAuthFailure();
+    } catch (error, stackTrace) {
+      throw UnknownAuthFailure.wrap(
+        'Ha ocurrido un error inesperado',
+        cause: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -219,8 +243,12 @@ class AuthRepositoryImpl implements AuthRepository {
       await _authDatasource.deleteCurrentUser(password: password);
     } on AuthFailure {
       rethrow;
-    } catch (_) {
-      throw const UnknownAuthFailure();
+    } catch (error, stackTrace) {
+      throw UnknownAuthFailure.wrap(
+        'Ha ocurrido un error inesperado',
+        cause: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 

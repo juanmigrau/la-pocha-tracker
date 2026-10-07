@@ -59,7 +59,7 @@ class _HistoryListView extends StatelessWidget {
                 HistoryListGameDeleted(state.gameId),
               );
             } else if (state is DeleteGameFromHistoryFailure) {
-              SnackBarHelper.showError(state.message);
+              SnackBarHelper.showError(state.message, context: context);
             }
           },
         ),
@@ -87,6 +87,7 @@ class _HistoryListView extends StatelessWidget {
                 SnackBarHelper.showError(
                   'No se pudo sincronizar. Comprueba '
                   'tu conexión e inténtalo de nuevo.',
+                  context: context,
                 );
               case null:
                 break;
