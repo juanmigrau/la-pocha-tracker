@@ -116,7 +116,10 @@ void main() {
     ),
     expect: () => [
       const AuthLoading(),
-      const AuthFailure(message: 'Email o contraseña incorrectos'),
+      const AuthFailure(
+        message: 'Contraseña incorrecta',
+        error: domain.InvalidCredentialsFailure(),
+      ),
       const Unauthenticated(),
     ],
     verify: (_) {
@@ -216,7 +219,10 @@ void main() {
     act: (bloc) => bloc.add(const GoogleSignInSubmitted()),
     expect: () => [
       const AuthLoading(),
-      const AuthFailure(message: 'Comprueba tu conexión e inténtalo de nuevo.'),
+      const AuthFailure(
+        message: 'Sin conexión a internet',
+        error: domain.NetworkUnavailableFailure(),
+      ),
       const Unauthenticated(),
     ],
   );
@@ -283,7 +289,10 @@ void main() {
     ),
     expect: () => [
       const AuthLoading(),
-      const AuthFailure(message: 'Email o contraseña incorrectos'),
+      const AuthFailure(
+        message: 'Contraseña incorrecta',
+        error: domain.InvalidCredentialsFailure(),
+      ),
       const Unauthenticated(),
     ],
   );
@@ -344,8 +353,31 @@ void main() {
     ),
     expect: () => [
       const AuthFailure(
-        message: 'No hay ninguna cuenta asociada a este email.',
+        message: 'Usuario no encontrado',
+        error: domain.UserNotFoundFailure(),
       ),
+      const Unauthenticated(),
+    ],
+  );
+
+  blocTest<AuthBloc, AuthState>(
+    'emits AuthFailure with descriptive message for unexpected errors',
+    build: buildBloc,
+    setUp: () {
+      when(signIn(email: 'ana@example.com', password: 'secret1'))
+          .thenThrow(Exception('firestore unavailable'));
+    },
+    act: (bloc) => bloc.add(
+      const SignInSubmitted(
+        email: 'ana@example.com',
+        password: 'secret1',
+      ),
+    ),
+    expect: () => [
+      const AuthLoading(),
+      isA<AuthFailure>()
+          .having((s) => s.message, 'message', 'Ha ocurrido un error inesperado')
+          .having((s) => s.error, 'error', isA<Exception>()),
       const Unauthenticated(),
     ],
   );

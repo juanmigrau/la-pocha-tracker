@@ -55,7 +55,7 @@ class _GameDetailView extends StatelessWidget {
             if (state is DeleteGameFromHistorySuccess) {
               context.pop();
             } else if (state is DeleteGameFromHistoryFailure) {
-              SnackBarHelper.showError(state.message);
+              SnackBarHelper.showError(state.message, context: context);
             }
           },
         ),
@@ -64,7 +64,7 @@ class _GameDetailView extends StatelessWidget {
             if (state is RepeatGameSuccess) {
               handleRepeatGameSuccess(context, state.newGameId);
             } else if (state is RepeatGameFailure) {
-              SnackBarHelper.showError(state.message);
+              SnackBarHelper.showError(state.message, context: context);
             }
           },
         ),

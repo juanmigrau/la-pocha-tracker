@@ -45,7 +45,7 @@ class _AddPlayersView extends StatelessWidget {
         if (errorMessage == null || errorMessage.isEmpty) {
           return;
         }
-        SnackBarHelper.showError(errorMessage);
+        SnackBarHelper.showError(errorMessage, context: context);
       },
       child: Scaffold(
         body: SafeArea(
@@ -118,6 +118,7 @@ class _AddPlayersView extends StatelessWidget {
                               activeEditIndex: state.activeEditIndex,
                               isLoading: state.isLoading,
                               currentUserId: state.currentUser?.uid,
+                              localUserId: state.localSelf?.id,
                               currentUserPhotoUrl: state.currentUser?.photoUrl,
                               isFavoritePlayer: (player) =>
                                   _isFavoritePlayer(player, state.favorites),

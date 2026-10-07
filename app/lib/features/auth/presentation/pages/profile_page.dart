@@ -154,7 +154,12 @@ class _ProfileViewState extends State<_ProfileView> {
         BlocListener<AuthBloc, AuthState>(
           listener: (context, state) {
             if (state is AuthFailure) {
-              SnackBarHelper.showError(state.message);
+              SnackBarHelper.showError(
+                state.message,
+                error: state.error,
+                stackTrace: state.stackTrace,
+                context: context,
+              );
             }
             if (state is Unauthenticated) {
               context.go('/onboarding');
@@ -164,14 +169,14 @@ class _ProfileViewState extends State<_ProfileView> {
         BlocListener<ProfileBloc, ProfileState>(
           listener: (context, state) {
             if (state is ProfileFailure) {
-              SnackBarHelper.showError(state.message);
+              SnackBarHelper.showError(state.message, context: context);
             }
             if (state is ProfileLoaded && state.displayNameUpdated) {
               context.read<AuthBloc>().add(AuthProfileUpdated(state.user));
               SnackBarHelper.showSuccess('Nombre actualizado correctamente');
             }
             if (state is AccountDeleteFailure) {
-              SnackBarHelper.showError(state.message);
+              SnackBarHelper.showError(state.message, context: context);
             }
             if (state is AccountReauthRequired) {
               _promptReauthPassword();

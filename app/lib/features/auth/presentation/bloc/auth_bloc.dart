@@ -85,9 +85,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final user = await _signIn(email: event.email, password: event.password);
       await _emitAuthenticated(user, emit);
-    } on domain.AuthFailure catch (error) {
-      emit(AuthFailure(message: error.message));
-      emit(const Unauthenticated());
+    } on domain.AuthFailure catch (error, stackTrace) {
+      _emitAuthFailure(emit, error, stackTrace);
+    } catch (error, stackTrace) {
+      _emitUnexpectedAuthFailure(emit, error, stackTrace);
     }
   }
 
@@ -106,9 +107,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } on domain.GoogleAccountAlreadyExistsFailure {
       emit(const AuthGoogleAccountExists());
       emit(const Unauthenticated());
-    } on domain.AuthFailure catch (error) {
-      emit(AuthFailure(message: error.message));
-      emit(const Unauthenticated());
+    } on domain.AuthFailure catch (error, stackTrace) {
+      _emitAuthFailure(emit, error, stackTrace);
+    } catch (error, stackTrace) {
+      _emitUnexpectedAuthFailure(emit, error, stackTrace);
     }
   }
 
@@ -126,9 +128,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       await _emitAuthenticated(user, emit);
     } on domain.AccountExistsWithDifferentCredentialFailure catch (error) {
       emit(AuthNeedsPasswordToLink(email: error.email));
-    } on domain.AuthFailure catch (error) {
-      emit(AuthFailure(message: error.message));
-      emit(const Unauthenticated());
+    } on domain.AuthFailure catch (error, stackTrace) {
+      _emitAuthFailure(emit, error, stackTrace);
+    } catch (error, stackTrace) {
+      _emitUnexpectedAuthFailure(emit, error, stackTrace);
     }
   }
 
@@ -143,9 +146,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         password: event.password,
       );
       await _emitAuthenticated(user, emit);
-    } on domain.AuthFailure catch (error) {
-      emit(AuthFailure(message: error.message));
-      emit(const Unauthenticated());
+    } on domain.AuthFailure catch (error, stackTrace) {
+      _emitAuthFailure(emit, error, stackTrace);
+    } catch (error, stackTrace) {
+      _emitUnexpectedAuthFailure(emit, error, stackTrace);
     }
   }
 
@@ -157,8 +161,28 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       await _logoutWithCleanup.execute();
       emit(const Unauthenticated());
-    } on domain.AuthFailure catch (error) {
-      emit(AuthFailure(message: error.message));
+    } on domain.AuthFailure catch (error, stackTrace) {
+      emit(
+        AuthFailure(
+          message: error.message,
+          error: error,
+          stackTrace: error.stackTrace ?? stackTrace,
+        ),
+      );
+      final user = await _authRepository.getCurrentUser();
+      if (user != null) {
+        emit(Authenticated(user));
+      } else {
+        emit(const Unauthenticated());
+      }
+    } catch (error, stackTrace) {
+      emit(
+        AuthFailure(
+          message: 'Ha ocurrido un error inesperado',
+          error: error,
+          stackTrace: stackTrace,
+        ),
+      );
       final user = await _authRepository.getCurrentUser();
       if (user != null) {
         emit(Authenticated(user));
@@ -183,10 +207,41 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       await _sendPasswordReset(email: event.email);
       emit(const PasswordResetEmailSent());
       emit(const Unauthenticated());
-    } on domain.AuthFailure catch (error) {
-      emit(AuthFailure(message: error.message));
-      emit(const Unauthenticated());
+    } on domain.AuthFailure catch (error, stackTrace) {
+      _emitAuthFailure(emit, error, stackTrace);
+    } catch (error, stackTrace) {
+      _emitUnexpectedAuthFailure(emit, error, stackTrace);
     }
+  }
+
+  void _emitAuthFailure(
+    Emitter<AuthState> emit,
+    domain.AuthFailure error,
+    StackTrace stackTrace,
+  ) {
+    emit(
+      AuthFailure(
+        message: error.message,
+        error: error.cause ?? error,
+        stackTrace: error.stackTrace ?? stackTrace,
+      ),
+    );
+    emit(const Unauthenticated());
+  }
+
+  void _emitUnexpectedAuthFailure(
+    Emitter<AuthState> emit,
+    Object error,
+    StackTrace stackTrace,
+  ) {
+    emit(
+      AuthFailure(
+        message: 'Ha ocurrido un error inesperado',
+        error: error,
+        stackTrace: stackTrace,
+      ),
+    );
+    emit(const Unauthenticated());
   }
 
   @override

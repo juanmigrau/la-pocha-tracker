@@ -119,7 +119,7 @@ class _LoadedBody extends StatelessWidget {
             if (state is RepeatGameSuccess) {
               context.go('/games/${state.newGameId}/setup');
             } else if (state is RepeatGameFailure) {
-              SnackBarHelper.showError(state.message);
+              SnackBarHelper.showError(state.message, context: context);
             }
           },
         ),
@@ -132,6 +132,7 @@ class _LoadedBody extends StatelessWidget {
             SnackBarHelper.showError(
               'No se pudo sincronizar con la nube. '
               'Puedes intentarlo de nuevo desde el historial.',
+              context: context,
             );
           },
         ),

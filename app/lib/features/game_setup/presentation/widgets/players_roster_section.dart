@@ -11,6 +11,7 @@ class PlayersRosterSection extends StatelessWidget {
     required this.isLoading,
     required this.isFavoritePlayer,
     this.currentUserId,
+    this.localUserId,
     this.currentUserPhotoUrl,
     this.onEmptySlotEditActivated,
     this.onPlayerEditActivated,
@@ -27,6 +28,9 @@ class PlayersRosterSection extends StatelessWidget {
   final bool isLoading;
   final bool Function(PlayerEmbed player) isFavoritePlayer;
   final String? currentUserId;
+
+  /// Local organizer id; hides the favorite star for the local self player.
+  final String? localUserId;
   final String? currentUserPhotoUrl;
   final ValueChanged<int>? onEmptySlotEditActivated;
   final ValueChanged<String>? onPlayerEditActivated;
@@ -59,10 +63,15 @@ class PlayersRosterSection extends StatelessWidget {
           child: Column(
             children: List.generate(playerCount, (index) {
               final player = index < players.length ? players[index] : null;
-              // Favorites are local; only hide the star for the signed-in self.
-              final showFavoriteButton = player == null ||
-                  currentUserId == null ||
-                  player.userId != currentUserId;
+              // Favorites are local; hide the star for Firebase or local self.
+              final isFirebaseSelf = player != null &&
+                  currentUserId != null &&
+                  player.userId == currentUserId;
+              final isLocalSelf = player != null &&
+                  localUserId != null &&
+                  player.localUserId == localUserId;
+              final showFavoriteButton =
+                  player == null || (!isFirebaseSelf && !isLocalSelf);
               final slot = PlayerSlot(
                 index: index,
                 player: player,

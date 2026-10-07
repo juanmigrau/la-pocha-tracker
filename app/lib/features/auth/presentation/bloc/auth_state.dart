@@ -29,12 +29,22 @@ final class Unauthenticated extends AuthState {
 }
 
 final class AuthFailure extends AuthState {
-  const AuthFailure({required this.message});
+  const AuthFailure({
+    required this.message,
+    this.error,
+    this.stackTrace,
+  });
 
   final String message;
 
+  /// Original exception for debug diagnostics (not shown in release UI).
+  final Object? error;
+
+  /// Stack trace of [error], when available.
+  final StackTrace? stackTrace;
+
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, error];
 }
 
 final class PasswordResetEmailSent extends AuthState {

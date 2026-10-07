@@ -45,7 +45,7 @@ class _GameOverflowMenuView extends StatelessWidget {
         if (state is CancelGameSuccess) {
           context.go('/');
         } else if (state is CancelGameFailure) {
-          SnackBarHelper.showError(state.message);
+          SnackBarHelper.showError(state.message, context: context);
         }
       },
       child: Row(

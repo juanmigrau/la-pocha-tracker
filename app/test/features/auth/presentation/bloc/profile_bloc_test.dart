@@ -185,7 +185,7 @@ void main() {
     expect: () => [
       const AccountDeleting(),
       const AccountDeleteFailure(
-        message: 'Comprueba tu conexión e inténtalo de nuevo.',
+        message: 'Sin conexión a internet',
       ),
       ProfileLoaded(user: profile, stats: stats, statsLoading: false),
     ],
