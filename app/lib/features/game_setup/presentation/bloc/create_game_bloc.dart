@@ -9,27 +9,53 @@ part 'create_game_state.dart';
 
 class CreateGameBloc extends Bloc<CreateGameEvent, CreateGameState> {
   CreateGameBloc({required this._createGameDraft})
-      : super(const CreateGameInitial()) {
+      : super(previewFor(defaultPlayerCount)) {
     on<PlayerCountChanged>(_onPlayerCountChanged);
     on<CreateGameConfirmed>(_onCreateGameConfirmed);
   }
 
+  /// Default preselected player count for a new game.
+  static const int defaultPlayerCount = 4;
+
   final CreateGameDraftUseCase _createGameDraft;
+
+  static CreateGamePreview previewFor(int playerCount) {
+    final config = GameDeckConfig.fromPlayerCount(playerCount);
+    return CreateGamePreview(
+      playerCount: playerCount,
+      totalCards: config.totalCards,
+      maxCardsPerRound: config.maxCardsPerRound,
+      totalRounds: config.totalRounds,
+    );
+  }
 
   void _onPlayerCountChanged(
     PlayerCountChanged event,
     Emitter<CreateGameState> emit,
   ) {
-    emit(_buildPreview(event.playerCount));
+    emit(previewFor(event.playerCount));
   }
 
   Future<void> _onCreateGameConfirmed(
     CreateGameConfirmed event,
     Emitter<CreateGameState> emit,
   ) async {
-    final currentPreview = state is CreateGamePreview
-        ? state as CreateGamePreview
-        : _buildPreview(4);
+    final currentPreview = switch (state) {
+      final CreateGamePreview preview => preview,
+      final CreateGameSubmitting submitting => CreateGamePreview(
+          playerCount: submitting.playerCount,
+          totalCards: submitting.totalCards,
+          maxCardsPerRound: submitting.maxCardsPerRound,
+          totalRounds: submitting.totalRounds,
+        ),
+      final CreateGameFailure failure => CreateGamePreview(
+          playerCount: failure.playerCount,
+          totalCards: failure.totalCards,
+          maxCardsPerRound: failure.maxCardsPerRound,
+          totalRounds: failure.totalRounds,
+        ),
+      _ => previewFor(defaultPlayerCount),
+    };
 
     emit(CreateGameSubmitting(
       playerCount: currentPreview.playerCount,
@@ -50,15 +76,5 @@ class CreateGameBloc extends Bloc<CreateGameEvent, CreateGameState> {
         totalRounds: currentPreview.totalRounds,
       ));
     }
-  }
-
-  CreateGamePreview _buildPreview(int playerCount) {
-    final config = GameDeckConfig.fromPlayerCount(playerCount);
-    return CreateGamePreview(
-      playerCount: playerCount,
-      totalCards: config.totalCards,
-      maxCardsPerRound: config.maxCardsPerRound,
-      totalRounds: config.totalRounds,
-    );
   }
 }

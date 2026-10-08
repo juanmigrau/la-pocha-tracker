@@ -11,12 +11,20 @@ class ReorderablePlayerList extends StatelessWidget {
     required this.firstDealerPlayerId,
     required this.onReorder,
     required this.onDealerSelected,
+    this.highlightedPlayerId,
+    this.winnerScale = 1.0,
   });
 
   final List<PlayerEmbed> players;
   final String firstDealerPlayerId;
   final void Function(int oldIndex, int newIndex) onReorder;
   final void Function(String playerId) onDealerSelected;
+
+  /// Soft highlight during random-dealer roulette (may differ from dealer).
+  final String? highlightedPlayerId;
+
+  /// Scale applied to the highlighted row (used for the winner pulse).
+  final double winnerScale;
 
   @override
   Widget build(BuildContext context) {
@@ -34,19 +42,25 @@ class ReorderablePlayerList extends StatelessWidget {
         itemBuilder: (context, index) {
           final player = players[index];
           final isDealer = player.id == firstDealerPlayerId;
+          final isHighlighted = player.id == highlightedPlayerId;
           final isLast = index == players.length - 1;
+          final scale = isHighlighted ? winnerScale : 1.0;
 
           return Column(
             key: ValueKey(player.id),
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(
-                height: 52,
-                child: _PlayerRow(
-                  player: player,
-                  index: index,
-                  isDealer: isDealer,
-                  onDealerSelected: () => onDealerSelected(player.id),
+              Transform.scale(
+                scale: scale,
+                child: SizedBox(
+                  height: 52,
+                  child: _PlayerRow(
+                    player: player,
+                    index: index,
+                    isDealer: isDealer,
+                    isHighlighted: isHighlighted,
+                    onDealerSelected: () => onDealerSelected(player.id),
+                  ),
                 ),
               ),
               if (!isLast)
@@ -67,17 +81,33 @@ class _PlayerRow extends StatelessWidget {
     required this.player,
     required this.index,
     required this.isDealer,
+    required this.isHighlighted,
     required this.onDealerSelected,
   });
 
   final PlayerEmbed player;
   final int index;
   final bool isDealer;
+  final bool isHighlighted;
   final VoidCallback onDealerSelected;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final primary = Theme.of(context).colorScheme.primary;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 80),
+      key: Key('playerRow_${player.id}'),
+      decoration: BoxDecoration(
+        color: isHighlighted
+            ? primary.withValues(alpha: 0.12)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isHighlighted ? primary : Colors.transparent,
+          width: 1.5,
+        ),
+      ),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
@@ -85,10 +115,7 @@ class _PlayerRow extends StatelessWidget {
             index: index,
             child: const Padding(
               padding: EdgeInsets.only(right: 4),
-              child: Icon(
-                Icons.drag_handle,
-                color: AppTheme.onSurfaceVariant,
-              ),
+              child: Icon(Icons.drag_handle, color: AppTheme.onSurfaceVariant),
             ),
           ),
           Container(
@@ -102,9 +129,9 @@ class _PlayerRow extends StatelessWidget {
             child: Text(
               '${player.seatOrder}',
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: AppTheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                color: AppTheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -117,16 +144,13 @@ class _PlayerRow extends StatelessWidget {
           Expanded(
             child: Text(
               player.displayName,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          DealerSelector(
-            isSelected: isDealer,
-            onTap: onDealerSelected,
-          ),
+          DealerSelector(isSelected: isDealer, onTap: onDealerSelected),
         ],
       ),
     );

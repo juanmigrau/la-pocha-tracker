@@ -6,6 +6,7 @@ import 'package:la_pocha/core/widgets/pocha_app_bar.dart';
 import 'package:la_pocha/core/widgets/primary_button.dart';
 import 'package:la_pocha/features/game_setup/domain/entities/player_embed.dart';
 import 'package:la_pocha/features/game_setup/presentation/bloc/game_setup_bloc.dart';
+import 'package:la_pocha/features/game_setup/presentation/widgets/dealer_roulette_scheduler.dart';
 import 'package:la_pocha/features/game_setup/presentation/widgets/random_dealer_button.dart';
 import 'package:la_pocha/features/game_setup/presentation/widgets/reorderable_player_list.dart';
 
@@ -86,7 +87,7 @@ class _GameSetupView extends StatelessWidget {
   }
 }
 
-class _LoadedBody extends StatelessWidget {
+class _LoadedBody extends StatefulWidget {
   const _LoadedBody({
     required this.players,
     required this.firstDealerPlayerId,
@@ -99,17 +100,133 @@ class _LoadedBody extends StatelessWidget {
   final bool isStarting;
   final bool isComplete;
 
+  @override
+  State<_LoadedBody> createState() => _LoadedBodyState();
+}
+
+class _LoadedBodyState extends State<_LoadedBody>
+    with SingleTickerProviderStateMixin {
+  DealerRouletteScheduler? _scheduler;
+  late final AnimationController _scaleController;
+  late final Animation<double> _scaleAnimation;
+
+  /// Dealer id shown in the list/header while the roulette runs (previous).
+  String? _visualDealerId;
+  String? _highlightedPlayerId;
+  bool _isAnimating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scaleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    );
+    _scaleAnimation =
+        TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.05), weight: 50),
+          TweenSequenceItem(tween: Tween(begin: 1.05, end: 1.0), weight: 50),
+        ]).animate(
+          CurvedAnimation(parent: _scaleController, curve: Curves.easeInOut),
+        );
+  }
+
+  @override
+  void dispose() {
+    _scheduler?.cancel();
+    _scaleController.dispose();
+    super.dispose();
+  }
+
+  String get _displayedDealerId =>
+      _visualDealerId ?? widget.firstDealerPlayerId;
+
   String get _dealerName {
-    for (final player in players) {
-      if (player.id == firstDealerPlayerId) {
+    for (final player in widget.players) {
+      if (player.id == _displayedDealerId) {
         return player.displayName;
       }
     }
     return '';
   }
 
+  void _onRandomDealerPressed() {
+    if (_isAnimating || widget.players.isEmpty) {
+      return;
+    }
+
+    final previousDealerId = widget.firstDealerPlayerId;
+    final playerIds = widget.players.map((p) => p.id).toList();
+
+    // Freeze the visual dealer on the previous selection, then let the BLoC
+    // predetermine the winner with the existing RandomDealerRequested logic.
+    setState(() {
+      _isAnimating = true;
+      _visualDealerId = previousDealerId;
+      _highlightedPlayerId = null;
+    });
+
+    context.read<GameSetupBloc>().add(const RandomDealerRequested());
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      final state = context.read<GameSetupBloc>().state;
+      if (state is! GameSetupLoaded || state.players.isEmpty) {
+        setState(() {
+          _isAnimating = false;
+          _visualDealerId = null;
+          _highlightedPlayerId = null;
+        });
+        return;
+      }
+
+      final winnerId = state.firstDealerPlayerId;
+      _scheduler?.cancel();
+      _scheduler = DealerRouletteScheduler(
+        playerIds: playerIds,
+        winnerId: winnerId,
+        onHighlight: (playerId) {
+          if (!mounted) {
+            return;
+          }
+          setState(() => _highlightedPlayerId = playerId);
+        },
+        onComplete: () => _onRouletteComplete(winnerId),
+      )..start();
+    });
+  }
+
+  Future<void> _onRouletteComplete(String winnerId) async {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _highlightedPlayerId = winnerId;
+      _visualDealerId = winnerId;
+    });
+
+    await _scaleController.forward(from: 0);
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isAnimating = false;
+      _visualDealerId = null;
+      // Keep a soft highlight on the winner until the next interaction clears it.
+      _highlightedPlayerId = winnerId;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    final actionsEnabled = !_isAnimating && !widget.isStarting;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -136,17 +253,31 @@ class _LoadedBody extends StatelessWidget {
         Expanded(
           child: Align(
             alignment: Alignment.topCenter,
-            child: ReorderablePlayerList(
-              players: players,
-              firstDealerPlayerId: firstDealerPlayerId,
-              onReorder: (oldIndex, newIndex) {
-                context.read<GameSetupBloc>().add(
-                  PlayersReordered(oldIndex: oldIndex, newIndex: newIndex),
-                );
-              },
-              onDealerSelected: (playerId) {
-                context.read<GameSetupBloc>().add(
-                  FirstDealerSelected(playerId: playerId),
+            child: AnimatedBuilder(
+              animation: _scaleAnimation,
+              builder: (context, child) {
+                return ReorderablePlayerList(
+                  players: widget.players,
+                  firstDealerPlayerId: _displayedDealerId,
+                  highlightedPlayerId: _highlightedPlayerId,
+                  winnerScale: _scaleAnimation.value,
+                  onReorder: (oldIndex, newIndex) {
+                    if (_isAnimating) {
+                      return;
+                    }
+                    context.read<GameSetupBloc>().add(
+                      PlayersReordered(oldIndex: oldIndex, newIndex: newIndex),
+                    );
+                  },
+                  onDealerSelected: (playerId) {
+                    if (_isAnimating) {
+                      return;
+                    }
+                    setState(() => _highlightedPlayerId = null);
+                    context.read<GameSetupBloc>().add(
+                      FirstDealerSelected(playerId: playerId),
+                    );
+                  },
                 );
               },
             ),
@@ -155,10 +286,8 @@ class _LoadedBody extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
           child: RandomDealerButton(
-            isEnabled: !isStarting && isComplete,
-            onPressed: () => context.read<GameSetupBloc>().add(
-              const RandomDealerRequested(),
-            ),
+            isEnabled: actionsEnabled && widget.isComplete,
+            onPressed: _onRandomDealerPressed,
           ),
         ),
         Padding(
@@ -166,8 +295,8 @@ class _LoadedBody extends StatelessWidget {
           child: PrimaryButton(
             label: 'Empezar partida',
             icon: Icons.play_arrow,
-            isLoading: isStarting,
-            onPressed: isComplete
+            isLoading: widget.isStarting,
+            onPressed: actionsEnabled && widget.isComplete
                 ? () => context.read<GameSetupBloc>().add(
                     const StartGameRequested(),
                   )
