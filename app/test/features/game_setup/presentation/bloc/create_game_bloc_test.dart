@@ -19,6 +19,16 @@ void main() {
 
   CreateGameBloc buildBloc() => CreateGameBloc(createGameDraft: createGameDraft);
 
+  test('starts with default player count preview from BLoC', () {
+    final bloc = buildBloc();
+    expect(
+      bloc.state,
+      CreateGameBloc.previewFor(CreateGameBloc.defaultPlayerCount),
+    );
+    expect(CreateGameBloc.defaultPlayerCount, 4);
+    bloc.close();
+  });
+
   blocTest<CreateGameBloc, CreateGameState>(
     'emits preview when player count changes',
     build: buildBloc,
@@ -30,6 +40,42 @@ void main() {
         maxCardsPerRound: 8,
         totalRounds: 20,
       ),
+    ],
+  );
+
+  blocTest<CreateGameBloc, CreateGameState>(
+    'keeps selected player count through submitting then success',
+    build: buildBloc,
+    seed: () => const CreateGamePreview(
+      playerCount: 6,
+      totalCards: 48,
+      maxCardsPerRound: 8,
+      totalRounds: 20,
+    ),
+    setUp: () {
+      when(createGameDraft(playerCount: 6)).thenAnswer(
+        (_) async => Game(
+          id: 'game-6',
+          status: GameStatus.setup,
+          playerCount: 6,
+          totalCards: 48,
+          maxCardsPerRound: 8,
+          roundSequence: const [],
+          players: const [],
+          createdAt: DateTime(2026),
+          updatedAt: DateTime(2026),
+        ),
+      );
+    },
+    act: (bloc) => bloc.add(const CreateGameConfirmed()),
+    expect: () => [
+      const CreateGameSubmitting(
+        playerCount: 6,
+        totalCards: 48,
+        maxCardsPerRound: 8,
+        totalRounds: 20,
+      ),
+      const CreateGameSuccess(gameId: 'game-6'),
     ],
   );
 

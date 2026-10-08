@@ -7,10 +7,6 @@ sealed class CreateGameState extends Equatable {
   List<Object?> get props => [];
 }
 
-final class CreateGameInitial extends CreateGameState {
-  const CreateGameInitial();
-}
-
 final class CreateGamePreview extends CreateGameState {
   const CreateGamePreview({
     required this.playerCount,

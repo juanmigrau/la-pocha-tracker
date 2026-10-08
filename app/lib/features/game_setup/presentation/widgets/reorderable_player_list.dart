@@ -11,6 +11,8 @@ class ReorderablePlayerList extends StatelessWidget {
     required this.firstDealerPlayerId,
     required this.onReorder,
     required this.onDealerSelected,
+    this.highlightedPlayerId,
+    this.winnerScale = 1.0,
   });
 
   final List<PlayerEmbed> players;
@@ -18,51 +20,57 @@ class ReorderablePlayerList extends StatelessWidget {
   final void Function(int oldIndex, int newIndex) onReorder;
   final void Function(String playerId) onDealerSelected;
 
+  /// Soft highlight during random-dealer roulette (may differ from dealer).
+  final String? highlightedPlayerId;
+
+  /// Scale applied to the highlighted row (used for the winner pulse).
+  final double winnerScale;
+
   @override
   Widget build(BuildContext context) {
-    final dividerColor = Theme.of(context).dividerColor;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: ReorderableListView.builder(
-          shrinkWrap: true,
-          physics: const ClampingScrollPhysics(),
-          buildDefaultDragHandles: false,
-          padding: EdgeInsets.zero,
-          itemCount: players.length,
-          onReorderItem: onReorder,
-          itemBuilder: (context, index) {
-            final player = players[index];
-            final isDealer = player.id == firstDealerPlayerId;
-            final isLast = index == players.length - 1;
+      child: ReorderableListView.builder(
+        shrinkWrap: true,
+        physics: const ClampingScrollPhysics(),
+        buildDefaultDragHandles: false,
+        padding: EdgeInsets.zero,
+        itemCount: players.length,
+        onReorderItem: onReorder,
+        itemBuilder: (context, index) {
+          final player = players[index];
+          final isDealer = player.id == firstDealerPlayerId;
+          final isHighlighted = player.id == highlightedPlayerId;
+          final isLast = index == players.length - 1;
+          final scale = isHighlighted ? winnerScale : 1.0;
 
-            return SizedBox(
-              key: ValueKey(player.id),
-              height: 52,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  border: isLast
-                      ? null
-                      : Border(
-                          bottom: BorderSide(color: dividerColor, width: 1),
-                        ),
-                ),
-                child: _PlayerRow(
-                  player: player,
-                  index: index,
-                  isDealer: isDealer,
-                  onDealerSelected: () => onDealerSelected(player.id),
+          return Column(
+            key: ValueKey(player.id),
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Transform.scale(
+                scale: scale,
+                child: SizedBox(
+                  height: 52,
+                  child: _PlayerRow(
+                    player: player,
+                    index: index,
+                    isDealer: isDealer,
+                    isHighlighted: isHighlighted,
+                    onDealerSelected: () => onDealerSelected(player.id),
+                  ),
                 ),
               ),
-            );
-          },
-        ),
+              if (!isLast)
+                Divider(
+                  height: 1,
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -73,28 +81,41 @@ class _PlayerRow extends StatelessWidget {
     required this.player,
     required this.index,
     required this.isDealer,
+    required this.isHighlighted,
     required this.onDealerSelected,
   });
 
   final PlayerEmbed player;
   final int index;
   final bool isDealer;
+  final bool isHighlighted;
   final VoidCallback onDealerSelected;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+    final primary = Theme.of(context).colorScheme.primary;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 80),
+      key: Key('playerRow_${player.id}'),
+      decoration: BoxDecoration(
+        color: isHighlighted
+            ? primary.withValues(alpha: 0.12)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isHighlighted ? primary : Colors.transparent,
+          width: 1.5,
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
           ReorderableDragStartListener(
             index: index,
             child: const Padding(
               padding: EdgeInsets.only(right: 4),
-              child: Icon(
-                Icons.drag_handle,
-                color: AppTheme.onSurfaceVariant,
-              ),
+              child: Icon(Icons.drag_handle, color: AppTheme.onSurfaceVariant),
             ),
           ),
           Container(
@@ -108,9 +129,9 @@ class _PlayerRow extends StatelessWidget {
             child: Text(
               '${player.seatOrder}',
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: AppTheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                color: AppTheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -119,18 +140,17 @@ class _PlayerRow extends StatelessWidget {
             colorIndex: index,
             radius: 16,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               player.displayName,
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          DealerSelector(
-            isSelected: isDealer,
-            onTap: onDealerSelected,
-          ),
+          DealerSelector(isSelected: isDealer, onTap: onDealerSelected),
         ],
       ),
     );

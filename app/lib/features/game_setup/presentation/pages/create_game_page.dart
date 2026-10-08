@@ -17,7 +17,7 @@ class CreateGamePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => getIt<CreateGameBloc>()..add(const PlayerCountChanged(4)),
+      create: (_) => getIt<CreateGameBloc>(),
       child: const _CreateGameView(),
     );
   }
@@ -73,6 +73,9 @@ class _CreateGameView extends StatelessWidget {
               ),
               Expanded(
                 child: BlocBuilder<CreateGameBloc, CreateGameState>(
+                  // Avoid flashing the default count when Success has no preview.
+                  buildWhen: (previous, current) =>
+                      current is! CreateGameSuccess,
                   builder: (context, state) {
                     final preview = _resolvePreview(state);
 
@@ -145,12 +148,9 @@ class _CreateGameView extends StatelessWidget {
         maxCardsPerRound: failure.maxCardsPerRound,
         totalRounds: failure.totalRounds,
       ),
-      _ => const CreateGamePreview(
-        playerCount: 4,
-        totalCards: 40,
-        maxCardsPerRound: 10,
-        totalRounds: 22,
-      ),
+      // Unreachable while buildWhen skips Success; keeps switch exhaustive.
+      CreateGameSuccess _ =>
+          CreateGameBloc.previewFor(CreateGameBloc.defaultPlayerCount),
     };
   }
 }
