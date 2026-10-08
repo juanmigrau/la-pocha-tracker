@@ -20,39 +20,28 @@ class ReorderablePlayerList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dividerColor = Theme.of(context).dividerColor;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: ReorderableListView.builder(
-          shrinkWrap: true,
-          physics: const ClampingScrollPhysics(),
-          buildDefaultDragHandles: false,
-          padding: EdgeInsets.zero,
-          itemCount: players.length,
-          onReorderItem: onReorder,
-          itemBuilder: (context, index) {
-            final player = players[index];
-            final isDealer = player.id == firstDealerPlayerId;
-            final isLast = index == players.length - 1;
+      child: ReorderableListView.builder(
+        shrinkWrap: true,
+        physics: const ClampingScrollPhysics(),
+        buildDefaultDragHandles: false,
+        padding: EdgeInsets.zero,
+        itemCount: players.length,
+        onReorderItem: onReorder,
+        itemBuilder: (context, index) {
+          final player = players[index];
+          final isDealer = player.id == firstDealerPlayerId;
+          final isLast = index == players.length - 1;
 
-            return SizedBox(
-              key: ValueKey(player.id),
-              height: 52,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  border: isLast
-                      ? null
-                      : Border(
-                          bottom: BorderSide(color: dividerColor, width: 1),
-                        ),
-                ),
+          return Column(
+            key: ValueKey(player.id),
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                height: 52,
                 child: _PlayerRow(
                   player: player,
                   index: index,
@@ -60,9 +49,14 @@ class ReorderablePlayerList extends StatelessWidget {
                   onDealerSelected: () => onDealerSelected(player.id),
                 ),
               ),
-            );
-          },
-        ),
+              if (!isLast)
+                Divider(
+                  height: 1,
+                  color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+                ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -84,7 +78,7 @@ class _PlayerRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
           ReorderableDragStartListener(
@@ -119,11 +113,13 @@ class _PlayerRow extends StatelessWidget {
             colorIndex: index,
             radius: 16,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               player.displayName,
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
