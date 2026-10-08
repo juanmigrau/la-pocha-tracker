@@ -3,3 +3,8 @@ app/firebase.json
 app/android/app/google-services.json
 app/ios/Runner/GoogleService-Info.plist
 app/lib/firebase_options.dart
+
+# Local secrets (never commit)
+.env
+.env.*
+!.env.example
