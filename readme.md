@@ -181,7 +181,11 @@ flutter build apk --release
 
 ## Tests
 
-Tests unitarios, de use cases, repositorios y BLoC (`bloc_test` + mocks). Cubre reglas de dominio (apuestas, puntuación, sync) y flujos de presentación.
+Más de 115 tests unitarios y de BLoC (`bloc_test` + mocks). Cobertura completa de BLoC: todos los BLoC/Cubits tienen test. Cubre reglas de dominio (apuestas, puntuación, sync) y flujos de presentación.
+
+También hay tests de integración:
+- Flujo completo de ronda con Drift real (sin mocks)
+- Sync con Firebase Emulator
 
 ```bash
 cd app
@@ -189,7 +193,7 @@ cd app
 # Unitarios, widgets y BLoC
 flutter test
 
-# Integración Firestore (credenciales o emulador según el test)
+# Integración (Drift real y Firebase Emulator)
 flutter test test/integration/
 ```
 
