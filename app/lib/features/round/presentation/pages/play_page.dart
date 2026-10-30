@@ -97,6 +97,7 @@ class _PlayView extends StatelessWidget {
                       gameId: gameId,
                       roundNumber: roundNumber,
                       cardsInRound: cardsInRound,
+                      phaseName: 'En juego',
                       onBack: () => _goToBidding(context),
                     );
                   },

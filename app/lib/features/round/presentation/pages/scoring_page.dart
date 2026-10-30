@@ -104,6 +104,7 @@ class _ScoringView extends StatelessWidget {
                       gameId: gameId,
                       roundNumber: roundNumber,
                       cardsInRound: cardsInRound,
+                      phaseName: 'Bazas',
                       onBack: () => _onBack(context),
                     );
                   },

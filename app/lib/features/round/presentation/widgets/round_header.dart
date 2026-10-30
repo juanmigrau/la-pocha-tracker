@@ -10,21 +10,20 @@ class RoundHeader extends StatelessWidget {
     required this.gameId,
     required this.roundNumber,
     required this.cardsInRound,
-    this.subtitle,
-    this.dealerName,
+    required this.phaseName,
     this.onBack,
   });
 
   final String gameId;
   final int roundNumber;
   final int? cardsInRound;
-  final String? subtitle;
-  final String? dealerName;
+  final String phaseName;
   final VoidCallback? onBack;
 
   @override
   Widget build(BuildContext context) {
-    final title = cardsInRound == null
+    final theme = Theme.of(context);
+    final roundSubtitle = cardsInRound == null
         ? 'Ronda $roundNumber'
         : 'Ronda $roundNumber · ${cardCountLabel(cardsInRound!)}';
 
@@ -46,25 +45,21 @@ class RoundHeader extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  title,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  phaseName,
+                  style: theme.textTheme.titleLarge?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                if (subtitle != null || dealerName != null)
-                  Text(
-                    dealerName != null && subtitle != null
-                        ? '$subtitle · Repartidor: $dealerName'
-                        : dealerName != null
-                        ? 'Repartidor: $dealerName'
-                        : subtitle!,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.8),
-                    ),
+                Text(
+                  roundSubtitle,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.80),
                   ),
+                ),
               ],
             ),
           ),

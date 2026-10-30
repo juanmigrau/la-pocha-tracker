@@ -7,12 +7,14 @@ class RoundResultPlayerRow extends StatelessWidget {
   const RoundResultPlayerRow({
     super.key,
     required this.entry,
+    this.isDealer = false,
     this.photoURL,
     this.currentUserId,
     this.currentDisplayName,
   });
 
   final RankingEntry entry;
+  final bool isDealer;
   final String? photoURL;
   final String? currentUserId;
   final String? currentDisplayName;
@@ -55,6 +57,14 @@ class RoundResultPlayerRow extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  if (isDealer) ...[
+                    const SizedBox(width: 6),
+                    Icon(
+                      Icons.style,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: 16,
+                    ),
+                  ],
                   if (positionDelta != null && positionDelta != 0) ...[
                     const SizedBox(width: 4),
                     _InlinePositionChange(positionDelta: positionDelta),

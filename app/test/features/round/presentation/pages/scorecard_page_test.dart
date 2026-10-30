@@ -451,7 +451,7 @@ void main() {
               gameId: state.pathParameters['gameId']!,
               roundNumber: 1,
               cardsInRound: 4,
-              subtitle: 'En juego',
+              phaseName: 'En juego',
             ),
           ),
         ),

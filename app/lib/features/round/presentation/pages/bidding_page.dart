@@ -113,6 +113,7 @@ class _BiddingView extends StatelessWidget {
                       gameId: gameId,
                       roundNumber: roundNumber,
                       cardsInRound: cardsInRound,
+                      phaseName: 'Apuestas',
                       onBack: () {
                         _onBack(context);
                       },

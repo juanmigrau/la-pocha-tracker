@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:la_pocha/core/di/injection.dart';
-import 'package:la_pocha/core/utils/player_display_name.dart';
 import 'package:la_pocha/core/widgets/primary_button.dart';
 import 'package:la_pocha/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:la_pocha/features/round/domain/entities/round_result.dart';
@@ -119,7 +118,7 @@ class _RoundResultView extends StatelessWidget {
                       gameId: gameId,
                       roundNumber: roundNumber,
                       cardsInRound: cardsInRound,
-                      subtitle: 'Resultado',
+                      phaseName: 'Resultado',
                       onBack: readOnly ? null : () => _goToScoring(context),
                     );
                   },
@@ -173,37 +172,10 @@ class _LoadedBody extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final authState = context.watch<AuthBloc>().state;
     final currentUser = authState is Authenticated ? authState.user : null;
-    final dealerIndex = result.game.players.indexWhere(
-      (player) => player.id == result.round.dealerPlayerId,
-    );
-    final dealerPlayer =
-        dealerIndex >= 0 ? result.game.players[dealerIndex] : null;
-    final dealerDisplayName = resolveDisplayName(
-      storedName: result.dealerDisplayName,
-      storedUserId: dealerPlayer?.userId,
-      currentUserId: currentUser?.uid,
-      currentDisplayName: currentUser?.displayName,
-    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              Icon(Icons.style, color: colorScheme.primary, size: 16),
-              const SizedBox(width: 8),
-              Text(
-                dealerDisplayName,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
-        ),
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -259,6 +231,8 @@ class _LoadedBody extends StatelessWidget {
                         ),
                       RoundResultPlayerRow(
                         entry: result.entries[index],
+                        isDealer: result.entries[index].player.id ==
+                            result.round.dealerPlayerId,
                         photoURL: result.entries[index].player.photoURL ??
                             (result.entries[index].player.userId ==
                                     currentUser?.uid
