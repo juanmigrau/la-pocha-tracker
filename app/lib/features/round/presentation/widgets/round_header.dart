@@ -10,7 +10,7 @@ class RoundHeader extends StatelessWidget {
     required this.gameId,
     required this.roundNumber,
     required this.cardsInRound,
-    required this.subtitle,
+    this.subtitle,
     this.dealerName,
     this.onBack,
   });
@@ -18,7 +18,7 @@ class RoundHeader extends StatelessWidget {
   final String gameId;
   final int roundNumber;
   final int? cardsInRound;
-  final String subtitle;
+  final String? subtitle;
   final String? dealerName;
   final VoidCallback? onBack;
 
@@ -54,14 +54,17 @@ class RoundHeader extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Text(
-                  dealerName != null
-                      ? '$subtitle · Repartidor: $dealerName'
-                      : subtitle,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.8),
+                if (subtitle != null || dealerName != null)
+                  Text(
+                    dealerName != null && subtitle != null
+                        ? '$subtitle · Repartidor: $dealerName'
+                        : dealerName != null
+                        ? 'Repartidor: $dealerName'
+                        : subtitle!,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.8),
+                    ),
                   ),
-                ),
               ],
             ),
           ),

@@ -7,9 +7,9 @@ import 'package:la_pocha/features/round/domain/usecases/revert_round_to_bidding_
 import 'package:la_pocha/features/round/presentation/bloc/play_state_bloc.dart';
 import 'package:la_pocha/features/round/presentation/bloc/play_state_event.dart';
 import 'package:la_pocha/features/round/presentation/bloc/play_state_state.dart';
+import 'package:la_pocha/features/round/presentation/widgets/giant_background_number.dart';
 import 'package:la_pocha/features/round/presentation/widgets/player_play_card.dart';
 import 'package:la_pocha/features/round/presentation/widgets/round_header.dart';
-import 'package:la_pocha/features/round/presentation/widgets/tricks_balance_banner.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class PlayPage extends StatefulWidget {
@@ -97,7 +97,6 @@ class _PlayView extends StatelessWidget {
                       gameId: gameId,
                       roundNumber: roundNumber,
                       cardsInRound: cardsInRound,
-                      subtitle: 'En juego',
                       onBack: () => _goToBidding(context),
                     );
                   },
@@ -137,117 +136,138 @@ class _LoadedBody extends StatelessWidget {
 
   final PlayStateLoaded state;
 
+  /// Bid balance = total bids − available tricks. Never 0 under dealer rule.
+  int get _balance =>
+      state.playState.bidSum - state.playState.round.cardsInRound;
+
+  Color _playColor(BuildContext context, int balance) {
+    final colorScheme = Theme.of(context).colorScheme;
+    if (balance < 0) {
+      return colorScheme.tertiary;
+    }
+    if (balance > 0) {
+      return colorScheme.error;
+    }
+    return colorScheme.onSurface;
+  }
+
   @override
   Widget build(BuildContext context) {
     final playState = state.playState;
     final colorScheme = Theme.of(context).colorScheme;
     final authState = context.watch<AuthBloc>().state;
     final currentUser = authState is Authenticated ? authState.user : null;
+    final balance = _balance;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Stack(
       children: [
-        TricksBalanceBanner(
-          bidSum: playState.bidSum,
-          cardsInRound: playState.round.cardsInRound,
+        GiantBackgroundNumber(
+          signedValue: balance,
+          label: 'balance',
+          color: _playColor(context, balance),
+          placement: GiantBackgroundNumberPlacement.bottom,
+          fontSizeFactor: 0.72,
+          numberOpacity: 0.10,
+          labelOpacity: 0.28,
         ),
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Row(
-                  children: [
-                    const Expanded(flex: 3, child: SizedBox()),
-                    SizedBox(
-                      width: 52,
-                      child: Text(
-                        'Bazas',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    SizedBox(
-                      width: 52,
-                      child: Text(
-                        'Pts',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 4),
-              Container(
-                decoration: BoxDecoration(
-                  color: colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  children: [
-                    for (
-                      var index = 0;
-                      index < playState.players.length;
-                      index++
-                    ) ...[
-                      if (index > 0)
-                        Divider(
-                          height: 1,
-                          color: colorScheme.outlineVariant.withValues(
-                            alpha: 0.6,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Row(
+                      children: [
+                        const Expanded(flex: 3, child: SizedBox()),
+                        SizedBox(
+                          width: 52,
+                          child: Text(
+                            'Bazas',
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                            textAlign: TextAlign.center,
                           ),
                         ),
-                      Builder(
-                        builder: (context) {
-                          final player = playState.players[index];
-                          return PlayerPlayCard(
-                            player: player,
-                            index: index,
-                            bid: playState.round.bids[player.id] ?? 0,
-                            isDealer:
-                                player.id == playState.round.dealerPlayerId,
-                            photoURL: player.photoURL ??
-                                (player.userId == currentUser?.uid
-                                    ? currentUser?.photoUrl
-                                    : null),
-                          );
-                        },
-                      ),
+                        SizedBox(
+                          width: 52,
+                          child: Text(
+                            'Pts',
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Column(
+                    children: [
+                      for (
+                        var index = 0;
+                        index < playState.players.length;
+                        index++
+                      ) ...[
+                        if (index > 0)
+                          Divider(
+                            height: 1,
+                            color: colorScheme.outlineVariant.withValues(
+                              alpha: 0.6,
+                            ),
+                          ),
+                        Builder(
+                          builder: (context) {
+                            final player = playState.players[index];
+                            return PlayerPlayCard(
+                              player: player,
+                              index: index,
+                              bid: playState.round.bids[player.id] ?? 0,
+                              isDealer:
+                                  player.id == playState.round.dealerPlayerId,
+                              photoURL:
+                                  player.photoURL ??
+                                  (player.userId == currentUser?.uid
+                                      ? currentUser?.photoUrl
+                                      : null),
+                            );
+                          },
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
+                ],
+              ),
+            ),
+            if (!playState.restrictionMet)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                child: Text(
+                  'La suma de apuestas iguala ${playState.round.cardsInRound}. '
+                  'El repartidor debe corregir su apuesta antes de continuar.',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: _warningColor),
                 ),
               ),
-            ],
-          ),
-        ),
-        if (!playState.restrictionMet)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-            child: Text(
-              'La suma de apuestas iguala ${playState.round.cardsInRound}. '
-              'El repartidor debe corregir su apuesta antes de continuar.',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: _warningColor),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+              child: FilledButton(
+                onPressed: playState.restrictionMet
+                    ? () => context.read<PlayStateBloc>().add(
+                        const IntroduceTricksRequested(),
+                      )
+                    : null,
+                child: const Text('Introducir bazas reales'),
+              ),
             ),
-          ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-          child: FilledButton(
-            onPressed: playState.restrictionMet
-                ? () => context.read<PlayStateBloc>().add(
-                    const IntroduceTricksRequested(),
-                  )
-                : null,
-            child: const Text('Introducir bazas reales'),
-          ),
+          ],
         ),
       ],
     );
