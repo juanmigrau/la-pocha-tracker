@@ -8,6 +8,7 @@ import 'package:la_pocha/features/game_setup/domain/entities/player_embed.dart';
 import 'package:la_pocha/features/round/presentation/bloc/scoring_bloc.dart';
 import 'package:la_pocha/features/round/presentation/bloc/scoring_event.dart';
 import 'package:la_pocha/features/round/presentation/bloc/scoring_state.dart';
+import 'package:la_pocha/features/round/presentation/widgets/giant_background_number.dart';
 import 'package:la_pocha/features/round/presentation/widgets/round_header.dart';
 import 'package:la_pocha/features/round/presentation/widgets/scoring_player_row.dart';
 import 'package:la_pocha/features/round/presentation/widgets/tricks_balance_indicator.dart';
@@ -104,7 +105,6 @@ class _ScoringView extends StatelessWidget {
                       gameId: gameId,
                       roundNumber: roundNumber,
                       cardsInRound: cardsInRound,
-                      subtitle: 'Bazas reales',
                       onBack: () => _onBack(context),
                     );
                   },
@@ -228,132 +228,167 @@ class _LoadedBodyState extends State<_LoadedBody> {
     }
   }
 
+  /// Bid balance = sum of bids − cards in round. Never 0 under dealer rule.
+  int get _balance {
+    final bidSum = state.round.bids.values.fold<int>(0, (sum, bid) => sum + bid);
+    return bidSum - state.round.cardsInRound;
+  }
+
+  String get _displayValue => _balance > 0 ? '+$_balance' : '$_balance';
+
+  Color _numberColor(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    if (_balance < 0) {
+      return Colors.green.shade400;
+    }
+    if (_balance > 0) {
+      return colorScheme.error;
+    }
+    return colorScheme.onSurface;
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final authState = context.watch<AuthBloc>().state;
     final currentUser = authState is Authenticated ? authState.user : null;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Stack(
       children: [
-        GestureDetector(
-          onTap: () => _cancelEditIfNeeded(context),
-          behavior: HitTestBehavior.opaque,
-          child: TricksBalanceIndicator(
-            availableTricks: state.remainingTricks,
-            zeroIsReady: true,
-          ),
+        GiantBackgroundNumber(
+          displayValue: _displayValue,
+          label: 'balance',
+          color: _numberColor(context),
         ),
-        if (state.validationMessage != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-            child: Text(
-              state.validationMessage!,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: colorScheme.error),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            GestureDetector(
+              onTap: () => _cancelEditIfNeeded(context),
+              behavior: HitTestBehavior.opaque,
+              child: TricksBalanceIndicator(
+                availableTricks: state.remainingTricks,
+                zeroIsReady: true,
+              ),
             ),
-          ),
-        Expanded(
-          child: ListView(
-            controller: _scrollController,
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  children: [
-                    for (
-                      var index = 0;
-                      index < state.scoringOrder.length;
-                      index++
-                    ) ...[
-                      if (index > 0)
-                        Divider(
-                          height: 1,
-                          color: colorScheme.outlineVariant.withValues(
-                            alpha: 0.6,
-                          ),
-                        ),
-                      Builder(
-                        builder: (context) {
-                          final playerId = state.scoringOrder[index];
-                          final player = _playerById(playerId);
-                          if (player == null) {
-                            return const SizedBox.shrink();
-                          }
-                          final rowStatus = _statusFor(playerId);
-                          final isExpanded = _isExpanded(rowStatus);
-                          return KeyedSubtree(
-                            key: _keyFor(playerId),
-                            child: ScoringPlayerRow(
-                              player: player,
-                              index: index,
-                              photoURL: player.photoURL ??
-                                  (player.userId == currentUser?.uid
-                                      ? currentUser?.photoUrl
-                                      : null),
-                              status: rowStatus,
-                              tricks: state.confirmedTricks[playerId],
-                              isDealer: playerId == state.round.dealerPlayerId,
-                              draftTrick: isExpanded ? state.draftTrick : 0,
-                              cardsInRound: state.round.cardsInRound,
-                              canConfirmTrick: state.canConfirmTrick,
-                              canAddMore: state.canAddMore,
-                              onActivateEdit:
-                                  rowStatus == ScoringPlayerRowStatus.completed
-                                  ? () => context.read<ScoringBloc>().add(
-                                      TricksEditActivated(playerId),
-                                    )
-                                  : null,
-                              onTrickChanged: isExpanded
-                                  ? (value) => context.read<ScoringBloc>().add(
-                                      TrickValueChanged(value),
-                                    )
-                                  : null,
-                              onTrickConfirmed: isExpanded
-                                  ? () {
-                                      final bloc = context.read<ScoringBloc>();
-                                      if (rowStatus ==
-                                          ScoringPlayerRowStatus.editing) {
-                                        bloc.add(
-                                          TricksUpdated(
-                                            playerId: playerId,
-                                            newTricks: state.draftTrick,
-                                          ),
-                                        );
-                                      } else {
-                                        bloc.add(const TricksConfirmed());
-                                      }
-                                    }
-                                  : null,
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ],
+            if (state.validationMessage != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                child: Text(
+                  state.validationMessage!,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: colorScheme.error),
                 ),
               ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-          child: PrimaryButton(
-            label: 'Confirmar bazas',
-            isLoading: state.isClosing,
-            onPressed: state.canConfirm
-                ? () => context.read<ScoringBloc>().add(
-                    const CloseRoundRequested(),
-                  )
-                : null,
-          ),
+            Expanded(
+              child: ListView(
+                controller: _scrollController,
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      children: [
+                        for (
+                          var index = 0;
+                          index < state.scoringOrder.length;
+                          index++
+                        ) ...[
+                          if (index > 0)
+                            Divider(
+                              height: 1,
+                              color: colorScheme.outlineVariant.withValues(
+                                alpha: 0.6,
+                              ),
+                            ),
+                          Builder(
+                            builder: (context) {
+                              final playerId = state.scoringOrder[index];
+                              final player = _playerById(playerId);
+                              if (player == null) {
+                                return const SizedBox.shrink();
+                              }
+                              final rowStatus = _statusFor(playerId);
+                              final isExpanded = _isExpanded(rowStatus);
+                              return KeyedSubtree(
+                                key: _keyFor(playerId),
+                                child: ScoringPlayerRow(
+                                  player: player,
+                                  index: index,
+                                  photoURL:
+                                      player.photoURL ??
+                                      (player.userId == currentUser?.uid
+                                          ? currentUser?.photoUrl
+                                          : null),
+                                  status: rowStatus,
+                                  tricks: state.confirmedTricks[playerId],
+                                  isDealer:
+                                      playerId == state.round.dealerPlayerId,
+                                  draftTrick: isExpanded
+                                      ? state.draftTrick
+                                      : 0,
+                                  cardsInRound: state.round.cardsInRound,
+                                  canConfirmTrick: state.canConfirmTrick,
+                                  canAddMore: state.canAddMore,
+                                  onActivateEdit:
+                                      rowStatus ==
+                                          ScoringPlayerRowStatus.completed
+                                      ? () => context.read<ScoringBloc>().add(
+                                          TricksEditActivated(playerId),
+                                        )
+                                      : null,
+                                  onTrickChanged: isExpanded
+                                      ? (value) =>
+                                            context.read<ScoringBloc>().add(
+                                              TrickValueChanged(value),
+                                            )
+                                      : null,
+                                  onTrickConfirmed: isExpanded
+                                      ? () {
+                                          final bloc = context
+                                              .read<ScoringBloc>();
+                                          if (rowStatus ==
+                                              ScoringPlayerRowStatus.editing) {
+                                            bloc.add(
+                                              TricksUpdated(
+                                                playerId: playerId,
+                                                newTricks: state.draftTrick,
+                                              ),
+                                            );
+                                          } else {
+                                            bloc.add(const TricksConfirmed());
+                                          }
+                                        }
+                                      : null,
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: PrimaryButton(
+                label: 'Confirmar bazas',
+                isLoading: state.isClosing,
+                onPressed: state.canConfirm
+                    ? () => context.read<ScoringBloc>().add(
+                        const CloseRoundRequested(),
+                      )
+                    : null,
+              ),
+            ),
+          ],
         ),
       ],
     );

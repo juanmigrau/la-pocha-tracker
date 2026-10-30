@@ -9,6 +9,7 @@ import 'package:la_pocha/features/round/presentation/bloc/bidding_bloc.dart';
 import 'package:la_pocha/features/round/presentation/bloc/bidding_event.dart';
 import 'package:la_pocha/features/round/presentation/bloc/bidding_state.dart';
 import 'package:la_pocha/features/round/presentation/widgets/bidding_player_row.dart';
+import 'package:la_pocha/features/round/presentation/widgets/giant_background_number.dart';
 import 'package:la_pocha/features/round/presentation/widgets/round_header.dart';
 import 'package:la_pocha/features/round/presentation/widgets/tricks_balance_indicator.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -113,7 +114,6 @@ class _BiddingView extends StatelessWidget {
                       gameId: gameId,
                       roundNumber: roundNumber,
                       cardsInRound: cardsInRound,
-                      subtitle: 'Apuestas',
                       onBack: () {
                         _onBack(context);
                       },
@@ -243,132 +243,155 @@ class _LoadedBodyState extends State<_LoadedBody> {
     }
   }
 
+  /// Forbidden dealer value = remaining tricks after current bids.
+  Color _numberColor(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    if (state.availableTricks == 0) {
+      return colorScheme.error;
+    }
+    return colorScheme.onSurface;
+  }
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Stack(
       children: [
-        GestureDetector(
-          onTap: () => _cancelEditIfNeeded(context),
-          behavior: HitTestBehavior.opaque,
-          child: TricksBalanceIndicator(availableTricks: state.availableTricks),
+        GiantBackgroundNumber(
+          displayValue: '${state.availableTricks}',
+          label: 'prohibido',
+          color: _numberColor(context),
         ),
-        if (state.validationMessage != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-            child: Text(
-              state.validationMessage!,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: colorScheme.error),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            GestureDetector(
+              onTap: () => _cancelEditIfNeeded(context),
+              behavior: HitTestBehavior.opaque,
+              child: TricksBalanceIndicator(
+                availableTricks: state.availableTricks,
+              ),
             ),
-          ),
-        Expanded(
-          child: ListView(
-            controller: _scrollController,
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Column(
-                  children: [
-                    for (
-                      var index = 0;
-                      index < state.biddingOrder.length;
-                      index++
-                    ) ...[
-                      if (index > 0)
-                        Divider(
-                          height: 1,
-                          color: colorScheme.outlineVariant.withValues(
-                            alpha: 0.6,
-                          ),
-                        ),
-                      Builder(
-                        builder: (context) {
-                          final playerId = state.biddingOrder[index];
-                          final player = _playerById(playerId);
-                          if (player == null) {
-                            return const SizedBox.shrink();
-                          }
-                          final rowStatus = _statusFor(playerId);
-                          final isExpanded = _isExpanded(rowStatus);
-                          final isDealer =
-                              playerId == state.round.dealerPlayerId;
-                          final showForbidden =
-                              isDealer &&
-                              state.forbiddenBid != null &&
-                              rowStatus != BiddingPlayerRowStatus.pending;
-                          return KeyedSubtree(
-                            key: _keyFor(playerId),
-                            child: BiddingPlayerRow(
-                              player: player,
-                              index: index,
-                              status: rowStatus,
-                              bid: state.round.bids[playerId],
-                              isDealer: isDealer,
-                              draftBid: isExpanded ? state.draftBid : 0,
-                              cardsInRound: state.round.cardsInRound,
-                              forbiddenBid: showForbidden
-                                  ? state.forbiddenBid
-                                  : null,
-                              canConfirmBid: state.canConfirmBid,
-                              isSubmitting: state.isSubmitting,
-                              onActivateEdit:
-                                  rowStatus == BiddingPlayerRowStatus.completed
-                                  ? () => context.read<BiddingBloc>().add(
-                                      BidEditActivated(playerId),
-                                    )
-                                  : null,
-                              onBidChanged: isExpanded
-                                  ? (bid) => context.read<BiddingBloc>().add(
-                                      BidValueChanged(bid),
-                                    )
-                                  : null,
-                              onBidConfirmed: isExpanded
-                                  ? () {
-                                      final bloc = context.read<BiddingBloc>();
-                                      if (rowStatus ==
-                                          BiddingPlayerRowStatus.editing) {
-                                        bloc.add(
-                                          BidUpdated(
-                                            playerId: playerId,
-                                            newBid: state.draftBid,
-                                          ),
-                                        );
-                                      } else {
-                                        bloc.add(const BidConfirmed());
-                                      }
-                                    }
-                                  : null,
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ],
+            if (state.validationMessage != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                child: Text(
+                  state.validationMessage!,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: colorScheme.error),
                 ),
               ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-          child: PrimaryButton(
-            label: 'Cerrar apuestas',
-            isLoading: state.isClosing,
-            onPressed: state.canClose
-                ? () => context.read<BiddingBloc>().add(
-                    const CloseBiddingRequested(),
-                  )
-                : null,
-          ),
+            Expanded(
+              child: ListView(
+                controller: _scrollController,
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      children: [
+                        for (
+                          var index = 0;
+                          index < state.biddingOrder.length;
+                          index++
+                        ) ...[
+                          if (index > 0)
+                            Divider(
+                              height: 1,
+                              color: colorScheme.outlineVariant.withValues(
+                                alpha: 0.6,
+                              ),
+                            ),
+                          Builder(
+                            builder: (context) {
+                              final playerId = state.biddingOrder[index];
+                              final player = _playerById(playerId);
+                              if (player == null) {
+                                return const SizedBox.shrink();
+                              }
+                              final rowStatus = _statusFor(playerId);
+                              final isExpanded = _isExpanded(rowStatus);
+                              final isDealer =
+                                  playerId == state.round.dealerPlayerId;
+                              final showForbidden =
+                                  isDealer &&
+                                  state.forbiddenBid != null &&
+                                  rowStatus != BiddingPlayerRowStatus.pending;
+                              return KeyedSubtree(
+                                key: _keyFor(playerId),
+                                child: BiddingPlayerRow(
+                                  player: player,
+                                  index: index,
+                                  status: rowStatus,
+                                  bid: state.round.bids[playerId],
+                                  isDealer: isDealer,
+                                  draftBid: isExpanded ? state.draftBid : 0,
+                                  cardsInRound: state.round.cardsInRound,
+                                  forbiddenBid: showForbidden
+                                      ? state.forbiddenBid
+                                      : null,
+                                  canConfirmBid: state.canConfirmBid,
+                                  isSubmitting: state.isSubmitting,
+                                  onActivateEdit:
+                                      rowStatus ==
+                                          BiddingPlayerRowStatus.completed
+                                      ? () => context.read<BiddingBloc>().add(
+                                          BidEditActivated(playerId),
+                                        )
+                                      : null,
+                                  onBidChanged: isExpanded
+                                      ? (bid) =>
+                                            context.read<BiddingBloc>().add(
+                                              BidValueChanged(bid),
+                                            )
+                                      : null,
+                                  onBidConfirmed: isExpanded
+                                      ? () {
+                                          final bloc = context
+                                              .read<BiddingBloc>();
+                                          if (rowStatus ==
+                                              BiddingPlayerRowStatus.editing) {
+                                            bloc.add(
+                                              BidUpdated(
+                                                playerId: playerId,
+                                                newBid: state.draftBid,
+                                              ),
+                                            );
+                                          } else {
+                                            bloc.add(const BidConfirmed());
+                                          }
+                                        }
+                                      : null,
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: PrimaryButton(
+                label: 'Cerrar apuestas',
+                isLoading: state.isClosing,
+                onPressed: state.canClose
+                    ? () => context.read<BiddingBloc>().add(
+                        const CloseBiddingRequested(),
+                      )
+                    : null,
+              ),
+            ),
+          ],
         ),
       ],
     );
