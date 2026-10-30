@@ -165,8 +165,8 @@ void main() {
     expect(find.text('Ana'), findsOneWidget);
     expect(find.text('42'), findsOneWidget);
     expect(find.text('38'), findsOneWidget);
-    expect(find.text('-2'), findsNWidgets(2));
-    expect(find.text('Balance de bazas'), findsOneWidget);
+    // Giant number uses RichText with separate sign/digit spans.
+    expect(find.text('Balance de bazas'), findsNothing);
     expect(find.text('Bazas'), findsOneWidget);
     expect(find.text('Pts'), findsOneWidget);
     expect(find.text('Introducir bazas reales'), findsOneWidget);

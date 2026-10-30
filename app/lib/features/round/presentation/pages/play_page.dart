@@ -10,7 +10,6 @@ import 'package:la_pocha/features/round/presentation/bloc/play_state_state.dart'
 import 'package:la_pocha/features/round/presentation/widgets/giant_background_number.dart';
 import 'package:la_pocha/features/round/presentation/widgets/player_play_card.dart';
 import 'package:la_pocha/features/round/presentation/widgets/round_header.dart';
-import 'package:la_pocha/features/round/presentation/widgets/tricks_balance_banner.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 class PlayPage extends StatefulWidget {
@@ -137,18 +136,16 @@ class _LoadedBody extends StatelessWidget {
 
   final PlayStateLoaded state;
 
-  /// Bid balance = sum of bids − cards in round. Never 0 under dealer rule.
+  /// Bid balance = total bids − available tricks. Never 0 under dealer rule.
   int get _balance =>
       state.playState.bidSum - state.playState.round.cardsInRound;
 
-  String get _displayValue => _balance > 0 ? '+$_balance' : '$_balance';
-
-  Color _numberColor(BuildContext context) {
+  Color _playColor(BuildContext context, int balance) {
     final colorScheme = Theme.of(context).colorScheme;
-    if (_balance < 0) {
-      return Colors.green.shade400;
+    if (balance < 0) {
+      return colorScheme.tertiary;
     }
-    if (_balance > 0) {
+    if (balance > 0) {
       return colorScheme.error;
     }
     return colorScheme.onSurface;
@@ -160,21 +157,22 @@ class _LoadedBody extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final authState = context.watch<AuthBloc>().state;
     final currentUser = authState is Authenticated ? authState.user : null;
+    final balance = _balance;
 
     return Stack(
       children: [
         GiantBackgroundNumber(
-          displayValue: _displayValue,
+          signedValue: balance,
           label: 'balance',
-          color: _numberColor(context),
+          color: _playColor(context, balance),
+          placement: GiantBackgroundNumberPlacement.bottom,
+          fontSizeFactor: 0.72,
+          numberOpacity: 0.10,
+          labelOpacity: 0.28,
         ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TricksBalanceBanner(
-              bidSum: playState.bidSum,
-              cardsInRound: playState.round.cardsInRound,
-            ),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -210,46 +208,39 @@ class _LoadedBody extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: colorScheme.surface,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Column(
-                      children: [
-                        for (
-                          var index = 0;
-                          index < playState.players.length;
-                          index++
-                        ) ...[
-                          if (index > 0)
-                            Divider(
-                              height: 1,
-                              color: colorScheme.outlineVariant.withValues(
-                                alpha: 0.6,
-                              ),
+                  Column(
+                    children: [
+                      for (
+                        var index = 0;
+                        index < playState.players.length;
+                        index++
+                      ) ...[
+                        if (index > 0)
+                          Divider(
+                            height: 1,
+                            color: colorScheme.outlineVariant.withValues(
+                              alpha: 0.6,
                             ),
-                          Builder(
-                            builder: (context) {
-                              final player = playState.players[index];
-                              return PlayerPlayCard(
-                                player: player,
-                                index: index,
-                                bid: playState.round.bids[player.id] ?? 0,
-                                isDealer:
-                                    player.id == playState.round.dealerPlayerId,
-                                photoURL:
-                                    player.photoURL ??
-                                    (player.userId == currentUser?.uid
-                                        ? currentUser?.photoUrl
-                                        : null),
-                              );
-                            },
                           ),
-                        ],
+                        Builder(
+                          builder: (context) {
+                            final player = playState.players[index];
+                            return PlayerPlayCard(
+                              player: player,
+                              index: index,
+                              bid: playState.round.bids[player.id] ?? 0,
+                              isDealer:
+                                  player.id == playState.round.dealerPlayerId,
+                              photoURL:
+                                  player.photoURL ??
+                                  (player.userId == currentUser?.uid
+                                      ? currentUser?.photoUrl
+                                      : null),
+                            );
+                          },
+                        ),
                       ],
-                    ),
+                    ],
                   ),
                 ],
               ),
