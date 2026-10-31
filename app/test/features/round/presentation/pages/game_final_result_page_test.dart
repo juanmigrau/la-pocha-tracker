@@ -190,7 +190,7 @@ void main() {
     expect(find.text('Carla'), findsOneWidget);
     expect(find.text('Nueva partida'), findsOneWidget);
     expect(find.text('Repetir partida'), findsOneWidget);
-    expect(find.byIcon(Icons.table_chart_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.bar_chart), findsOneWidget);
     expect(find.byIcon(Icons.more_vert), findsNothing);
   });
 

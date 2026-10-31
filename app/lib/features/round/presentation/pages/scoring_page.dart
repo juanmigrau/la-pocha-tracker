@@ -104,6 +104,7 @@ class _ScoringView extends StatelessWidget {
                       gameId: gameId,
                       roundNumber: roundNumber,
                       cardsInRound: cardsInRound,
+                      phaseName: 'Bazas',
                       onBack: () => _onBack(context),
                     );
                   },
@@ -250,7 +251,7 @@ class _LoadedBodyState extends State<_LoadedBody> {
           color: _tricksColor(context, restantes),
           placement: GiantBackgroundNumberPlacement.bottom,
           fontSizeFactor: 0.72,
-          numberOpacity: 0.10,
+          numberOpacity: 0.20,
           labelOpacity: 0.28,
         ),
         Column(
@@ -320,10 +321,9 @@ class _LoadedBodyState extends State<_LoadedBody> {
                                       )
                                     : null,
                                 onTrickChanged: isExpanded
-                                    ? (value) =>
-                                          context.read<ScoringBloc>().add(
-                                            TrickValueChanged(value),
-                                          )
+                                    ? (value) => context
+                                          .read<ScoringBloc>()
+                                          .add(TrickValueChanged(value))
                                     : null,
                                 onTrickConfirmed: isExpanded
                                     ? () {

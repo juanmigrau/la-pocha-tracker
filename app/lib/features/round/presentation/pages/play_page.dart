@@ -97,6 +97,7 @@ class _PlayView extends StatelessWidget {
                       gameId: gameId,
                       roundNumber: roundNumber,
                       cardsInRound: cardsInRound,
+                      phaseName: 'En juego',
                       onBack: () => _goToBidding(context),
                     );
                   },
@@ -143,7 +144,7 @@ class _LoadedBody extends StatelessWidget {
   Color _playColor(BuildContext context, int balance) {
     final colorScheme = Theme.of(context).colorScheme;
     if (balance < 0) {
-      return colorScheme.tertiary;
+      return colorScheme.primary;
     }
     if (balance > 0) {
       return colorScheme.error;
@@ -167,7 +168,7 @@ class _LoadedBody extends StatelessWidget {
           color: _playColor(context, balance),
           placement: GiantBackgroundNumberPlacement.bottom,
           fontSizeFactor: 0.72,
-          numberOpacity: 0.10,
+          numberOpacity: 0.20,
           labelOpacity: 0.28,
         ),
         Column(
@@ -187,9 +188,7 @@ class _LoadedBody extends StatelessWidget {
                           child: Text(
                             'Bazas',
                             style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
+                                ?.copyWith(color: colorScheme.onSurfaceVariant),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -198,9 +197,7 @@ class _LoadedBody extends StatelessWidget {
                           child: Text(
                             'Pts',
                             style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(
-                                  color: colorScheme.onSurfaceVariant,
-                                ),
+                                ?.copyWith(color: colorScheme.onSurfaceVariant),
                             textAlign: TextAlign.center,
                           ),
                         ),

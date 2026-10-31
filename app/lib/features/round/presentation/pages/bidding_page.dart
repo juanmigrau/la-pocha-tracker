@@ -113,6 +113,7 @@ class _BiddingView extends StatelessWidget {
                       gameId: gameId,
                       roundNumber: roundNumber,
                       cardsInRound: cardsInRound,
+                      phaseName: 'Apuestas',
                       onBack: () {
                         _onBack(context);
                       },
@@ -236,45 +237,49 @@ class _LoadedBodyState extends State<_LoadedBody> {
         status == BiddingPlayerRowStatus.editing;
   }
 
-  /// Total confirmed bids so far in the current round.
-  int get _totalBidsSoFar => state.partialSum;
-
-  /// Forbidden dealer value = cards in round − bids so far.
-  int get _forbidden => state.round.cardsInRound - _totalBidsSoFar;
-
-  Color _bidColor(BuildContext context, int forbidden) {
+  Color _numberColor(BuildContext context, int forbidden) {
     final colorScheme = Theme.of(context).colorScheme;
     if (forbidden > 0) {
-      return colorScheme.tertiary;
+      return colorScheme.primary;
     }
-    if (forbidden == 0) {
-      return colorScheme.error;
-    }
-    return colorScheme.onSurface;
+    return colorScheme.error;
   }
 
   String _labelFor(int forbidden) {
-    if (forbidden >= 0) {
-      return 'prohibido ${forbidden.abs()}';
+    if (forbidden < 0) {
+      return 'bazas de más';
     }
-    return 'sin restricción';
+    return 'prohibido';
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final forbidden = _forbidden;
+    // availableTricks == cardsInRound − totalBidsSoFar (see BiddingBloc).
+    final forbidden = state.availableTricks;
+    final dealerId = state.round.dealerPlayerId;
+    final isDealerSelecting =
+        state.editingPlayerId == dealerId ||
+        (state.editingPlayerId == null && state.currentPlayerId == dealerId);
+    // No currentDealerBid in state — draftBid while the dealer is selecting.
+    final int? currentDealerBid = isDealerSelecting ? state.draftBid : null;
+    final isDealerPickingForbidden =
+        currentDealerBid != null && currentDealerBid == forbidden;
+    // Match PlayPage opacity pair; bump both when dealer picks forbidden.
+    final numberOpacity = isDealerPickingForbidden ? 0.5 : 0.20;
+    final labelOpacity = isDealerPickingForbidden ? 0.616 : 0.28;
 
     return Stack(
       children: [
         GiantBackgroundNumber(
-          displayValue: '$_totalBidsSoFar',
+          signedValue: forbidden < 0 ? forbidden.abs() : null,
+          displayValue: forbidden >= 0 ? '$forbidden' : null,
           label: _labelFor(forbidden),
-          color: _bidColor(context, forbidden),
+          color: _numberColor(context, forbidden),
           placement: GiantBackgroundNumberPlacement.bottom,
           fontSizeFactor: 0.72,
-          numberOpacity: 0.10,
-          labelOpacity: 0.28,
+          numberOpacity: numberOpacity,
+          labelOpacity: labelOpacity,
         ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -319,10 +324,6 @@ class _LoadedBodyState extends State<_LoadedBody> {
                             final isExpanded = _isExpanded(rowStatus);
                             final isDealer =
                                 playerId == state.round.dealerPlayerId;
-                            final showForbidden =
-                                isDealer &&
-                                state.forbiddenBid != null &&
-                                rowStatus != BiddingPlayerRowStatus.pending;
                             return KeyedSubtree(
                               key: _keyFor(playerId),
                               child: BiddingPlayerRow(
@@ -333,9 +334,6 @@ class _LoadedBodyState extends State<_LoadedBody> {
                                 isDealer: isDealer,
                                 draftBid: isExpanded ? state.draftBid : 0,
                                 cardsInRound: state.round.cardsInRound,
-                                forbiddenBid: showForbidden
-                                    ? state.forbiddenBid
-                                    : null,
                                 canConfirmBid: state.canConfirmBid,
                                 isSubmitting: state.isSubmitting,
                                 onActivateEdit:

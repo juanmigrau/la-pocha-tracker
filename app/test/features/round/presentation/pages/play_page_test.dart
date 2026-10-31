@@ -171,7 +171,7 @@ void main() {
     expect(find.text('Pts'), findsOneWidget);
     expect(find.text('Introducir bazas reales'), findsOneWidget);
     expect(find.text('Corregir apuestas'), findsNothing);
-    expect(find.text('En juego'), findsNothing);
+    expect(find.text('En juego'), findsOneWidget);
     expect(find.text('balance'), findsOneWidget);
   });
 
