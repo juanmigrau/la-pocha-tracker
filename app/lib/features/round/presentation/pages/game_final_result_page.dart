@@ -150,7 +150,7 @@ class _LoadedBody extends StatelessWidget {
             actions: [
               IconButton(
                 icon: const Icon(
-                  Icons.table_chart_outlined,
+                  Icons.bar_chart,
                   color: Colors.white,
                 ),
                 tooltip: 'Ver tabla de puntos',
