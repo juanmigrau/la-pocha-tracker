@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:la_pocha/core/theme/app_theme.dart';
 import 'package:la_pocha/features/favorites/presentation/bloc/favorites_bloc.dart';
 
 enum _AddFavoriteOption { freeName, search }
@@ -195,21 +194,23 @@ class _RegisteredFavoriteSearch extends StatelessWidget {
             Text(
               'Resultado de ejemplo (stub)',
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: AppTheme.onSurfaceVariant,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
             ),
             const SizedBox(height: 8),
             ListTile(
-              tileColor: Colors.white,
+              tileColor: Theme.of(context).cardTheme.color ??
+                  Theme.of(context).colorScheme.surface,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              leading: const CircleAvatar(
-                backgroundColor: Color(0xFFD7ECE0),
+              leading: CircleAvatar(
+                backgroundColor:
+                    Theme.of(context).colorScheme.primaryContainer,
                 child: Text(
                   'A',
                   style: TextStyle(
-                    color: AppTheme.primary,
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),

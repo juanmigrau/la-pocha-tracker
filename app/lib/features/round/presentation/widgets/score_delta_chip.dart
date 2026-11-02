@@ -8,17 +8,15 @@ class ScoreDeltaChip extends StatelessWidget {
 
   final int positionDelta;
 
-  static const Color _positiveColor = Color(0xFF2E7D5B);
-  static const Color _negativeColor = Color(0xFFD9772E);
-
   @override
   Widget build(BuildContext context) {
     if (positionDelta == 0) {
       return const SizedBox.shrink();
     }
 
+    final colorScheme = Theme.of(context).colorScheme;
     final isUp = positionDelta > 0;
-    final color = isUp ? _positiveColor : _negativeColor;
+    final color = isUp ? colorScheme.primary : colorScheme.tertiary;
     final icon = isUp ? Icons.arrow_upward : Icons.arrow_downward;
     final label = isUp ? '+$positionDelta' : '$positionDelta';
 

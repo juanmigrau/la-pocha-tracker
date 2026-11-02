@@ -143,18 +143,25 @@ class _LoadedBody extends StatelessWidget {
           PochaAppBar(
             title: 'Resultado final',
             subtitle: '${data.roundCount} rondas',
-            leading: IconButton(
-              onPressed: () => context.go('/'),
-              icon: const Icon(Icons.home, color: Colors.white),
+            leading: Builder(
+              builder: (context) {
+                final onPrimary = Theme.of(context).colorScheme.onPrimary;
+                return IconButton(
+                  onPressed: () => context.go('/'),
+                  icon: Icon(Icons.home, color: onPrimary),
+                );
+              },
             ),
             actions: [
-              IconButton(
-                icon: const Icon(
-                  Icons.bar_chart,
-                  color: Colors.white,
-                ),
-                tooltip: 'Ver tabla de puntos',
-                onPressed: () => context.push('/games/$gameId/scorecard'),
+              Builder(
+                builder: (context) {
+                  final onPrimary = Theme.of(context).colorScheme.onPrimary;
+                  return IconButton(
+                    icon: Icon(Icons.bar_chart, color: onPrimary),
+                    tooltip: 'Ver tabla de puntos',
+                    onPressed: () => context.push('/games/$gameId/scorecard'),
+                  );
+                },
               ),
             ],
           ),

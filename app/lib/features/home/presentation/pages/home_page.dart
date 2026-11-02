@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:la_pocha/core/di/injection.dart';
-import 'package:la_pocha/core/theme/app_theme.dart';
+import 'package:la_pocha/core/theme/theme_bloc.dart';
 import 'package:la_pocha/core/utils/snack_bar_helper.dart';
 import 'package:la_pocha/core/widgets/player_initial_avatar.dart';
 import 'package:la_pocha/core/widgets/pocha_app_bar.dart';
@@ -120,6 +120,49 @@ class _HomeViewState extends State<_HomeView> {
               subtitle: 'Marcador de puntos',
               expanded: true,
               actions: [
+                BlocBuilder<ThemeBloc, ThemeState>(
+                  builder: (context, themeState) {
+                    return PopupMenuButton<ThemeMode>(
+                      icon: Icon(
+                        switch (themeState.themeMode) {
+                          ThemeMode.light => Icons.light_mode,
+                          ThemeMode.dark => Icons.dark_mode,
+                          ThemeMode.system => Icons.brightness_auto,
+                        },
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
+                      tooltip: 'Tema',
+                      onSelected: (mode) =>
+                          context.read<ThemeBloc>().add(ThemeChanged(mode)),
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(
+                          value: ThemeMode.light,
+                          child: ListTile(
+                            leading: Icon(Icons.light_mode),
+                            title: Text('Claro'),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: ThemeMode.dark,
+                          child: ListTile(
+                            leading: Icon(Icons.dark_mode),
+                            title: Text('Oscuro'),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: ThemeMode.system,
+                          child: ListTile(
+                            leading: Icon(Icons.brightness_auto),
+                            title: Text('Dispositivo'),
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
                 BlocBuilder<AuthBloc, AuthState>(
                   builder: (context, state) {
                     final isAuthenticated = state is Authenticated;
@@ -127,6 +170,7 @@ class _HomeViewState extends State<_HomeView> {
                     final photoURL = user?.photoUrl;
                     final hasPhoto =
                         user != null && photoURL != null && photoURL.isNotEmpty;
+                    final onPrimary = Theme.of(context).colorScheme.onPrimary;
                     final icon = hasPhoto
                         ? PlayerInitialAvatar(
                             name: user.displayName,
@@ -134,9 +178,9 @@ class _HomeViewState extends State<_HomeView> {
                             photoURL: photoURL,
                             radius: 20,
                           )
-                        : const Icon(
+                        : Icon(
                             Icons.account_circle_outlined,
-                            color: Colors.white,
+                            color: onPrimary,
                           );
                     return IconButton(
                       onPressed: () =>
@@ -252,8 +296,8 @@ class _HomeViewState extends State<_HomeView> {
                 icon: const Icon(Icons.help_outline),
                 label: const Text('¿Cómo se juega?'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.primary,
-                  side: const BorderSide(color: AppTheme.primary),
+                  foregroundColor: theme.colorScheme.primary,
+                  side: BorderSide(color: theme.colorScheme.primary),
                   minimumSize: const Size.fromHeight(52),
                 ),
               ),

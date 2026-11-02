@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:la_pocha/core/theme/app_theme.dart';
 import 'package:la_pocha/core/widgets/player_initial_avatar.dart';
 import 'package:la_pocha/features/game_setup/domain/entities/player_embed.dart';
 import 'package:la_pocha/features/round/presentation/widgets/bid_input_stepper.dart';
@@ -93,11 +92,12 @@ class ScoringPlayerRow extends StatelessWidget {
               if (status == ScoringPlayerRowStatus.completed)
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: const Color(0xFFD7ECE0),
+                  backgroundColor:
+                      Theme.of(context).colorScheme.primaryContainer,
                   child: Text(
                     '$tricks',
-                    style: const TextStyle(
-                      color: AppTheme.primary,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),

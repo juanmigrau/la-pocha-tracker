@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:la_pocha/core/theme/app_theme.dart';
 import 'package:la_pocha/core/widgets/player_initial_avatar.dart';
 import 'package:la_pocha/features/favorites/domain/entities/favorite_player.dart';
 
@@ -17,8 +16,9 @@ class FavoriteListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return ListTile(
-      tileColor: Colors.white,
+      tileColor: theme.cardTheme.color ?? theme.colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -37,8 +37,10 @@ class FavoriteListTile extends StatelessWidget {
                   onPressed: onDelete,
                 )
               : Icon(
-                  favorite.isRegistered ? Icons.verified : Icons.person_outline,
-                  color: AppTheme.onSurfaceVariant,
+                  favorite.isRegistered
+                      ? Icons.verified
+                      : Icons.person_outline,
+                  color: theme.colorScheme.onSurfaceVariant,
                 )),
     );
   }

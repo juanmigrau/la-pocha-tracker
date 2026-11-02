@@ -89,41 +89,51 @@ class GiantBackgroundNumber extends StatelessWidget {
       final value = signedValue!;
       return SizedBox(
         width: constraints.maxWidth,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              value < 0 ? '-' : '+',
-              style: TextStyle(
-                fontSize: fontSize * 0.55,
-                fontWeight: FontWeight.w900,
-                color: numberColor,
-                height: 1.0,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                value < 0 ? '-' : '+',
+                style: TextStyle(
+                  fontSize: fontSize * 0.55,
+                  fontWeight: FontWeight.w900,
+                  color: numberColor,
+                  height: 1.0,
+                ),
               ),
-            ),
-            Text(
-              value.abs().toString(),
-              style: TextStyle(
-                fontSize: fontSize,
-                fontWeight: FontWeight.w900,
-                color: numberColor,
-                height: 1.0,
+              Text(
+                value.abs().toString(),
+                style: TextStyle(
+                  fontSize: fontSize,
+                  fontWeight: FontWeight.w900,
+                  color: numberColor,
+                  height: 1.0,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
 
-    return Text(
-      displayValue!,
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: fontSize,
-        fontWeight: FontWeight.w900,
-        color: numberColor,
-        height: 1.0,
+    return SizedBox(
+      width: constraints.maxWidth,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          displayValue!,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: fontSize,
+            fontWeight: FontWeight.w900,
+            color: numberColor,
+            height: 1.0,
+          ),
+        ),
       ),
     );
   }

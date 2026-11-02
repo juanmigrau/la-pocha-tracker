@@ -18,7 +18,7 @@ Future<bool> showRepeatRoundDialog(BuildContext context) async {
         TextButton(
           onPressed: () => Navigator.of(dialogContext).pop(true),
           style: TextButton.styleFrom(
-            foregroundColor: const Color(0xFFD9772E),
+            foregroundColor: Theme.of(dialogContext).colorScheme.tertiary,
           ),
           child: const Text('Repetir ronda'),
         ),

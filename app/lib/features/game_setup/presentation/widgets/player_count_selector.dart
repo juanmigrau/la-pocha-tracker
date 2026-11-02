@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:la_pocha/core/theme/app_theme.dart';
 
 class PlayerCountSelector extends StatelessWidget {
   const PlayerCountSelector({
@@ -15,13 +14,14 @@ class PlayerCountSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'NÚMERO DE JUGADORES',
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: AppTheme.onSurfaceVariant,
+                color: colorScheme.onSurfaceVariant,
                 letterSpacing: 1.2,
                 fontWeight: FontWeight.w600,
               ),
@@ -66,12 +66,16 @@ class _PlayerCountButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final borderColor = selected
-        ? AppTheme.primary
-        : AppTheme.onSurfaceVariant.withValues(alpha: 0.3);
+        ? colorScheme.primary
+        : colorScheme.onSurfaceVariant.withValues(alpha: 0.3);
 
     return Material(
-      color: selected ? AppTheme.primary : Colors.white,
+      color: selected
+          ? colorScheme.primary
+          : theme.cardTheme.color ?? colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: borderColor),
@@ -87,7 +91,9 @@ class _PlayerCountButton extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 20,
-                color: selected ? Colors.white : AppTheme.onSurfaceVariant,
+                color: selected
+                    ? colorScheme.onPrimary
+                    : colorScheme.onSurfaceVariant,
               ),
             ),
           ),

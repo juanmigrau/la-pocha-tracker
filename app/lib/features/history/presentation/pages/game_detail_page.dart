@@ -162,7 +162,10 @@ class _LoadedBody extends StatelessWidget {
           onBack: () => context.pop(),
           actions: [
             IconButton(
-              icon: const Icon(Icons.table_chart_outlined, color: Colors.white),
+              icon: Icon(
+                Icons.table_chart_outlined,
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
               tooltip: 'Ver tabla de puntos',
               onPressed: () =>
                   context.push('/games/${detail.game.id}/scorecard'),

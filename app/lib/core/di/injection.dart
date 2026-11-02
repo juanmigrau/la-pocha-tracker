@@ -5,6 +5,7 @@ import 'package:get_it/get_it.dart';
 import 'package:la_pocha/core/config/debug_config_notifier.dart';
 import 'package:la_pocha/core/database/app_database.dart';
 import 'package:la_pocha/core/services/local_user_service.dart';
+import 'package:la_pocha/core/theme/theme_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:la_pocha/features/game_setup/data/datasources/game_local_datasource.dart';
 import 'package:la_pocha/features/game_setup/data/datasources/round_local_datasource.dart';
@@ -123,6 +124,9 @@ Future<void> configureDependencies() async {
   getIt.registerSingleton<SharedPreferences>(prefs);
   getIt.registerLazySingleton<LocalUserService>(
     () => LocalUserService(getIt<SharedPreferences>()),
+  );
+  getIt.registerLazySingleton<ThemeBloc>(
+    () => ThemeBloc(prefs: getIt<SharedPreferences>()),
   );
 
   if (kDebugMode) {

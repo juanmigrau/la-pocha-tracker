@@ -90,7 +90,10 @@ class _AddPlayersView extends StatelessWidget {
                             const UserSearchOpened(),
                           );
                         },
-                        icon: const Icon(Icons.search, color: Colors.white),
+                        icon: Icon(
+                          Icons.search,
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
                       ),
                     ],
                   ),

@@ -118,14 +118,14 @@ class _HistoryListView extends StatelessWidget {
                     onBack: () => context.pop(),
                     actions: [
                       if (isCloudLoading)
-                        const Padding(
-                          padding: EdgeInsets.only(right: 16),
+                        Padding(
+                          padding: const EdgeInsets.only(right: 16),
                           child: SizedBox(
                             width: 12,
                             height: 12,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onPrimary,
                             ),
                           ),
                         ),

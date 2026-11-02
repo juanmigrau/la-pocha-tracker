@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:la_pocha/core/theme/app_theme.dart';
 import 'package:la_pocha/features/history/domain/entities/game_history_source.dart';
 import 'package:la_pocha/features/sync/domain/entities/sync_status.dart';
 
@@ -50,28 +49,28 @@ class SourceBadge extends StatelessWidget {
     }
 
     if (syncStatus == SyncStatus.pending) {
-      return const _BadgeAppearance(
+      return _BadgeAppearance(
         label: 'Pendiente',
         icon: Icons.cloud_upload_outlined,
-        background: Color(0xFFFFF3E0),
-        foreground: Color(0xFFE65100),
+        background: colorScheme.tertiaryContainer,
+        foreground: colorScheme.onTertiaryContainer,
       );
     }
 
     if (syncStatus == SyncStatus.failed) {
-      return const _BadgeAppearance(
+      return _BadgeAppearance(
         label: 'Error sync',
         icon: Icons.cloud_off_outlined,
-        background: Color(0xFFFFEBEE),
-        foreground: Color(0xFFC62828),
+        background: colorScheme.errorContainer,
+        foreground: colorScheme.onErrorContainer,
       );
     }
 
-    return const _BadgeAppearance(
+    return _BadgeAppearance(
       label: 'Local',
       icon: Icons.smartphone,
-      background: Color(0xFFD7ECE0),
-      foreground: AppTheme.primary,
+      background: colorScheme.primaryContainer,
+      foreground: colorScheme.primary,
     );
   }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:la_pocha/core/theme/app_theme.dart';
 import 'package:la_pocha/core/utils/card_count_label.dart';
 import 'package:la_pocha/features/game_setup/presentation/widgets/game_overflow_menu.dart';
 
@@ -23,6 +22,8 @@ class RoundHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final onPrimary = colorScheme.onPrimary;
     final roundSubtitle = cardsInRound == null
         ? 'Ronda $roundNumber'
         : 'Ronda $roundNumber · ${cardCountLabel(cardsInRound!)}';
@@ -31,16 +32,16 @@ class RoundHeader extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        color: AppTheme.primary,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: colorScheme.primary,
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
       ),
       padding: EdgeInsets.fromLTRB(8, 16 + statusBarHeight, 16, 16),
       child: Row(
         children: [
           IconButton(
             onPressed: onBack ?? () => context.pop(),
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            icon: Icon(Icons.arrow_back, color: onPrimary),
           ),
           Expanded(
             child: Column(
@@ -50,14 +51,14 @@ class RoundHeader extends StatelessWidget {
                 Text(
                   phaseName,
                   style: theme.textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
+                    color: onPrimary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
                   roundSubtitle,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.80),
+                    color: onPrimary.withValues(alpha: 0.80),
                   ),
                 ),
               ],

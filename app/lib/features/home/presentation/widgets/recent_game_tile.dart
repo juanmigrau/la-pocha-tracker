@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:la_pocha/core/theme/app_theme.dart';
 import 'package:la_pocha/core/utils/player_display_name.dart';
 import 'package:la_pocha/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:la_pocha/features/history/domain/entities/game_history_item.dart';
@@ -54,9 +53,9 @@ class RecentGameTile extends StatelessWidget {
           );
 
     return Material(
-      color: Colors.white,
+      color: theme.cardTheme.color ?? colorScheme.surface,
       elevation: 2,
-      shadowColor: Colors.black26,
+      shadowColor: colorScheme.shadow.withValues(alpha: 0.26),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -82,7 +81,7 @@ class RecentGameTile extends StatelessWidget {
                 Text(
                   playerNames,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.onSurface,
+                    color: colorScheme.onSurface,
                     fontWeight: FontWeight.w700,
                     height: 1.2,
                   ),
@@ -93,7 +92,7 @@ class RecentGameTile extends StatelessWidget {
                 Text(
                   winnerName == null ? 'Sin ganador' : 'Ganó $winnerName',
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppTheme.primary,
+                    color: colorScheme.primary,
                     height: 1.2,
                   ),
                   maxLines: 1,

@@ -40,6 +40,7 @@ class _GameOverflowMenuView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final onPrimary = Theme.of(context).colorScheme.onPrimary;
     return BlocListener<CancelGameCubit, CancelGameState>(
       listener: (context, state) {
         if (state is CancelGameSuccess) {
@@ -54,12 +55,12 @@ class _GameOverflowMenuView extends StatelessWidget {
           IconButton(
             tooltip: 'Ver tabla de puntos',
             onPressed: () => context.push('/games/$gameId/scorecard'),
-            icon: const Icon(Icons.bar_chart, color: Colors.white),
+            icon: Icon(Icons.bar_chart, color: onPrimary),
           ),
           IconButton(
             tooltip: 'Cancelar partida',
             onPressed: () => _confirmAndCancel(context),
-            icon: const Icon(Icons.cancel_outlined, color: Colors.white),
+            icon: Icon(Icons.cancel_outlined, color: onPrimary),
           ),
         ],
       ),

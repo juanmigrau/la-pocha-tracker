@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:la_pocha/core/theme/app_theme.dart';
 
 class PochaAppBar extends StatelessWidget implements PreferredSizeWidget {
   const PochaAppBar({
@@ -67,11 +66,13 @@ class PochaAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final onPrimary = colorScheme.onPrimary;
     final titleStyle =
         (expanded
                 ? Theme.of(context).textTheme.headlineSmall
                 : Theme.of(context).textTheme.titleLarge)
-            ?.copyWith(color: Colors.white, fontWeight: FontWeight.bold);
+            ?.copyWith(color: onPrimary, fontWeight: FontWeight.bold);
 
     final showDefaultBack = leading == null && onBack != null;
     final resolvedLeading =
@@ -84,13 +85,13 @@ class PochaAppBar extends StatelessWidget implements PreferredSizeWidget {
                   minimumSize: const Size(48, 48),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                icon: Icon(Icons.arrow_back, color: onPrimary),
               )
             : null);
 
     final statusBarHeight = MediaQuery.paddingOf(context).top;
     final bar = Container(
-      decoration: const BoxDecoration(color: AppTheme.primary),
+      decoration: BoxDecoration(color: colorScheme.primary),
       padding: expanded
           ? EdgeInsets.fromLTRB(16, 24 + statusBarHeight, 24, 24)
           : EdgeInsets.fromLTRB(16, 16 + statusBarHeight, 8, 16),
@@ -110,7 +111,7 @@ class PochaAppBar extends StatelessWidget implements PreferredSizeWidget {
                   Text(
                     subtitle!,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.8),
+                      color: onPrimary.withValues(alpha: 0.8),
                     ),
                   ),
               ],

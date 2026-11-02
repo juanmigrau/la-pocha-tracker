@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:la_pocha/core/theme/app_theme.dart';
 
 class UserSearchField extends StatefulWidget {
   const UserSearchField({
@@ -32,17 +31,18 @@ class _UserSearchFieldState extends State<UserSearchField> {
 
   @override
   Widget build(BuildContext context) {
+    final onPrimary = Theme.of(context).colorScheme.onPrimary;
     return TextField(
       controller: _controller,
       autofocus: true,
       textInputAction: TextInputAction.search,
       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-        color: Colors.white,
+        color: onPrimary,
       ),
-      cursorColor: Colors.white,
+      cursorColor: onPrimary,
       decoration: InputDecoration(
         hintText: 'Buscar usuario…',
-        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+        hintStyle: TextStyle(color: onPrimary.withValues(alpha: 0.7)),
         border: InputBorder.none,
         suffixIcon: IconButton(
           onPressed: () {
@@ -53,7 +53,7 @@ class _UserSearchFieldState extends State<UserSearchField> {
               widget.onClosed();
             }
           },
-          icon: const Icon(Icons.close, color: Colors.white),
+          icon: Icon(Icons.close, color: onPrimary),
         ),
       ),
       onChanged: widget.onQueryChanged,
@@ -77,8 +77,9 @@ class UserSearchAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Material(
-      color: AppTheme.primary,
+      color: colorScheme.primary,
       child: SafeArea(
         bottom: false,
         child: SizedBox(
@@ -87,7 +88,7 @@ class UserSearchAppBar extends StatelessWidget implements PreferredSizeWidget {
             children: [
               IconButton(
                 onPressed: onClosed,
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                icon: Icon(Icons.arrow_back, color: colorScheme.onPrimary),
               ),
               Expanded(
                 child: UserSearchField(

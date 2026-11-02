@@ -16,13 +16,14 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final onPrimary = Theme.of(context).colorScheme.onPrimary;
     final child = isLoading
-        ? const SizedBox(
+        ? SizedBox(
             height: 20,
             width: 20,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: Colors.white,
+              color: onPrimary,
             ),
           )
         : Text(label);

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:la_pocha/core/theme/app_theme.dart';
 import 'package:la_pocha/core/utils/player_colors.dart';
 import 'package:la_pocha/core/utils/player_display_name.dart';
 import 'package:la_pocha/features/game_setup/domain/entities/player_embed.dart';
@@ -103,7 +102,7 @@ class _ScorecardTableState extends State<ScorecardTable> {
                   child: Text(
                     '#',
                     style: headerStyle?.copyWith(
-                      color: AppTheme.onSurfaceVariant,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -218,11 +217,13 @@ class _CardsCell extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: isCurrent
-            ? AppTheme.primary.withValues(alpha: 0.05)
+            ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.05)
             : Colors.transparent,
         border: Border(
           right: BorderSide(color: dividerColor, width: 0.5),
-          bottom: BorderSide(color: Colors.black.withValues(alpha: 0.18)),
+          bottom: BorderSide(
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.18),
+          ),
         ),
       ),
       child: Text(
@@ -296,10 +297,12 @@ class _DataRow extends StatelessWidget {
       height: height,
       decoration: BoxDecoration(
         color: row.isCurrent
-            ? AppTheme.primary.withValues(alpha: 0.05)
+            ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.05)
             : Colors.transparent,
         border: Border(
-          bottom: BorderSide(color: Colors.black.withValues(alpha: 0.18)),
+          bottom: BorderSide(
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.18),
+          ),
         ),
       ),
       child: Row(
@@ -328,7 +331,7 @@ class _DataRow extends StatelessWidget {
                       _formatNullable(row.cumulative[players[i].id]),
                       textAlign: TextAlign.center,
                       style: style?.copyWith(
-                        color: _bidOutcomeColor(players[i].id),
+                        color: _bidOutcomeColor(context, players[i].id),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -344,11 +347,11 @@ class _DataRow extends StatelessWidget {
   String _formatNullable(int? value) => value == null ? '—' : '$value';
 
   /// Green when bid hit tricks; red when missed. Independent of score sign.
-  Color? _bidOutcomeColor(String playerId) {
+  Color? _bidOutcomeColor(BuildContext context, String playerId) {
     final bid = row.bids[playerId];
     final tricks = row.tricks[playerId];
     if (bid == null || tricks == null) {
-      return AppTheme.onSurfaceVariant;
+      return Theme.of(context).colorScheme.onSurfaceVariant;
     }
     if (bid == tricks) {
       return const Color(0xFF43A047);

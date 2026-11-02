@@ -29,8 +29,6 @@ class _CorrectBidsDialog extends StatefulWidget {
 }
 
 class _CorrectBidsDialogState extends State<_CorrectBidsDialog> {
-  static const Color _warningColor = Color(0xFFD9772E);
-
   late final Map<String, int> _initialBids;
   late Map<String, int> _draftBids;
 
@@ -134,7 +132,7 @@ class _CorrectBidsDialogState extends State<_CorrectBidsDialog> {
                   'La suma iguala $cardsInRound: el repartidor debera ajustar '
                   'su apuesta antes de continuar.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: _warningColor,
+                        color: Theme.of(context).colorScheme.tertiary,
                       ),
                 ),
               ),

@@ -7,6 +7,7 @@ import 'package:la_pocha/core/di/injection.dart';
 import 'package:la_pocha/core/router/app_router.dart';
 import 'package:la_pocha/core/router/auth_refresh_notifier.dart';
 import 'package:la_pocha/core/theme/app_theme.dart';
+import 'package:la_pocha/core/theme/theme_bloc.dart';
 import 'package:la_pocha/core/widgets/root_scaffold_messenger_key.dart';
 import 'package:la_pocha/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:la_pocha/features/game_setup/domain/entities/round_status.dart';
@@ -19,15 +20,6 @@ import 'package:la_pocha/firebase_options.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Colors.transparent,
-      systemNavigationBarIconBrightness: Brightness.dark,
-      systemNavigationBarDividerColor: Colors.transparent,
-    ),
-  );
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -39,6 +31,7 @@ Future<void> main() async {
 
   final authBloc = getIt<AuthBloc>()..add(const AuthStarted());
   final gameSyncBloc = getIt<GameSyncBloc>();
+  final themeBloc = getIt<ThemeBloc>()..add(const ThemeStarted());
   final refreshNotifier = AuthRefreshNotifier(authBloc);
   final router = createAppRouter(
     refreshListenable: refreshNotifier,
@@ -47,7 +40,12 @@ Future<void> main() async {
   );
 
   runApp(
-    LaPochaApp(authBloc: authBloc, gameSyncBloc: gameSyncBloc, router: router),
+    LaPochaApp(
+      authBloc: authBloc,
+      gameSyncBloc: gameSyncBloc,
+      themeBloc: themeBloc,
+      router: router,
+    ),
   );
 }
 
@@ -83,11 +81,13 @@ class LaPochaApp extends StatelessWidget {
     super.key,
     required this.authBloc,
     required this.gameSyncBloc,
+    required this.themeBloc,
     required this.router,
   });
 
   final AuthBloc authBloc;
   final GameSyncBloc gameSyncBloc;
+  final ThemeBloc themeBloc;
   final GoRouter router;
 
   @override
@@ -96,13 +96,20 @@ class LaPochaApp extends StatelessWidget {
       providers: [
         BlocProvider<AuthBloc>.value(value: authBloc),
         BlocProvider<GameSyncBloc>.value(value: gameSyncBloc),
+        BlocProvider<ThemeBloc>.value(value: themeBloc),
       ],
       child: SyncStatusSnackbar(
-        child: MaterialApp.router(
-          title: 'La Pocha',
-          theme: AppTheme.light,
-          scaffoldMessengerKey: rootScaffoldMessengerKey,
-          routerConfig: router,
+        child: BlocBuilder<ThemeBloc, ThemeState>(
+          builder: (context, state) {
+            return MaterialApp.router(
+              title: 'La Pocha',
+              theme: AppTheme.light,
+              darkTheme: AppTheme.dark,
+              themeMode: state.themeMode,
+              scaffoldMessengerKey: rootScaffoldMessengerKey,
+              routerConfig: router,
+            );
+          },
         ),
       ),
     );

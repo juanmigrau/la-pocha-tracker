@@ -133,8 +133,6 @@ class _PlayView extends StatelessWidget {
 class _LoadedBody extends StatelessWidget {
   const _LoadedBody({required this.state});
 
-  static const Color _warningColor = Color(0xFFD9772E);
-
   final PlayStateLoaded state;
 
   /// Bid balance = total bids − available tricks. Never 0 under dealer rule.
@@ -248,9 +246,9 @@ class _LoadedBody extends StatelessWidget {
                 child: Text(
                   'La suma de apuestas iguala ${playState.round.cardsInRound}. '
                   'El repartidor debe corregir su apuesta antes de continuar.',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodySmall?.copyWith(color: _warningColor),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.tertiary,
+                  ),
                 ),
               ),
             Padding(

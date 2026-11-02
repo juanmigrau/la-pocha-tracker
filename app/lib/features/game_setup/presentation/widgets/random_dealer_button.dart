@@ -10,15 +10,14 @@ class RandomDealerButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final bool isEnabled;
 
-  static const Color _amber = Color(0xFFF4A259);
-
   @override
   Widget build(BuildContext context) {
+    final tertiary = Theme.of(context).colorScheme.tertiary;
     return OutlinedButton.icon(
       onPressed: isEnabled ? onPressed : null,
       style: OutlinedButton.styleFrom(
-        foregroundColor: _amber,
-        side: const BorderSide(color: _amber),
+        foregroundColor: tertiary,
+        side: BorderSide(color: tertiary),
         minimumSize: const Size.fromHeight(52),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
