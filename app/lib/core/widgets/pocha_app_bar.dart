@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 class PochaAppBar extends StatelessWidget implements PreferredSizeWidget {
   const PochaAppBar({
     super.key,
-    required this.title,
+    this.title = '',
+    this.titleWidget,
     this.subtitle,
     this.actions,
     this.onBack,
@@ -11,9 +12,13 @@ class PochaAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.backConfirmationMessage = '¿Seguro que quieres salir?',
     this.leading,
     this.expanded = false,
-  });
+  }) : assert(
+         titleWidget != null || title != '',
+         'Provide either title or titleWidget',
+       );
 
   final String title;
+  final Widget? titleWidget;
   final String? subtitle;
   final List<Widget>? actions;
   final VoidCallback? onBack;
@@ -91,7 +96,13 @@ class PochaAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     final statusBarHeight = MediaQuery.paddingOf(context).top;
     final bar = Container(
-      decoration: BoxDecoration(color: colorScheme.primary),
+      decoration: BoxDecoration(
+        color: colorScheme.primary,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+      ),
       padding: expanded
           ? EdgeInsets.fromLTRB(16, 24 + statusBarHeight, 24, 24)
           : EdgeInsets.fromLTRB(16, 16 + statusBarHeight, 8, 16),
@@ -106,7 +117,7 @@ class PochaAppBar extends StatelessWidget implements PreferredSizeWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(title, style: titleStyle),
+                titleWidget ?? Text(title, style: titleStyle),
                 if (subtitle != null && subtitle!.isNotEmpty)
                   Text(
                     subtitle!,
