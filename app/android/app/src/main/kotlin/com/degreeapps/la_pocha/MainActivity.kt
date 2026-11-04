@@ -9,12 +9,6 @@ import io.flutter.embedding.android.FlutterFragmentActivity
 // extends FragmentActivity → ComponentActivity and supports enableEdgeToEdge().
 class MainActivity : FlutterFragmentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
-    // #region agent log
-    android.util.Log.i(
-      "DBG06c61b",
-      "hypA: base=FlutterFragmentActivity enableEdgeToEdge_receiver_ok=true",
-    )
-    // #endregion
     enableEdgeToEdge()
     super.onCreate(savedInstanceState)
   }
