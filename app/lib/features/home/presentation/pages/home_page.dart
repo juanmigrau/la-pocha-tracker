@@ -116,6 +116,9 @@ class _HomeViewState extends State<_HomeView> {
       body: SafeArea(
         top: false,
         child: ListView(
+          // Explicit padding stops ListView from consuming MediaQuery's top
+          // inset, so PochaAppBar can draw under the status bar.
+          padding: EdgeInsets.zero,
           children: [
             PochaAppBar(
               titleWidget: const PochaLogo(height: 40),

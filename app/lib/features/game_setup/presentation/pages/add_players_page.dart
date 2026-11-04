@@ -322,6 +322,7 @@ class _UserSearchBody extends StatelessWidget {
     }
 
     return ListView.builder(
+      padding: EdgeInsets.zero,
       itemCount: state.userSearchResults.length,
       itemBuilder: (context, index) {
         final user = state.userSearchResults[index];
