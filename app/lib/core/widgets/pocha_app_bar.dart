@@ -6,6 +6,7 @@ class PochaAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.title = '',
     this.titleWidget,
     this.subtitle,
+    this.subtitleStyle,
     this.actions,
     this.onBack,
     this.showBackConfirmation = false,
@@ -20,6 +21,7 @@ class PochaAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final Widget? titleWidget;
   final String? subtitle;
+  final TextStyle? subtitleStyle;
   final List<Widget>? actions;
   final VoidCallback? onBack;
   final bool showBackConfirmation;
@@ -121,9 +123,11 @@ class PochaAppBar extends StatelessWidget implements PreferredSizeWidget {
                 if (subtitle != null && subtitle!.isNotEmpty)
                   Text(
                     subtitle!,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: onPrimary.withValues(alpha: 0.8),
-                    ),
+                    style:
+                        subtitleStyle ??
+                        Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: onPrimary.withValues(alpha: 0.8),
+                        ),
                   ),
               ],
             ),
