@@ -120,8 +120,12 @@ class LaPochaApp extends StatelessWidget {
                 return AnnotatedRegion<SystemUiOverlayStyle>(
                   value: SystemUiOverlayStyle(
                     statusBarColor: Colors.transparent,
-                    statusBarIconBrightness: Brightness.light,
-                    statusBarBrightness: Brightness.dark,
+                    statusBarIconBrightness: isDark
+                        ? Brightness.dark
+                        : Brightness.light,
+                    statusBarBrightness: isDark
+                        ? Brightness.light
+                        : Brightness.dark,
                     systemNavigationBarColor: Colors.transparent,
                     systemNavigationBarDividerColor: Colors.transparent,
                     systemNavigationBarIconBrightness: iconBrightness,
