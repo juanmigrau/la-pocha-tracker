@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:la_pocha/core/di/injection.dart';
 import 'package:la_pocha/core/services/local_user_service.dart';
 import 'package:la_pocha/core/theme/app_theme.dart';
@@ -62,13 +61,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            PochaAppBar(
-              titleWidget: const PochaLogo(height: 40),
+            const PochaAppBar(
+              titleWidget: PochaLogo(height: 40),
+              title: 'La Pocha',
               subtitle: 'Marcador de puntos',
-              subtitleStyle: GoogleFonts.nunitoSans(
-                textStyle: theme.textTheme.bodyMedium,
-                color: theme.colorScheme.onPrimary.withValues(alpha: 0.8),
-              ),
               expanded: true,
             ),
             Expanded(

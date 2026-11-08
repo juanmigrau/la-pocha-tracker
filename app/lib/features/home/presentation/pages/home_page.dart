@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:la_pocha/core/di/injection.dart';
 import 'package:la_pocha/core/theme/theme_bloc.dart';
 import 'package:la_pocha/core/utils/snack_bar_helper.dart';
@@ -123,11 +122,8 @@ class _HomeViewState extends State<_HomeView> {
           children: [
             PochaAppBar(
               titleWidget: const PochaLogo(height: 40),
+              title: 'La Pocha',
               subtitle: 'Marcador de puntos',
-              subtitleStyle: GoogleFonts.nunitoSans(
-                textStyle: theme.textTheme.bodyMedium,
-                color: theme.colorScheme.onPrimary.withValues(alpha: 0.8),
-              ),
               expanded: true,
               actions: [
                 BlocBuilder<ThemeBloc, ThemeState>(

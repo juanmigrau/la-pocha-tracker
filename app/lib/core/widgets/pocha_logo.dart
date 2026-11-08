@@ -1,53 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:la_pocha/core/theme/app_theme.dart';
 import 'package:la_pocha/core/widgets/pocha_app_bar.dart';
 
+/// Brand fan icon used as [PochaAppBar.titleWidget].
 class PochaLogo extends StatelessWidget {
-  const PochaLogo({
-    super.key,
-    this.height = 40.0,
-    this.title = 'La Pocha',
-  });
+  const PochaLogo({super.key, this.height = 40.0});
 
   static const String fanAssetPath = 'assets/images/la_pocha_fan.png';
 
   final double height;
-  final String title;
 
   @override
   Widget build(BuildContext context) {
-    final onPrimary = Theme.of(context).colorScheme.onPrimary;
-
-    return SizedBox(
+    return Image.asset(
+      fanAssetPath,
       height: height,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Image.asset(
-            fanAssetPath,
-            height: height,
-            fit: BoxFit.contain,
-            filterQuality: FilterQuality.high,
-          ),
-          SizedBox(width: height * 0.2),
-          Text(
-            title,
-            style: GoogleFonts.lilitaOne(
-              fontSize: height * 0.7,
-              color: onPrimary,
-              height: 1.0,
-            ),
-          ),
-        ],
-      ),
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.high,
     );
   }
 }
 
-/// Renders [PochaLogo] inside a real [PochaAppBar], as on the home screen.
+/// Renders a branded [PochaAppBar], as on the home screen.
 Widget pochaLogoPreviewShell(Widget child) {
   return Theme(
     data: AppTheme.light,
@@ -79,11 +54,8 @@ Widget pochaLogoHomeAppBarPreview() {
   final onPrimary = AppTheme.light.colorScheme.onPrimary;
   return PochaAppBar(
     titleWidget: const PochaLogo(height: 40),
+    title: 'La Pocha',
     subtitle: 'Marcador de puntos',
-    subtitleStyle: GoogleFonts.nunitoSans(
-      textStyle: AppTheme.light.textTheme.bodyMedium,
-      color: onPrimary.withValues(alpha: 0.8),
-    ),
     expanded: true,
     actions: [
       Icon(Icons.brightness_auto, color: onPrimary),
@@ -96,5 +68,9 @@ Widget pochaLogoHomeAppBarPreview() {
 
 @PochaLogoPreview(name: 'Compact AppBar')
 Widget pochaLogoCompactAppBarPreview() {
-  return const PochaAppBar(titleWidget: PochaLogo(height: 40));
+  return const PochaAppBar(
+    titleWidget: PochaLogo(height: 40),
+    title: 'La Pocha',
+    subtitle: 'Marcador de puntos',
+  );
 }
