@@ -7,6 +7,7 @@ import 'package:la_pocha/core/theme/theme_bloc.dart';
 import 'package:la_pocha/core/utils/snack_bar_helper.dart';
 import 'package:la_pocha/core/widgets/player_initial_avatar.dart';
 import 'package:la_pocha/core/widgets/pocha_app_bar.dart';
+import 'package:la_pocha/core/widgets/pocha_logo.dart';
 import 'package:la_pocha/core/widgets/primary_button.dart';
 import 'package:la_pocha/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:la_pocha/features/history/domain/entities/game_history_item.dart';
@@ -60,7 +61,8 @@ class _HomeViewState extends State<_HomeView> {
       return;
     }
     setState(() {
-      _bannerDismissed = prefs.getBool(_registrationBannerDismissedKey) ?? false;
+      _bannerDismissed =
+          prefs.getBool(_registrationBannerDismissedKey) ?? false;
       _bannerPrefsLoaded = true;
     });
   }
@@ -114,8 +116,12 @@ class _HomeViewState extends State<_HomeView> {
       body: SafeArea(
         top: false,
         child: ListView(
+          // Explicit padding stops ListView from consuming MediaQuery's top
+          // inset, so PochaAppBar can draw under the status bar.
+          padding: EdgeInsets.zero,
           children: [
             PochaAppBar(
+              titleWidget: const PochaLogo(height: 40),
               title: 'La Pocha',
               subtitle: 'Marcador de puntos',
               expanded: true,
@@ -123,14 +129,12 @@ class _HomeViewState extends State<_HomeView> {
                 BlocBuilder<ThemeBloc, ThemeState>(
                   builder: (context, themeState) {
                     return PopupMenuButton<ThemeMode>(
-                      icon: Icon(
-                        switch (themeState.themeMode) {
-                          ThemeMode.light => Icons.light_mode,
-                          ThemeMode.dark => Icons.dark_mode,
-                          ThemeMode.system => Icons.brightness_auto,
-                        },
-                        color: Theme.of(context).colorScheme.onPrimary,
-                      ),
+                      icon: Icon(switch (themeState.themeMode) {
+                        ThemeMode.light => Icons.light_mode,
+                        ThemeMode.dark => Icons.dark_mode,
+                        ThemeMode.system => Icons.brightness_auto,
+                      }, color: Theme.of(context).colorScheme.onPrimary),
+                      iconSize: 24,
                       tooltip: 'Tema',
                       onSelected: (mode) =>
                           context.read<ThemeBloc>().add(ThemeChanged(mode)),
@@ -178,10 +182,7 @@ class _HomeViewState extends State<_HomeView> {
                             photoURL: photoURL,
                             radius: 20,
                           )
-                        : Icon(
-                            Icons.account_circle_outlined,
-                            color: onPrimary,
-                          );
+                        : Icon(Icons.account_circle_outlined, color: onPrimary);
                     return IconButton(
                       onPressed: () =>
                           _onAccountPressed(isAuthenticated: isAuthenticated),
@@ -255,26 +256,24 @@ class _HomeViewState extends State<_HomeView> {
               child: BlocBuilder<HomeBloc, HomeState>(
                 builder: (context, state) {
                   return switch (state) {
-                    HomeLoading() || HomeInitial() => const SizedBox(
-                      height: 48,
+                    HomeLoading() ||
+                    HomeInitial() => const SizedBox(height: 48),
+                    HomeLoaded() ||
+                    HomeEmpty() => BlocBuilder<AuthBloc, AuthState>(
+                      builder: (context, authState) {
+                        final games = switch (state) {
+                          HomeLoaded(:final recentGames) => recentGames,
+                          _ => const <GameHistoryItem>[],
+                        };
+                        return RecentGamesSection(
+                          games: games,
+                          isAuthenticated: authState is Authenticated,
+                          onViewAll: () => context.push('/history'),
+                          onGameTap: (item) =>
+                              context.push('/history/${item.id}?source=local'),
+                        );
+                      },
                     ),
-                    HomeLoaded() || HomeEmpty() =>
-                      BlocBuilder<AuthBloc, AuthState>(
-                        builder: (context, authState) {
-                          final games = switch (state) {
-                            HomeLoaded(:final recentGames) => recentGames,
-                            _ => const <GameHistoryItem>[],
-                          };
-                          return RecentGamesSection(
-                            games: games,
-                            isAuthenticated: authState is Authenticated,
-                            onViewAll: () => context.push('/history'),
-                            onGameTap: (item) => context.push(
-                              '/history/${item.id}?source=local',
-                            ),
-                          );
-                        },
-                      ),
                     HomeFailure(:final message) => Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       child: Text(
@@ -356,11 +355,7 @@ class _RegistrationBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.cloud_outlined,
-            color: colorScheme.primary,
-            size: 28,
-          ),
+          Icon(Icons.cloud_outlined, color: colorScheme.primary, size: 28),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -424,9 +419,7 @@ class _AccountBenefitsSheet extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom),
       child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxHeight: mediaQuery.size.height * 0.85,
-        ),
+        constraints: BoxConstraints(maxHeight: mediaQuery.size.height * 0.85),
         child: SingleChildScrollView(
           child: SafeArea(
             child: Padding(
@@ -450,8 +443,7 @@ class _AccountBenefitsSheet extends StatelessWidget {
                   const SizedBox(height: 12),
                   const _BenefitRow(
                     icon: Icons.history,
-                    text:
-                        'Accede a tu historial desde cualquier dispositivo',
+                    text: 'Accede a tu historial desde cualquier dispositivo',
                   ),
                   const _BenefitRow(
                     icon: Icons.bar_chart,
@@ -459,8 +451,7 @@ class _AccountBenefitsSheet extends StatelessWidget {
                   ),
                   const _BenefitRow(
                     icon: Icons.cloud_done,
-                    text:
-                        'Tus partidas se guardan automáticamente en la nube',
+                    text: 'Tus partidas se guardan automáticamente en la nube',
                   ),
                   const _BenefitRow(
                     icon: Icons.people,
@@ -482,7 +473,7 @@ class _AccountBenefitsSheet extends StatelessWidget {
                       Navigator.pop(context);
                       context.go('/auth/sign-in');
                     },
-                    child: const Text('Ya tengo cuenta — Iniciar sesión'),
+                    child: const Text('Tengo cuenta — Iniciar sesión'),
                   ),
                 ],
               ),
@@ -511,9 +502,7 @@ class _BenefitRow extends StatelessWidget {
         children: [
           Icon(icon, size: 20, color: theme.colorScheme.primary),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(text, style: theme.textTheme.bodyMedium),
-          ),
+          Expanded(child: Text(text, style: theme.textTheme.bodyMedium)),
         ],
       ),
     );

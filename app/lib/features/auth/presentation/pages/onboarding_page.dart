@@ -4,6 +4,7 @@ import 'package:la_pocha/core/di/injection.dart';
 import 'package:la_pocha/core/services/local_user_service.dart';
 import 'package:la_pocha/core/theme/app_theme.dart';
 import 'package:la_pocha/core/widgets/pocha_app_bar.dart';
+import 'package:la_pocha/core/widgets/pocha_logo.dart';
 import 'package:la_pocha/core/widgets/primary_button.dart';
 import 'package:la_pocha/features/auth/presentation/widgets/auth_text_field.dart';
 
@@ -61,6 +62,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const PochaAppBar(
+              titleWidget: PochaLogo(height: 40),
               title: 'La Pocha',
               subtitle: 'Marcador de puntos',
               expanded: true,

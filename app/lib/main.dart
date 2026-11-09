@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:go_router/go_router.dart';
 import 'package:la_pocha/core/di/injection.dart';
 import 'package:la_pocha/core/router/app_router.dart';
@@ -18,7 +19,9 @@ import 'package:la_pocha/features/sync/presentation/widgets/sync_status_snackbar
 import 'package:la_pocha/firebase_options.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(
+    widgetsBinding: WidgetsFlutterBinding.ensureInitialized(),
+  );
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -39,6 +42,7 @@ Future<void> main() async {
     resumeLocation: resumeLocation,
   );
 
+  FlutterNativeSplash.remove();
   runApp(
     LaPochaApp(
       authBloc: authBloc,
@@ -108,6 +112,28 @@ class LaPochaApp extends StatelessWidget {
               themeMode: state.themeMode,
               scaffoldMessengerKey: rootScaffoldMessengerKey,
               routerConfig: router,
+              builder: (context, child) {
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+                final iconBrightness = isDark
+                    ? Brightness.light
+                    : Brightness.dark;
+                return AnnotatedRegion<SystemUiOverlayStyle>(
+                  value: SystemUiOverlayStyle(
+                    statusBarColor: Colors.transparent,
+                    statusBarIconBrightness: isDark
+                        ? Brightness.dark
+                        : Brightness.light,
+                    statusBarBrightness: isDark
+                        ? Brightness.light
+                        : Brightness.dark,
+                    systemNavigationBarColor: Colors.transparent,
+                    systemNavigationBarDividerColor: Colors.transparent,
+                    systemNavigationBarIconBrightness: iconBrightness,
+                    systemNavigationBarContrastEnforced: false,
+                  ),
+                  child: child ?? const SizedBox.shrink(),
+                );
+              },
             );
           },
         ),

@@ -1,20 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class PochaAppBar extends StatelessWidget implements PreferredSizeWidget {
   const PochaAppBar({
     super.key,
-    required this.title,
+    this.title = '',
+    this.titleWidget,
+    this.titleStyle,
     this.subtitle,
+    this.subtitleStyle,
     this.actions,
     this.onBack,
     this.showBackConfirmation = false,
     this.backConfirmationMessage = '¿Seguro que quieres salir?',
     this.leading,
     this.expanded = false,
-  });
+  }) : assert(
+         titleWidget != null || title != '',
+         'Provide either title or titleWidget',
+       );
 
+  /// Optional icon shown to the left of [title] (e.g. brand fan image).
+  final Widget? titleWidget;
   final String title;
+  final TextStyle? titleStyle;
   final String? subtitle;
+  final TextStyle? subtitleStyle;
   final List<Widget>? actions;
   final VoidCallback? onBack;
   final bool showBackConfirmation;
@@ -68,11 +79,30 @@ class PochaAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final onPrimary = colorScheme.onPrimary;
-    final titleStyle =
-        (expanded
-                ? Theme.of(context).textTheme.headlineSmall
-                : Theme.of(context).textTheme.titleLarge)
-            ?.copyWith(color: onPrimary, fontWeight: FontWeight.bold);
+    final textTheme = Theme.of(context).textTheme;
+    final useBrandTypography = titleWidget != null && title.isNotEmpty;
+
+    final resolvedTitleStyle =
+        titleStyle ??
+        (useBrandTypography
+            ? GoogleFonts.lilitaOne(
+                fontSize: expanded ? 28 : 24,
+                color: onPrimary,
+                height: 1.0,
+              )
+            : (expanded ? textTheme.headlineSmall : textTheme.titleLarge)
+                  ?.copyWith(color: onPrimary, fontWeight: FontWeight.bold));
+
+    final resolvedSubtitleStyle =
+        subtitleStyle ??
+        (useBrandTypography
+            ? GoogleFonts.nunitoSans(
+                textStyle: textTheme.bodyMedium,
+                color: onPrimary.withValues(alpha: 0.8),
+              )
+            : textTheme.bodyMedium?.copyWith(
+                color: onPrimary.withValues(alpha: 0.8),
+              ));
 
     final showDefaultBack = leading == null && onBack != null;
     final resolvedLeading =
@@ -89,9 +119,42 @@ class PochaAppBar extends StatelessWidget implements PreferredSizeWidget {
               )
             : null);
 
+    final Widget titleLine;
+    if (titleWidget != null && title.isNotEmpty) {
+      titleLine = Row(
+        children: [
+          titleWidget!,
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              title,
+              style: resolvedTitleStyle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      );
+    } else if (titleWidget != null) {
+      titleLine = titleWidget!;
+    } else {
+      titleLine = Text(
+        title,
+        style: resolvedTitleStyle,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
     final statusBarHeight = MediaQuery.paddingOf(context).top;
     final bar = Container(
-      decoration: BoxDecoration(color: colorScheme.primary),
+      decoration: BoxDecoration(
+        color: colorScheme.primary,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+      ),
       padding: expanded
           ? EdgeInsets.fromLTRB(16, 24 + statusBarHeight, 24, 24)
           : EdgeInsets.fromLTRB(16, 16 + statusBarHeight, 8, 16),
@@ -106,14 +169,9 @@ class PochaAppBar extends StatelessWidget implements PreferredSizeWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(title, style: titleStyle),
+                titleLine,
                 if (subtitle != null && subtitle!.isNotEmpty)
-                  Text(
-                    subtitle!,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: onPrimary.withValues(alpha: 0.8),
-                    ),
-                  ),
+                  Text(subtitle!, style: resolvedSubtitleStyle),
               ],
             ),
           ),
