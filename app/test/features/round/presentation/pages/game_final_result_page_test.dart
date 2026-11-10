@@ -20,15 +20,29 @@ import 'package:la_pocha/features/game_setup/domain/repositories/round_repositor
 import 'package:la_pocha/features/history/domain/usecases/repeat_game_usecase.dart';
 import 'package:la_pocha/features/history/presentation/bloc/repeat_game_cubit.dart';
 import 'package:la_pocha/features/round/presentation/pages/game_final_result_page.dart';
+import 'package:la_pocha/features/share_result/domain/entities/share_origin.dart';
+import 'package:la_pocha/features/share_result/domain/entities/share_outcome.dart';
+import 'package:la_pocha/features/share_result/domain/entities/share_result_payload.dart';
+import 'package:la_pocha/features/share_result/domain/repositories/share_result_image_renderer.dart';
+import 'package:la_pocha/features/share_result/domain/usecases/build_share_result_caption_usecase.dart';
+import 'package:la_pocha/features/share_result/domain/usecases/share_game_result_usecase.dart';
+import 'package:la_pocha/features/share_result/presentation/bloc/share_result_cubit.dart';
 import 'package:la_pocha/features/sync/domain/usecases/upload_finished_game_usecase.dart';
 import 'package:la_pocha/features/sync/presentation/bloc/game_sync_bloc.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+import 'package:mocktail/mocktail.dart' as mocktail;
 
 import 'game_final_result_page_test.mocks.dart';
 
 class MockGameSyncBloc extends MockBloc<GameSyncEvent, GameSyncState>
     implements GameSyncBloc {}
+
+class MockShareResultImageRenderer extends mocktail.Mock
+    implements ShareResultImageRenderer {}
+
+class MockShareGameResultUseCase extends mocktail.Mock
+    implements ShareGameResultUseCase {}
 
 @GenerateNiceMocks([
   MockSpec<GameRepository>(),
@@ -42,11 +56,27 @@ void main() {
   late MockRepeatGameUseCase repeatGame;
   late MockAuthBloc authBloc;
   late MockGameSyncBloc gameSyncBloc;
+  late MockShareResultImageRenderer imageRenderer;
+  late MockShareGameResultUseCase shareGameResult;
   late StreamController<GameSyncState> syncStates;
   final getIt = GetIt.instance;
 
   provideDummy<AuthState>(const AuthInitial());
   provideDummy<GameSyncState>(const GameSyncIdle());
+
+  setUpAll(() {
+    mocktail.registerFallbackValue(
+      const ShareResultPayload(
+        ranking: [],
+        finishedAt: null,
+        playerCount: 0,
+        roundCount: 0,
+      ),
+    );
+    mocktail.registerFallbackValue(
+      const ShareOrigin(x: 0, y: 0, width: 1, height: 1),
+    );
+  });
 
   final players = [
     PlayerEmbed(
@@ -113,6 +143,8 @@ void main() {
     repeatGame = MockRepeatGameUseCase();
     authBloc = MockAuthBloc();
     gameSyncBloc = MockGameSyncBloc();
+    imageRenderer = MockShareResultImageRenderer();
+    shareGameResult = MockShareGameResultUseCase();
     syncStates = StreamController<GameSyncState>.broadcast();
 
     whenListen(
@@ -140,11 +172,31 @@ void main() {
       ),
     );
 
+    mocktail
+        .when(() => imageRenderer.renderPngFile(mocktail.any()))
+        .thenAnswer((_) async => '/tmp/la_pocha_share_result.png');
+    mocktail
+        .when(
+          () => shareGameResult(
+            imageFilePath: mocktail.any(named: 'imageFilePath'),
+            caption: mocktail.any(named: 'caption'),
+            origin: mocktail.any(named: 'origin'),
+          ),
+        )
+        .thenAnswer((_) async => ShareOutcome.unavailable);
+
     await getIt.reset();
     getIt.registerLazySingleton<GameRepository>(() => gameRepository);
     getIt.registerLazySingleton<RoundRepository>(() => roundRepository);
     getIt.registerFactory<RepeatGameCubit>(
       () => RepeatGameCubit(repeatGame: repeatGame),
+    );
+    getIt.registerFactory<ShareResultCubit>(
+      () => ShareResultCubit(
+        buildCaption: const BuildShareResultCaptionUseCase(),
+        imageRenderer: imageRenderer,
+        shareGameResult: shareGameResult,
+      ),
     );
   });
 
@@ -191,6 +243,7 @@ void main() {
     expect(find.text('Nueva partida'), findsOneWidget);
     expect(find.text('Repetir partida'), findsOneWidget);
     expect(find.byIcon(Icons.bar_chart), findsOneWidget);
+    expect(find.byIcon(Icons.ios_share), findsOneWidget);
     expect(find.byIcon(Icons.more_vert), findsNothing);
   });
 
