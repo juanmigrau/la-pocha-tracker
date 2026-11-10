@@ -69,6 +69,16 @@ Other skills under `.agents/skills/` may be used when relevant; the six above ar
 - **Widget**: `flutter_test` + `pumpWidget` with `MaterialApp` and test doubles
 - **Integration**: **`flutter-add-integration-test`**; run against Firebase Emulator Suite when testing E2E flows with Firestore/Auth
 
+## Local share sheet (no Firebase)
+
+Feature `share_result` shares a finished game as a brand-fixed PNG + caption via the system share sheet:
+
+- Dependency: `share_plus` (`SharePlus.instance.share(ShareParams(...))`)
+- Domain port `ShareSheetGateway` returns `ShareOutcome` (`shared` / `dismissed` / `unavailable`); no Flutter imports in domain
+- Image capture: isolated render tree (`RenderRepaintBoundary` + `PipelineOwner` / `BuildOwner`) at logical 360×450 with `pixelRatio` 3.0 → 1080×1350; fixed temp file name, no post-share cleanup
+- Brand fonts: bundled `LilitaOne` under `assets/fonts/` (SIL Open Font License; see `assets/fonts/OFL.txt`) — do **not** use `google_fonts` for the share card (offline-first)
+- Presentation must not use Firebase; theme of the share card is fixed (`#2E5040`) and ignores app `ThemeMode` / system text scaling
+
 ## Code quality
 
 - Run `dart format .` and `flutter analyze` before considering a task done
