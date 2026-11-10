@@ -12,13 +12,10 @@ const shareResultFailureMessage = 'No se pudo compartir. Inténtalo de nuevo.';
 
 class ShareResultCubit extends Cubit<ShareResultState> {
   ShareResultCubit({
-    required BuildShareResultCaptionUseCase buildCaption,
-    required ShareResultImageRenderer imageRenderer,
-    required ShareGameResultUseCase shareGameResult,
-  }) : _buildCaption = buildCaption,
-       _imageRenderer = imageRenderer,
-       _shareGameResult = shareGameResult,
-       super(const ShareResultInitial());
+    required this._buildCaption,
+    required this._imageRenderer,
+    required this._shareGameResult,
+  }) : super(const ShareResultInitial());
 
   final BuildShareResultCaptionUseCase _buildCaption;
   final ShareResultImageRenderer _imageRenderer;

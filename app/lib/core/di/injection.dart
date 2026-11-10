@@ -78,6 +78,13 @@ import 'package:la_pocha/features/history/domain/services/game_detail_mapper.dar
 import 'package:la_pocha/features/history/domain/usecases/delete_local_game_usecase.dart';
 import 'package:la_pocha/features/history/domain/usecases/get_game_detail_usecase.dart';
 import 'package:la_pocha/features/history/domain/usecases/get_game_history_usecase.dart';
+import 'package:la_pocha/features/share_result/data/share_plus_sheet_gateway.dart';
+import 'package:la_pocha/features/share_result/domain/repositories/share_result_image_renderer.dart';
+import 'package:la_pocha/features/share_result/domain/repositories/share_sheet_gateway.dart';
+import 'package:la_pocha/features/share_result/domain/usecases/build_share_result_caption_usecase.dart';
+import 'package:la_pocha/features/share_result/domain/usecases/share_game_result_usecase.dart';
+import 'package:la_pocha/features/share_result/presentation/bloc/share_result_cubit.dart';
+import 'package:la_pocha/features/share_result/presentation/services/share_result_image_renderer_impl.dart';
 import 'package:la_pocha/features/history/domain/usecases/get_recent_games_usecase.dart';
 import 'package:la_pocha/features/home/presentation/bloc/home_bloc.dart';
 import 'package:la_pocha/features/history/domain/usecases/hide_cloud_game_usecase.dart';
@@ -513,10 +520,8 @@ Future<void> configureDependencies() async {
   );
 
   getIt.registerFactory<GetGameStatsUseCase>(
-    () => GetGameStatsUseCase(
-      getIt<GameRepository>(),
-      getIt<RoundRepository>(),
-    ),
+    () =>
+        GetGameStatsUseCase(getIt<GameRepository>(), getIt<RoundRepository>()),
   );
 
   getIt.registerFactory<AdvanceToNextRoundUseCase>(
@@ -669,6 +674,24 @@ Future<void> configureDependencies() async {
       getRoundResult: getIt<GetRoundResultUseCase>(),
       advanceToNextRound: getIt<AdvanceToNextRoundUseCase>(),
       finishGame: getIt<FinishGameUseCase>(),
+    ),
+  );
+
+  getIt.registerLazySingleton<ShareSheetGateway>(SharePlusSheetGateway.new);
+  getIt.registerLazySingleton<ShareResultImageRenderer>(
+    ShareResultImageRendererImpl.new,
+  );
+  getIt.registerLazySingleton<BuildShareResultCaptionUseCase>(
+    () => const BuildShareResultCaptionUseCase(),
+  );
+  getIt.registerLazySingleton<ShareGameResultUseCase>(
+    () => ShareGameResultUseCase(getIt<ShareSheetGateway>()),
+  );
+  getIt.registerFactory<ShareResultCubit>(
+    () => ShareResultCubit(
+      buildCaption: getIt<BuildShareResultCaptionUseCase>(),
+      imageRenderer: getIt<ShareResultImageRenderer>(),
+      shareGameResult: getIt<ShareGameResultUseCase>(),
     ),
   );
 }
