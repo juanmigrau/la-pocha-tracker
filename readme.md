@@ -36,7 +36,7 @@ La partida se juega en un solo dispositivo (offline-first). El registro es opcio
 
 ## Arquitectura
 
-Clean Architecture por feature (`auth`, `game_setup`, `round`, `history`, `favorites`, `sync`):
+Clean Architecture por feature (`auth`, `game_setup`, `round`, `history`, `favorites`, `sync`, `share_result`):
 
 - **presentation** — widgets + BLoC (eventos → estados)
 - **domain** — entidades, use cases e interfaces de repositorio (Dart puro)
@@ -96,6 +96,7 @@ Código de la app en `app/lib/`, con `core/` (router, DI, tema, base de datos) y
 - Corrección de apuestas en la ronda actual y repetición de ronda
 - Jugadores por nombre libre, búsqueda de usuarios registrados y favoritos locales
 - Historial unificado (local + nube), detalle ronda a ronda y «repetir partida»
+- Compartir resultado final como imagen PNG (share sheet local con `share_plus`, sin Firebase)
 - Registro / login opcional (email-contraseña y Google); sync automático al finalizar (con reintento si falla)
 
 ---

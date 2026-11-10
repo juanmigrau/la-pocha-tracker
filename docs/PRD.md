@@ -156,3 +156,40 @@ ninguna acción adicional.
 - Jugador registrado vinculado a la partida la ve en su historial 
   sin acción adicional
 - Historial local funcional sin conexión a internet
+
+## 9. Evolución posterior al MVP
+
+Funcionalidades añadidas después de la entrega del MVP, como proyecto
+personal de portfolio.
+
+### 9.1 Compartir el resultado de la partida
+
+**Objetivo:** el organizador comparte con su grupo el resultado final de
+una partida como imagen, desde cualquier app (mensajería, redes), sin
+necesidad de cuenta ni de conexión.
+
+**Alcance**
+
+- **Imagen** vertical 4:5 (1080×1350 px) con: ranking final (posición,
+  nombre y puntos), ganador destacado, fecha, número de jugadores y de
+  rondas, y la marca La Pocha. Apta para 3 a 8 jugadores.
+- **Aspecto fijo de marca** (verde `#2E5040`), independiente del modo
+  claro u oscuro de la app.
+- **Texto acompañante** breve junto a la imagen, por si la app de destino
+  no la muestra (p. ej. "La Pocha: gana María con 245 pts").
+- **Empates:** comparten puesto ("ex aequo") y el siguiente puesto se
+  salta (1º, 1º, 3º). La imagen y la pantalla de resultado final deben
+  mostrar el mismo ranking.
+- **Dónde:** botón en la pantalla de resultado final y en el detalle de
+  partida del historial. Solo partidas en estado `finished`.
+- **Offline:** funciona sin conexión y sin cuenta. No lee ni escribe en
+  Firestore y no modifica el modelo de datos.
+- **Gratuita.** Si más adelante se implementa el freemium, se decidirá
+  entonces si pasa a premium.
+
+**Fuera de alcance**
+
+- Enlace o deep link a la partida en la nube
+- Compartir una partida en curso
+- Tabla ronda a ronda o gráfica de evolución
+- Compartir solo texto, sin imagen
