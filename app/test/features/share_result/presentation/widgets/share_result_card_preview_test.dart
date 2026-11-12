@@ -62,6 +62,8 @@ ShareResultPayload _payload({
   );
 }
 
+String _longName(int i) => 'NombreLargoJugador$i'.padRight(20).substring(0, 20);
+
 Future<ByteData> _loadFontBytes(String absolutePath) async {
   final bytes = await File(absolutePath).readAsBytes();
   return ByteData.sublistView(Uint8List.fromList(bytes));
@@ -87,7 +89,6 @@ Future<void> _loadPreviewFonts() async {
   final robotoData = await _loadFontBytes(
     '$fontsDir${Platform.pathSeparator}roboto-regular.ttf',
   );
-  // Card DefaultTextStyle uses Roboto; also replace Ahem for any unset family.
   await (FontLoader('Roboto')..addFont(Future.value(robotoData))).load();
   await (FontLoader('Ahem')..addFont(Future.value(robotoData))).load();
 
@@ -179,7 +180,7 @@ void main() {
             for (var i = 0; i < 8; i++)
               _entry(
                 id: '$i',
-                name: 'NombreLargoJugador$i'.padRight(20).substring(0, 20),
+                name: _longName(i),
                 rank: i + 1,
                 score: 300 - (i * 10),
               ),
@@ -212,12 +213,88 @@ void main() {
         ),
       );
 
+      await renderPreview(
+        fileName: '07_tie_two_long_names.png',
+        payload: _payload(
+          ranking: [
+            _entry(id: '0', name: _longName(0), rank: 1, score: 200),
+            _entry(id: '1', name: _longName(1), rank: 1, score: 200),
+            _entry(id: '2', name: 'Ana', rank: 3, score: 90),
+            _entry(id: '3', name: 'Luis', rank: 4, score: 40),
+          ],
+        ),
+      );
+
+      await renderPreview(
+        fileName: '08_tie_three_of_five.png',
+        payload: _payload(
+          ranking: [
+            _entry(id: '0', name: 'María', rank: 1, score: 100),
+            _entry(id: '1', name: 'Juan', rank: 1, score: 100),
+            _entry(id: '2', name: 'Ana', rank: 1, score: 100),
+            _entry(id: '3', name: 'Luis', rank: 4, score: 40),
+            _entry(id: '4', name: 'Eva', rank: 5, score: 20),
+          ],
+        ),
+      );
+
+      await renderPreview(
+        fileName: '09_all_four_tied.png',
+        payload: _payload(
+          ranking: [
+            for (var i = 0; i < 4; i++)
+              _entry(id: '$i', name: 'Jugador$i', rank: 1, score: 15),
+          ],
+        ),
+      );
+
+      await renderPreview(
+        fileName: '10_all_eight_tied.png',
+        payload: _payload(
+          ranking: [
+            for (var i = 0; i < 8; i++)
+              _entry(id: '$i', name: 'Empate$i', rank: 1, score: 12),
+          ],
+          roundCount: 19,
+        ),
+      );
+
+      await renderPreview(
+        fileName: '11_five_vertical_winner.png',
+        payload: _payload(
+          ranking: [
+            for (var i = 0; i < 5; i++)
+              _entry(
+                id: '$i',
+                name: 'Jugador$i',
+                rank: i + 1,
+                score: 50 - i * 5,
+              ),
+          ],
+        ),
+      );
+
+      await renderPreview(
+        fileName: '12_six_row_winner.png',
+        payload: _payload(
+          ranking: [
+            for (var i = 0; i < 6; i++)
+              _entry(
+                id: '$i',
+                name: 'Jugador$i',
+                rank: i + 1,
+                score: 60 - i * 5,
+              ),
+          ],
+        ),
+      );
+
       final files = previewDir
           .listSync()
           .whereType<File>()
           .where((f) => f.path.endsWith('.png'))
           .toList();
-      expect(files, hasLength(6));
+      expect(files, hasLength(12));
       // ignore: avoid_print
       print('Share previews written to: ${previewDir.path}');
     },
@@ -227,6 +304,6 @@ void main() {
               '--tags preview '
               'test/features/share_result/presentation/widgets/'
               'share_result_card_preview_test.dart',
-    timeout: const Timeout(Duration(minutes: 2)),
+    timeout: const Timeout(Duration(minutes: 3)),
   );
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:la_pocha/core/widgets/player_initial_avatar.dart';
+import 'package:la_pocha/core/utils/player_colors.dart';
 import 'package:la_pocha/core/widgets/pocha_logo.dart';
 import 'package:la_pocha/features/round/domain/entities/ranking_entry.dart';
 import 'package:la_pocha/features/share_result/domain/entities/share_result_payload.dart';
@@ -25,6 +25,9 @@ class ShareResultCard extends StatelessWidget {
   static const Color trophyGold = Color(0xFFC8A84B);
   static const String brandFontFamily = 'LilitaOne';
 
+  /// Vertical centered single-winner hero when total players is at most this.
+  static const int verticalHeroMaxPlayers = 5;
+
   final ShareResultPayload payload;
 
   static const List<String> _monthNames = [
@@ -46,6 +49,22 @@ class ShareResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final winners = payload.ranking.where((e) => e.rank == 1).toList();
     final rest = payload.ranking.where((e) => e.rank >= 2).toList();
+    final totalPlayers = payload.ranking.length;
+    final isTie = winners.length > 1;
+    final useVerticalSingle = !isTie && totalPlayers <= verticalHeroMaxPlayers;
+
+    final int heroFlex;
+    if (rest.isEmpty) {
+      heroFlex = 8;
+    } else if (isTie) {
+      heroFlex = 5;
+    } else if (useVerticalSingle) {
+      heroFlex = 5;
+    } else {
+      heroFlex = 3;
+    }
+
+    final listFlex = rest.length >= 5 ? 5 : 3;
 
     return MediaQuery(
       data: MediaQueryData(size: logicalSize, textScaler: TextScaler.noScaling),
@@ -75,19 +94,21 @@ class ShareResultCard extends StatelessWidget {
                         const _BrandHeader(),
                         const SizedBox(height: 16),
                         Expanded(
-                          flex: rest.isEmpty ? 7 : 3,
+                          flex: heroFlex,
                           child: winners.isEmpty
                               ? const SizedBox.shrink()
-                              : _WinnerHero(winners: winners),
+                              : _WinnerHero(
+                                  winners: winners,
+                                  useVerticalSingle: useVerticalSingle,
+                                ),
                         ),
                         if (rest.isNotEmpty) ...[
                           const SizedBox(height: 14),
                           Expanded(
-                            flex: rest.length >= 5 ? 5 : 4,
+                            flex: listFlex,
                             child: _StandingsList(entries: rest),
                           ),
-                        ] else
-                          const Spacer(flex: 1),
+                        ],
                         const SizedBox(height: 12),
                         _FooterMeta(
                           finishedAt: payload.finishedAt,
@@ -194,9 +215,10 @@ class _BrandHeader extends StatelessWidget {
 }
 
 class _WinnerHero extends StatelessWidget {
-  const _WinnerHero({required this.winners});
+  const _WinnerHero({required this.winners, required this.useVerticalSingle});
 
   final List<RankingEntry> winners;
+  final bool useVerticalSingle;
 
   @override
   Widget build(BuildContext context) {
@@ -208,16 +230,33 @@ class _WinnerHero extends StatelessWidget {
         color: ShareResultCard.brandGreen,
         borderRadius: BorderRadius.circular(16),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: isTie
           ? _TieHeroContent(winners: winners, score: score)
-          : _SingleWinnerContent(entry: winners.first),
+          : _SingleWinnerContent(
+              entry: winners.first,
+              vertical: useVerticalSingle,
+            ),
     );
   }
 }
 
 class _SingleWinnerContent extends StatelessWidget {
-  const _SingleWinnerContent({required this.entry});
+  const _SingleWinnerContent({required this.entry, required this.vertical});
+
+  final RankingEntry entry;
+  final bool vertical;
+
+  @override
+  Widget build(BuildContext context) {
+    return vertical
+        ? _SingleWinnerVertical(entry: entry)
+        : _SingleWinnerRow(entry: entry);
+  }
+}
+
+class _SingleWinnerVertical extends StatelessWidget {
+  const _SingleWinnerVertical({required this.entry});
 
   final RankingEntry entry;
 
@@ -225,65 +264,144 @@ class _SingleWinnerContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = entry.player.displayName;
 
-    return Row(
-      children: [
-        const Icon(
-          Icons.emoji_events,
-          color: ShareResultCard.trophyGold,
-          size: 36,
-        ),
-        const SizedBox(width: 12),
-        PlayerInitialAvatar(
-          name: name,
-          colorIndex: entry.player.seatOrder,
-          radius: 28,
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'GANADOR',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                  color: ShareResultCard.accentMint,
-                  height: 1.0,
-                ),
+    return KeyedSubtree(
+      key: const Key('share_result_hero_vertical'),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return FittedBox(
+            fit: BoxFit.scaleDown,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.emoji_events,
+                    color: ShareResultCard.trophyGold,
+                    size: 36,
+                  ),
+                  const SizedBox(height: 10),
+                  _ShareInitialAvatar(
+                    name: name,
+                    colorIndex: entry.player.seatOrder,
+                    radius: 32,
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'GANADOR',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
+                      color: ShareResultCard.accentMint,
+                      height: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    name,
+                    maxLines: 2,
+                    textAlign: TextAlign.center,
+                    softWrap: true,
+                    style: const TextStyle(
+                      fontFamily: ShareResultCard.brandFontFamily,
+                      fontSize: 28,
+                      color: Colors.white,
+                      height: 1.05,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${entry.totalScore} pts',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: ShareResultCard.brandFontFamily,
+                      fontSize: 20,
+                      color: ShareResultCard.trophyGold,
+                      height: 1.1,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 4),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  name,
-                  maxLines: 2,
-                  softWrap: true,
-                  style: const TextStyle(
-                    fontFamily: ShareResultCard.brandFontFamily,
-                    fontSize: 28,
-                    color: Colors.white,
-                    height: 1.05,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SingleWinnerRow extends StatelessWidget {
+  const _SingleWinnerRow({required this.entry});
+
+  final RankingEntry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final name = entry.player.displayName;
+
+    return KeyedSubtree(
+      key: const Key('share_result_hero_row'),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.emoji_events,
+            color: ShareResultCard.trophyGold,
+            size: 36,
+          ),
+          const SizedBox(width: 12),
+          _ShareInitialAvatar(
+            name: name,
+            colorIndex: entry.player.seatOrder,
+            radius: 28,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'GANADOR',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
+                    color: ShareResultCard.accentMint,
+                    height: 1.0,
                   ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                '${entry.totalScore} pts',
-                style: const TextStyle(
-                  fontFamily: ShareResultCard.brandFontFamily,
-                  fontSize: 18,
-                  color: ShareResultCard.trophyGold,
-                  height: 1.1,
+                const SizedBox(height: 4),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    name,
+                    maxLines: 2,
+                    softWrap: true,
+                    style: const TextStyle(
+                      fontFamily: ShareResultCard.brandFontFamily,
+                      fontSize: 28,
+                      color: Colors.white,
+                      height: 1.05,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 2),
+                Text(
+                  '${entry.totalScore} pts',
+                  style: const TextStyle(
+                    fontFamily: ShareResultCard.brandFontFamily,
+                    fontSize: 18,
+                    color: ShareResultCard.trophyGold,
+                    height: 1.1,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -296,10 +414,17 @@ class _TieHeroContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = winners.length >= 4;
+    // Compact chips sized to fit up to 4 per row in the 360-wide card.
+    final avatarRadius = compact ? 14.0 : 22.0;
+    final chipWidth = compact ? 62.0 : 96.0;
+    final nameSize = compact ? 11.0 : 15.0;
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.emoji_events,
@@ -319,27 +444,47 @@ class _TieHeroContent extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         Expanded(
-          child: Center(
-            child: Wrap(
-              spacing: 12,
-              runSpacing: 10,
-              alignment: WrapAlignment.center,
-              children: [
-                for (final entry in winners) _TiedWinnerChip(entry: entry),
-              ],
-            ),
-          ),
-        ),
-        Text(
-          '$score pts',
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontFamily: ShareResultCard.brandFontFamily,
-            fontSize: 20,
-            color: ShareResultCard.trophyGold,
-            height: 1.1,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return FittedBox(
+                fit: BoxFit.scaleDown,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Wrap(
+                        spacing: compact ? 6 : 12,
+                        runSpacing: compact ? 8 : 10,
+                        alignment: WrapAlignment.center,
+                        children: [
+                          for (final entry in winners)
+                            _TiedWinnerChip(
+                              entry: entry,
+                              avatarRadius: avatarRadius,
+                              width: chipWidth,
+                              nameSize: nameSize,
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        '$score pts',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: ShareResultCard.brandFontFamily,
+                          fontSize: 20,
+                          color: ShareResultCard.trophyGold,
+                          height: 1.1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ],
@@ -348,22 +493,30 @@ class _TieHeroContent extends StatelessWidget {
 }
 
 class _TiedWinnerChip extends StatelessWidget {
-  const _TiedWinnerChip({required this.entry});
+  const _TiedWinnerChip({
+    required this.entry,
+    required this.avatarRadius,
+    required this.width,
+    required this.nameSize,
+  });
 
   final RankingEntry entry;
+  final double avatarRadius;
+  final double width;
+  final double nameSize;
 
   @override
   Widget build(BuildContext context) {
     final name = entry.player.displayName;
     return SizedBox(
-      width: 96,
+      width: width,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          PlayerInitialAvatar(
+          _ShareInitialAvatar(
             name: name,
             colorIndex: entry.player.seatOrder,
-            radius: 22,
+            radius: avatarRadius,
           ),
           const SizedBox(height: 6),
           Text(
@@ -371,9 +524,9 @@ class _TiedWinnerChip extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: ShareResultCard.brandFontFamily,
-              fontSize: 16,
+              fontSize: nameSize,
               color: Colors.white,
               height: 1.1,
             ),
@@ -464,8 +617,7 @@ class _StandingRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 4),
-              // Initials only (no photoURL): same seatOrder color as the app.
-              PlayerInitialAvatar(
+              _ShareInitialAvatar(
                 name: name,
                 colorIndex: entry.player.seatOrder,
                 radius: avatarRadius,
@@ -497,6 +649,57 @@ class _StandingRow extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Initials avatar for the share capture tree.
+///
+/// Same color/initial rules as [PlayerInitialAvatar] via
+/// [playerAvatarColorForIndex], with font size ~0.5× diameter so compact
+/// rows keep the letter inside the circle.
+class _ShareInitialAvatar extends StatelessWidget {
+  const _ShareInitialAvatar({
+    required this.name,
+    required this.colorIndex,
+    required this.radius,
+  });
+
+  final String name;
+  final int colorIndex;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    final initial = name.isNotEmpty ? name.characters.first.toUpperCase() : '?';
+    final diameter = radius * 2;
+    final inset = diameter * 0.18;
+
+    return SizedBox(
+      width: diameter,
+      height: diameter,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: playerAvatarColorForIndex(colorIndex),
+          shape: BoxShape.circle,
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(inset),
+          child: FittedBox(
+            fit: BoxFit.contain,
+            child: Text(
+              initial,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                height: 1.0,
+                leadingDistribution: TextLeadingDistribution.even,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

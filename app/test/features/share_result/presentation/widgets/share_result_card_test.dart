@@ -55,6 +55,16 @@ Future<void> _pumpCard(WidgetTester tester, ShareResultPayload payload) async {
   await tester.pump();
 }
 
+void _failOnOverflow() {
+  FlutterError.onError = (details) {
+    final message = details.exceptionAsString();
+    if (message.contains('overflowed') || message.contains('RenderFlex')) {
+      fail(message);
+    }
+    FlutterError.presentError(details);
+  };
+}
+
 void main() {
   final sampleRanking = [
     _entry(id: '1', name: 'María', rank: 1, score: 245),
@@ -88,10 +98,34 @@ void main() {
     expect(find.text('GANADOR'), findsNothing);
     expect(find.text('María'), findsOneWidget);
     expect(find.text('Juan'), findsOneWidget);
-    // Winner block must not repeat rank-1 entries in the standings list.
     expect(find.text('1'), findsNothing);
     expect(find.text('3'), findsOneWidget);
     expect(find.text('Ana'), findsOneWidget);
+  });
+
+  testWidgets('three-way first-place tie shows all winners and rest list', (
+    tester,
+  ) async {
+    _failOnOverflow();
+    final ranking = [
+      _entry(id: '0', name: 'María', rank: 1, score: 100),
+      _entry(id: '1', name: 'Juan', rank: 1, score: 100),
+      _entry(id: '2', name: 'Ana', rank: 1, score: 100),
+      _entry(id: '3', name: 'Luis', rank: 4, score: 40),
+      _entry(id: '4', name: 'Eva', rank: 5, score: 20),
+    ];
+
+    await _pumpCard(tester, _payload(ranking: ranking));
+
+    expect(find.text('EMPATE'), findsOneWidget);
+    expect(find.text('María'), findsOneWidget);
+    expect(find.text('Juan'), findsOneWidget);
+    expect(find.text('Ana'), findsOneWidget);
+    expect(find.textContaining('100 pts'), findsOneWidget);
+    expect(find.byKey(const Key('share_result_standings')), findsOneWidget);
+    expect(find.text('4'), findsOneWidget);
+    expect(find.text('5'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('single winner shows GANADOR and excludes them from list', (
@@ -112,9 +146,40 @@ void main() {
     expect(find.textContaining('35 pts'), findsOneWidget);
     expect(find.text('2'), findsOneWidget);
     expect(find.text('3'), findsNWidgets(2));
-    expect(find.text('Juanmi'), findsOneWidget);
-    expect(find.text('pp'), findsOneWidget);
-    expect(find.text('kk'), findsOneWidget);
+  });
+
+  testWidgets('five players use vertical single-winner hero without overflow', (
+    tester,
+  ) async {
+    _failOnOverflow();
+    final ranking = [
+      for (var i = 0; i < 5; i++)
+        _entry(id: '$i', name: 'Jugador$i', rank: i + 1, score: 50 - i * 5),
+    ];
+
+    await _pumpCard(tester, _payload(ranking: ranking));
+
+    expect(find.byKey(const Key('share_result_hero_vertical')), findsOneWidget);
+    expect(find.byKey(const Key('share_result_hero_row')), findsNothing);
+    expect(find.text('GANADOR'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('six players use row single-winner hero without overflow', (
+    tester,
+  ) async {
+    _failOnOverflow();
+    final ranking = [
+      for (var i = 0; i < 6; i++)
+        _entry(id: '$i', name: 'Jugador$i', rank: i + 1, score: 60 - i * 5),
+    ];
+
+    await _pumpCard(tester, _payload(ranking: ranking));
+
+    expect(find.byKey(const Key('share_result_hero_row')), findsOneWidget);
+    expect(find.byKey(const Key('share_result_hero_vertical')), findsNothing);
+    expect(find.text('GANADOR'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('third-place tie paints two rows with rank 3', (tester) async {
@@ -144,6 +209,23 @@ void main() {
     expect(find.text('Bea'), findsOneWidget);
     expect(find.text('Cris'), findsOneWidget);
     expect(find.byKey(const Key('share_result_standings')), findsNothing);
+  });
+
+  testWidgets('all eight tied omits standings without overflow', (
+    tester,
+  ) async {
+    _failOnOverflow();
+    final ranking = [
+      for (var i = 0; i < 8; i++)
+        _entry(id: '$i', name: 'Empate$i', rank: 1, score: 12),
+    ];
+
+    await _pumpCard(tester, _payload(ranking: ranking));
+
+    expect(find.text('EMPATE'), findsOneWidget);
+    expect(find.byKey(const Key('share_result_standings')), findsNothing);
+    expect(find.textContaining('12 pts'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('shows negative scores as-is', (tester) async {
@@ -186,15 +268,8 @@ void main() {
   testWidgets('fits 8 players with max-length names without overflow', (
     tester,
   ) async {
-    FlutterError.onError = (details) {
-      final message = details.exceptionAsString();
-      if (message.contains('overflowed') || message.contains('RenderFlex')) {
-        fail(message);
-      }
-      FlutterError.presentError(details);
-    };
+    _failOnOverflow();
 
-    // App allows player names up to 20 characters. One winner + 7 standings rows.
     final ranking = [
       for (var i = 0; i < 8; i++)
         _entry(
@@ -209,9 +284,9 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('GANADOR'), findsOneWidget);
+    expect(find.byKey(const Key('share_result_hero_row')), findsOneWidget);
     expect(find.byKey(const Key('share_result_standings')), findsOneWidget);
     expect(find.textContaining('NombreLargoJugador'), findsWidgets);
-    // Standings exclude the winner → ranks 2..8 (7 rows).
     expect(find.text('2'), findsOneWidget);
     expect(find.text('8'), findsOneWidget);
   });
