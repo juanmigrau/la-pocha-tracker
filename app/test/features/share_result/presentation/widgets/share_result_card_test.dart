@@ -5,13 +5,13 @@ import 'package:la_pocha/features/round/domain/entities/ranking_entry.dart';
 import 'package:la_pocha/features/share_result/domain/entities/share_result_payload.dart';
 import 'package:la_pocha/features/share_result/presentation/widgets/share_result_card.dart';
 
-PlayerEmbed _player(String id, String name, int score) {
+PlayerEmbed _player(String id, String name, int score, {int? seatOrder}) {
   return PlayerEmbed(
     id: id,
     displayName: name,
     isGuest: true,
     userId: null,
-    seatOrder: int.tryParse(id) ?? 0,
+    seatOrder: seatOrder ?? (int.tryParse(id) ?? 0),
     totalScore: score,
     joinedAt: DateTime(2026, 1, 1),
   );
@@ -22,9 +22,10 @@ RankingEntry _entry({
   required String name,
   required int rank,
   required int score,
+  int? seatOrder,
 }) {
   return RankingEntry(
-    player: _player(id, name, score),
+    player: _player(id, name, score, seatOrder: seatOrder),
     rank: rank,
     roundScore: 0,
     totalScore: score,
@@ -45,6 +46,15 @@ ShareResultPayload _payload({
   );
 }
 
+Future<void> _pumpCard(WidgetTester tester, ShareResultPayload payload) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      home: Center(child: ShareResultCard(payload: payload)),
+    ),
+  );
+  await tester.pump();
+}
+
 void main() {
   final sampleRanking = [
     _entry(id: '1', name: 'María', rank: 1, score: 245),
@@ -53,48 +63,99 @@ void main() {
   ];
 
   testWidgets('omits date when finishedAt is null', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Center(
-          child: ShareResultCard(payload: _payload(ranking: sampleRanking)),
-        ),
-      ),
-    );
+    await _pumpCard(tester, _payload(ranking: sampleRanking));
 
     expect(find.byKey(const Key('share_result_date')), findsNothing);
     expect(find.textContaining('jugadores'), findsOneWidget);
   });
 
   testWidgets('shows formatted date when finishedAt is set', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Center(
-          child: ShareResultCard(
-            payload: _payload(
-              ranking: sampleRanking,
-              finishedAt: DateTime(2026, 7, 4),
-            ),
-          ),
-        ),
-      ),
+    await _pumpCard(
+      tester,
+      _payload(ranking: sampleRanking, finishedAt: DateTime(2026, 7, 4)),
     );
 
     expect(find.byKey(const Key('share_result_date')), findsOneWidget);
-    expect(find.text('4 jul 2026'), findsOneWidget);
+    expect(find.textContaining('4 jul 2026'), findsOneWidget);
   });
 
-  testWidgets('paints RankingEntry.rank with ties 1º, 1º, 3º', (tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Center(
-          child: ShareResultCard(payload: _payload(ranking: sampleRanking)),
-        ),
-      ),
-    );
+  testWidgets('first-place tie shows EMPATE hero and rest of ranking only', (
+    tester,
+  ) async {
+    await _pumpCard(tester, _payload(ranking: sampleRanking));
 
-    expect(find.text('1º'), findsNWidgets(2));
-    expect(find.text('3º'), findsOneWidget);
-    expect(find.text('2º'), findsNothing);
+    expect(find.text('EMPATE'), findsOneWidget);
+    expect(find.text('GANADOR'), findsNothing);
+    expect(find.text('María'), findsOneWidget);
+    expect(find.text('Juan'), findsOneWidget);
+    // Winner block must not repeat rank-1 entries in the standings list.
+    expect(find.text('1'), findsNothing);
+    expect(find.text('3'), findsOneWidget);
+    expect(find.text('Ana'), findsOneWidget);
+  });
+
+  testWidgets('single winner shows GANADOR and excludes them from list', (
+    tester,
+  ) async {
+    final ranking = [
+      _entry(id: '1', name: 'tt', rank: 1, score: 35),
+      _entry(id: '2', name: 'Juanmi', rank: 2, score: 20),
+      _entry(id: '3', name: 'pp', rank: 3, score: 15),
+      _entry(id: '4', name: 'kk', rank: 3, score: 15),
+    ];
+
+    await _pumpCard(tester, _payload(ranking: ranking, roundCount: 3));
+
+    expect(find.text('GANADOR'), findsOneWidget);
+    expect(find.text('EMPATE'), findsNothing);
+    expect(find.text('tt'), findsOneWidget);
+    expect(find.textContaining('35 pts'), findsOneWidget);
+    expect(find.text('2'), findsOneWidget);
+    expect(find.text('3'), findsNWidgets(2));
+    expect(find.text('Juanmi'), findsOneWidget);
+    expect(find.text('pp'), findsOneWidget);
+    expect(find.text('kk'), findsOneWidget);
+  });
+
+  testWidgets('third-place tie paints two rows with rank 3', (tester) async {
+    final ranking = [
+      _entry(id: '1', name: 'tt', rank: 1, score: 35),
+      _entry(id: '2', name: 'Juanmi', rank: 2, score: 20),
+      _entry(id: '3', name: 'pp', rank: 3, score: 15),
+      _entry(id: '4', name: 'kk', rank: 3, score: 15),
+    ];
+
+    await _pumpCard(tester, _payload(ranking: ranking));
+
+    expect(find.text('3'), findsNWidgets(2));
+  });
+
+  testWidgets('all tied for first omits standings list', (tester) async {
+    final ranking = [
+      _entry(id: '1', name: 'Alex', rank: 1, score: 10),
+      _entry(id: '2', name: 'Bea', rank: 1, score: 10),
+      _entry(id: '3', name: 'Cris', rank: 1, score: 10),
+    ];
+
+    await _pumpCard(tester, _payload(ranking: ranking));
+
+    expect(find.text('EMPATE'), findsOneWidget);
+    expect(find.text('Alex'), findsOneWidget);
+    expect(find.text('Bea'), findsOneWidget);
+    expect(find.text('Cris'), findsOneWidget);
+    expect(find.byKey(const Key('share_result_standings')), findsNothing);
+  });
+
+  testWidgets('shows negative scores as-is', (tester) async {
+    final ranking = [
+      _entry(id: '1', name: 'Top', rank: 1, score: 5),
+      _entry(id: '2', name: 'Low', rank: 2, score: -12),
+    ];
+
+    await _pumpCard(tester, _payload(ranking: ranking));
+
+    expect(find.textContaining('5 pts'), findsOneWidget);
+    expect(find.text('-12'), findsOneWidget);
   });
 
   testWidgets('textScaler 3.0 and 1.0 produce the same card layout size', (
@@ -133,29 +194,25 @@ void main() {
       FlutterError.presentError(details);
     };
 
-    // App allows player names up to 20 characters.
+    // App allows player names up to 20 characters. One winner + 7 standings rows.
     final ranking = [
       for (var i = 0; i < 8; i++)
         _entry(
           id: '$i',
           name: 'NombreLargoJugador$i'.padRight(20).substring(0, 20),
-          rank: i < 2 ? 1 : i + 1,
+          rank: i + 1,
           score: 300 - (i * 10),
         ),
     ];
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Center(
-          child: ShareResultCard(
-            payload: _payload(ranking: ranking, playerCount: 8),
-          ),
-        ),
-      ),
-    );
-    await tester.pump();
+    await _pumpCard(tester, _payload(ranking: ranking, playerCount: 8));
 
     expect(tester.takeException(), isNull);
+    expect(find.text('GANADOR'), findsOneWidget);
+    expect(find.byKey(const Key('share_result_standings')), findsOneWidget);
     expect(find.textContaining('NombreLargoJugador'), findsWidgets);
+    // Standings exclude the winner → ranks 2..8 (7 rows).
+    expect(find.text('2'), findsOneWidget);
+    expect(find.text('8'), findsOneWidget);
   });
 }

@@ -173,13 +173,18 @@ necesidad de cuenta ni de conexión.
 - **Imagen** vertical 4:5 (1080×1350 px) con: ranking final (posición,
   nombre y puntos), ganador destacado, fecha, número de jugadores y de
   rondas, y la marca La Pocha. Apta para 3 a 8 jugadores.
-- **Aspecto fijo de marca** (verde `#2E5040`), independiente del modo
-  claro u oscuro de la app.
+- **Aspecto:** paleta oscura de la app (fondo `#1A2420`, tarjeta del
+  ganador `#2E5040`, acento menta `#4CAF82`), independiente del modo
+  claro u oscuro. Misma estructura visual que la pantalla de resultado
+  final: bloque héroe del ganador (trofeo + avatar + nombre + puntos) y,
+  debajo, el resto de la clasificación (sin repetir al ganador). Empate
+  en 1º → héroe con etiqueta «EMPATE» y todos los empatados.
 - **Texto acompañante** breve junto a la imagen, por si la app de destino
   no la muestra (p. ej. "La Pocha: gana María con 245 pts").
 - **Empates:** comparten puesto ("ex aequo") y el siguiente puesto se
-  salta (1º, 1º, 3º). La imagen y la pantalla de resultado final deben
-  mostrar el mismo ranking.
+  salta (p. ej. dos 1º y luego 3º en ranking). La imagen destaca a todos
+  los empatados en 1º en el héroe; el resto de puestos empatados se pintan
+  como filas con el mismo número de posición.
 - **Dónde:** botón en la pantalla de resultado final y en el detalle de
   partida del historial. Solo partidas en estado `finished`.
 - **Offline:** funciona sin conexión y sin cuenta. No lee ni escribe en

@@ -77,7 +77,8 @@ Feature `share_result` shares a finished game as a brand-fixed PNG + caption via
 - Domain port `ShareSheetGateway` returns `ShareOutcome` (`shared` / `dismissed` / `unavailable`); no Flutter imports in domain
 - Image capture: isolated render tree (`RenderRepaintBoundary` + `PipelineOwner` / `BuildOwner`) at logical 360×450 with `pixelRatio` 3.0 → 1080×1350; fixed temp file name, no post-share cleanup
 - Brand fonts: bundled `LilitaOne` under `assets/fonts/` (SIL Open Font License; see `assets/fonts/OFL.txt`) — do **not** use `google_fonts` for the share card (offline-first)
-- Presentation must not use Firebase; theme of the share card is fixed (`#2E5040`) and ignores app `ThemeMode` / system text scaling
+- Presentation must not use Firebase; the share card copies the dark final-result palette as local constants (background `#1A2420`, winner card `#2E5040`, mint accent `#4CAF82`) and ignores app `ThemeMode` / system text scaling — no `Theme.of` / `AppTheme` at capture time
+- Visual structure mirrors the final-result screen: winner hero (trophy + avatar + name + points) + remaining standings (`rank >= 2`); first-place ties use an `EMPATE` hero; optional PNG previews via `flutter test --dart-define=SHARE_PREVIEWS=true --tags preview` → `build/share_previews/`
 
 ## Code quality
 

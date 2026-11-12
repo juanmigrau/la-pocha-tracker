@@ -96,7 +96,7 @@ Código de la app en `app/lib/`, con `core/` (router, DI, tema, base de datos) y
 - Corrección de apuestas en la ronda actual y repetición de ronda
 - Jugadores por nombre libre, búsqueda de usuarios registrados y favoritos locales
 - Historial unificado (local + nube), detalle ronda a ronda y «repetir partida»
-- Compartir resultado final como imagen PNG (share sheet local con `share_plus`, sin Firebase)
+- Compartir resultado final como imagen PNG (share sheet local con `share_plus`, sin Firebase; card con paleta oscura y héroe del ganador como en resultado final)
 - Registro / login opcional (email-contraseña y Google); sync automático al finalizar (con reintento si falla)
 
 ---
