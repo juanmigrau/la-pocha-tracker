@@ -25,9 +25,6 @@ class ShareResultCard extends StatelessWidget {
   static const Color trophyGold = Color(0xFFC8A84B);
   static const String brandFontFamily = 'LilitaOne';
 
-  /// Vertical centered single-winner hero when total players is at most this.
-  static const int verticalHeroMaxPlayers = 5;
-
   final ShareResultPayload payload;
 
   static const List<String> _monthNames = [
@@ -49,9 +46,7 @@ class ShareResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final winners = payload.ranking.where((e) => e.rank == 1).toList();
     final rest = payload.ranking.where((e) => e.rank >= 2).toList();
-    final totalPlayers = payload.ranking.length;
     final isTie = winners.length > 1;
-    final useVerticalSingle = !isTie && totalPlayers <= verticalHeroMaxPlayers;
 
     return MediaQuery(
       data: MediaQueryData(size: logicalSize, textScaler: TextScaler.noScaling),
@@ -84,7 +79,6 @@ class ShareResultCard extends StatelessWidget {
                           child: _CardBody(
                             winners: winners,
                             rest: rest,
-                            useVerticalSingle: useVerticalSingle,
                             isTie: isTie,
                           ),
                         ),
@@ -195,23 +189,22 @@ class _BrandHeader extends StatelessWidget {
 
 /// Middle section: hero + optional standings with capped inter-block gaps.
 ///
-/// Short lists keep intrinsic row height; leftover height grows the hero so
-/// the gap between hero and list stays ≤ [_maxBlockGap] (fixed [_minBlockGap]).
+/// Single-winner hero stays compact (row); leftover centers the list with
+/// gaps ≤ [_maxBlockGap]. Tie heroes may expand to fill when the list is short.
 class _CardBody extends StatelessWidget {
   const _CardBody({
     required this.winners,
     required this.rest,
-    required this.useVerticalSingle,
     required this.isTie,
   });
 
   static const double _maxBlockGap = 40;
   static const double _minBlockGap = 14;
-  static const double _heroMinHeight = 96;
+  static const double _heroMinHeight = 88;
+  static const double _singleHeroSoftMax = 118;
 
   final List<RankingEntry> winners;
   final List<RankingEntry> rest;
-  final bool useVerticalSingle;
   final bool isTie;
 
   @override
@@ -222,8 +215,7 @@ class _CardBody extends StatelessWidget {
 
     final hero = _WinnerHero(
       winners: winners,
-      useVerticalSingle: useVerticalSingle,
-      // Fill grown hero height for all-tied and multi-ties with a short list.
+      // Fill height for all-tied and multi-ties with a short list.
       expandTieToFill: rest.isEmpty || isTie,
     );
 
@@ -238,8 +230,7 @@ class _CardBody extends StatelessWidget {
             listAtMax + _minBlockGap + _heroMinHeight > constraints.maxHeight;
 
         if (tight) {
-          // Long standings: share space; rows shrink below max height.
-          final heroFlex = isTie || useVerticalSingle ? 5 : 3;
+          final heroFlex = isTie ? 5 : 3;
           final listFlex = rest.length >= 5 ? 5 : 3;
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -254,9 +245,39 @@ class _CardBody extends StatelessWidget {
           );
         }
 
-        // Short standings: hero Expanded absorbs leftover; list stays compact.
-        // Gap is fixed at [_minBlockGap] (≤ [_maxBlockGap]); no floating void.
         assert(_minBlockGap <= _maxBlockGap);
+
+        // Compact single-winner row: cap green height; center list; no voids.
+        if (!isTie) {
+          var heroH = _singleHeroSoftMax;
+          var leftover = constraints.maxHeight - heroH - listAtMax;
+          if (leftover < 2 * _minBlockGap) {
+            heroH = (constraints.maxHeight - listAtMax - 2 * _minBlockGap)
+                .clamp(_heroMinHeight, _singleHeroSoftMax);
+            leftover = constraints.maxHeight - heroH - listAtMax;
+          }
+          if (leftover > 2 * _maxBlockGap) {
+            heroH = constraints.maxHeight - listAtMax - 2 * _maxBlockGap;
+            leftover = 2 * _maxBlockGap;
+          }
+          final pad = (leftover / 2).clamp(0.0, _maxBlockGap);
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SizedBox(height: heroH, child: hero),
+              SizedBox(height: pad),
+              SizedBox(
+                height: listAtMax,
+                child: _StandingsList(entries: rest),
+              ),
+              // Absorb remainder (avoids float rounding overflow on exact sums).
+              const Expanded(child: SizedBox.shrink()),
+            ],
+          );
+        }
+
+        // Tie + short standings: hero absorbs leftover; fixed gap to list.
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -274,14 +295,9 @@ class _CardBody extends StatelessWidget {
 }
 
 class _WinnerHero extends StatelessWidget {
-  const _WinnerHero({
-    required this.winners,
-    required this.useVerticalSingle,
-    required this.expandTieToFill,
-  });
+  const _WinnerHero({required this.winners, required this.expandTieToFill});
 
   final List<RankingEntry> winners;
-  final bool useVerticalSingle;
   final bool expandTieToFill;
 
   @override
@@ -290,115 +306,25 @@ class _WinnerHero extends StatelessWidget {
     final score = winners.first.totalScore;
 
     return Container(
+      key: const Key('share_result_winner_card'),
       decoration: BoxDecoration(
         color: ShareResultCard.brandGreen,
         borderRadius: BorderRadius.circular(16),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      // Matches [WinnerCard] padding; brand colors stay fixed (no Theme).
+      padding: const EdgeInsets.all(16),
       child: isTie
           ? _TieHeroContent(
               winners: winners,
               score: score,
               expandToFill: expandTieToFill,
             )
-          : _SingleWinnerContent(
-              entry: winners.first,
-              vertical: useVerticalSingle,
-            ),
+          : _SingleWinnerRow(entry: winners.first),
     );
   }
 }
 
-class _SingleWinnerContent extends StatelessWidget {
-  const _SingleWinnerContent({required this.entry, required this.vertical});
-
-  final RankingEntry entry;
-  final bool vertical;
-
-  @override
-  Widget build(BuildContext context) {
-    return vertical
-        ? _SingleWinnerVertical(entry: entry)
-        : _SingleWinnerRow(entry: entry);
-  }
-}
-
-class _SingleWinnerVertical extends StatelessWidget {
-  const _SingleWinnerVertical({required this.entry});
-
-  final RankingEntry entry;
-
-  @override
-  Widget build(BuildContext context) {
-    final name = entry.player.displayName;
-
-    return KeyedSubtree(
-      key: const Key('share_result_hero_vertical'),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return FittedBox(
-            fit: BoxFit.scaleDown,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: constraints.maxWidth),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.emoji_events,
-                    color: ShareResultCard.trophyGold,
-                    size: 36,
-                  ),
-                  const SizedBox(height: 10),
-                  _ShareInitialAvatar(
-                    name: name,
-                    colorIndex: entry.player.seatOrder,
-                    radius: 32,
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'GANADOR',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
-                      color: ShareResultCard.accentMint,
-                      height: 1.0,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    name,
-                    maxLines: 2,
-                    textAlign: TextAlign.center,
-                    softWrap: true,
-                    style: const TextStyle(
-                      fontFamily: ShareResultCard.brandFontFamily,
-                      fontSize: 28,
-                      color: Colors.white,
-                      height: 1.05,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${entry.totalScore} pts',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontFamily: ShareResultCard.brandFontFamily,
-                      fontSize: 20,
-                      color: ShareResultCard.trophyGold,
-                      height: 1.1,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
+/// Single-winner hero: same Row structure as [WinnerCard], brand-fixed styles.
 class _SingleWinnerRow extends StatelessWidget {
   const _SingleWinnerRow({required this.entry});
 
@@ -410,65 +336,73 @@ class _SingleWinnerRow extends StatelessWidget {
 
     return KeyedSubtree(
       key: const Key('share_result_hero_row'),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.emoji_events,
-            color: ShareResultCard.trophyGold,
-            size: 36,
-          ),
-          const SizedBox(width: 12),
-          _ShareInitialAvatar(
-            name: name,
-            colorIndex: entry.player.seatOrder,
-            radius: 28,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  'GANADOR',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.2,
-                    color: ShareResultCard.accentMint,
-                    height: 1.0,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    name,
-                    maxLines: 2,
-                    softWrap: true,
-                    style: const TextStyle(
-                      fontFamily: ShareResultCard.brandFontFamily,
-                      fontSize: 28,
-                      color: Colors.white,
-                      height: 1.05,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final row = Row(
+            children: [
+              const Icon(
+                Icons.emoji_events,
+                color: ShareResultCard.trophyGold,
+                size: 32,
+              ),
+              const SizedBox(width: 12),
+              _ShareInitialAvatar(
+                name: name,
+                colorIndex: entry.player.seatOrder,
+                radius: 28,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'GANADOR',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.2,
+                        color: ShareResultCard.accentMint,
+                        height: 1.0,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 4),
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: ShareResultCard.brandFontFamily,
+                        fontSize: 24,
+                        color: Colors.white,
+                        height: 1.05,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${entry.totalScore} pts',
+                      style: const TextStyle(
+                        fontFamily: ShareResultCard.brandFontFamily,
+                        fontSize: 18,
+                        color: ShareResultCard.trophyGold,
+                        height: 1.1,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  '${entry.totalScore} pts',
-                  style: const TextStyle(
-                    fontFamily: ShareResultCard.brandFontFamily,
-                    fontSize: 18,
-                    color: ShareResultCard.trophyGold,
-                    height: 1.1,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+              ),
+            ],
+          );
+
+          // Scale down when the hero band is shorter than the row (long lists).
+          return FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: SizedBox(width: constraints.maxWidth, child: row),
+          );
+        },
       ),
     );
   }

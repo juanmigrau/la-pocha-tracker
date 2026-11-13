@@ -215,7 +215,7 @@ void main() {
     expect(find.text('3'), findsNWidgets(2));
   });
 
-  testWidgets('five players use vertical single-winner hero without overflow', (
+  testWidgets('five players use row single-winner hero without overflow', (
     tester,
   ) async {
     _failOnOverflow();
@@ -226,8 +226,8 @@ void main() {
 
     await _pumpCard(tester, _payload(ranking: ranking));
 
-    expect(find.byKey(const Key('share_result_hero_vertical')), findsOneWidget);
-    expect(find.byKey(const Key('share_result_hero_row')), findsNothing);
+    expect(find.byKey(const Key('share_result_hero_row')), findsOneWidget);
+    expect(find.byKey(const Key('share_result_hero_vertical')), findsNothing);
     expect(find.text('GANADOR'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -246,6 +246,30 @@ void main() {
     expect(find.byKey(const Key('share_result_hero_row')), findsOneWidget);
     expect(find.byKey(const Key('share_result_hero_vertical')), findsNothing);
     expect(find.text('GANADOR'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('compact single-winner hero keeps short list gaps small', (
+    tester,
+  ) async {
+    _failOnOverflow();
+    final ranking = [
+      _entry(id: '0', name: 'tt', rank: 1, score: 35),
+      _entry(id: '1', name: 'Juanmi', rank: 2, score: 20),
+      _entry(id: '2', name: 'pp', rank: 3, score: 15),
+    ];
+
+    await _pumpCard(tester, _payload(ranking: ranking));
+
+    final heroBox = tester.getRect(
+      find.byKey(const Key('share_result_winner_card')),
+    );
+    final listBox = tester.getRect(
+      find.byKey(const Key('share_result_standings')),
+    );
+    expect(listBox.top - heroBox.bottom, lessThanOrEqualTo(40.5));
+    expect(heroBox.height, lessThanOrEqualTo(130));
+    expect(find.byKey(const Key('share_result_hero_row')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
