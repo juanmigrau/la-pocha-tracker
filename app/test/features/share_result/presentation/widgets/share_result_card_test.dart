@@ -103,7 +103,7 @@ void main() {
     expect(find.text('Ana'), findsOneWidget);
   });
 
-  testWidgets('three-way first-place tie shows all winners and rest list', (
+  testWidgets('three-way first-place tie uses single avatar row', (
     tester,
   ) async {
     _failOnOverflow();
@@ -118,6 +118,11 @@ void main() {
     await _pumpCard(tester, _payload(ranking: ranking));
 
     expect(find.text('EMPATE'), findsOneWidget);
+    expect(
+      find.byKey(const Key('share_result_tie_single_row')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('share_result_tie_wrap')), findsNothing);
     expect(find.text('María'), findsOneWidget);
     expect(find.text('Juan'), findsOneWidget);
     expect(find.text('Ana'), findsOneWidget);
@@ -125,6 +130,26 @@ void main() {
     expect(find.byKey(const Key('share_result_standings')), findsOneWidget);
     expect(find.text('4'), findsOneWidget);
     expect(find.text('5'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('five of six tied uses wrap grid without overflow', (
+    tester,
+  ) async {
+    _failOnOverflow();
+    final ranking = [
+      for (var i = 0; i < 5; i++)
+        _entry(id: '$i', name: 'Empate$i', rank: 1, score: 30),
+      _entry(id: '5', name: 'Sexto', rank: 6, score: 5),
+    ];
+
+    await _pumpCard(tester, _payload(ranking: ranking));
+
+    expect(find.text('EMPATE'), findsOneWidget);
+    expect(find.byKey(const Key('share_result_tie_wrap')), findsOneWidget);
+    expect(find.byKey(const Key('share_result_tie_single_row')), findsNothing);
+    expect(find.byKey(const Key('share_result_standings')), findsOneWidget);
+    expect(find.text('Sexto'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -195,7 +220,10 @@ void main() {
     expect(find.text('3'), findsNWidgets(2));
   });
 
-  testWidgets('all tied for first omits standings list', (tester) async {
+  testWidgets('all three tied uses single row and omits standings', (
+    tester,
+  ) async {
+    _failOnOverflow();
     final ranking = [
       _entry(id: '1', name: 'Alex', rank: 1, score: 10),
       _entry(id: '2', name: 'Bea', rank: 1, score: 10),
@@ -205,13 +233,37 @@ void main() {
     await _pumpCard(tester, _payload(ranking: ranking));
 
     expect(find.text('EMPATE'), findsOneWidget);
+    expect(
+      find.byKey(const Key('share_result_tie_single_row')),
+      findsOneWidget,
+    );
     expect(find.text('Alex'), findsOneWidget);
     expect(find.text('Bea'), findsOneWidget);
     expect(find.text('Cris'), findsOneWidget);
     expect(find.byKey(const Key('share_result_standings')), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 
-  testWidgets('all eight tied omits standings without overflow', (
+  testWidgets('all four tied uses single row without overflow', (tester) async {
+    _failOnOverflow();
+    final ranking = [
+      for (var i = 0; i < 4; i++)
+        _entry(id: '$i', name: 'Jugador$i', rank: 1, score: 15),
+    ];
+
+    await _pumpCard(tester, _payload(ranking: ranking));
+
+    expect(find.text('EMPATE'), findsOneWidget);
+    expect(
+      find.byKey(const Key('share_result_tie_single_row')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('share_result_standings')), findsNothing);
+    expect(find.textContaining('15 pts'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('all eight tied uses wrap and omits standings without overflow', (
     tester,
   ) async {
     _failOnOverflow();
@@ -223,6 +275,7 @@ void main() {
     await _pumpCard(tester, _payload(ranking: ranking));
 
     expect(find.text('EMPATE'), findsOneWidget);
+    expect(find.byKey(const Key('share_result_tie_wrap')), findsOneWidget);
     expect(find.byKey(const Key('share_result_standings')), findsNothing);
     expect(find.textContaining('12 pts'), findsOneWidget);
     expect(tester.takeException(), isNull);

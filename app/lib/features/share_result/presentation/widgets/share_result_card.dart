@@ -100,6 +100,7 @@ class ShareResultCard extends StatelessWidget {
                               : _WinnerHero(
                                   winners: winners,
                                   useVerticalSingle: useVerticalSingle,
+                                  expandTieToFill: rest.isEmpty,
                                 ),
                         ),
                         if (rest.isNotEmpty) ...[
@@ -215,10 +216,15 @@ class _BrandHeader extends StatelessWidget {
 }
 
 class _WinnerHero extends StatelessWidget {
-  const _WinnerHero({required this.winners, required this.useVerticalSingle});
+  const _WinnerHero({
+    required this.winners,
+    required this.useVerticalSingle,
+    required this.expandTieToFill,
+  });
 
   final List<RankingEntry> winners;
   final bool useVerticalSingle;
+  final bool expandTieToFill;
 
   @override
   Widget build(BuildContext context) {
@@ -232,7 +238,11 @@ class _WinnerHero extends StatelessWidget {
       ),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: isTie
-          ? _TieHeroContent(winners: winners, score: score)
+          ? _TieHeroContent(
+              winners: winners,
+              score: score,
+              expandToFill: expandTieToFill,
+            )
           : _SingleWinnerContent(
               entry: winners.first,
               vertical: useVerticalSingle,
@@ -406,36 +416,153 @@ class _SingleWinnerRow extends StatelessWidget {
   }
 }
 
+/// Layout metrics for multi-winner tie hero (sizes scale with available space).
+class _TieLayoutMetrics {
+  const _TieLayoutMetrics({
+    required this.avatarDiameter,
+    required this.chipWidth,
+    required this.nameSize,
+    required this.scoreSize,
+    required this.labelSize,
+    required this.trophySize,
+    required this.gapAfterLabel,
+    required this.gapBeforeScore,
+    required this.spacing,
+    required this.runSpacing,
+    required this.maxPerRow,
+  });
+
+  final double avatarDiameter;
+  final double chipWidth;
+  final double nameSize;
+  final double scoreSize;
+  final double labelSize;
+  final double trophySize;
+  final double gapAfterLabel;
+  final double gapBeforeScore;
+  final double spacing;
+  final double runSpacing;
+  final int maxPerRow;
+
+  double get avatarRadius => avatarDiameter / 2;
+
+  /// Computes sizes so ≤4 winners stay on one row and 5–8 use two rows of ≤4.
+  static _TieLayoutMetrics compute({
+    required int winnerCount,
+    required double maxWidth,
+    required double maxHeight,
+  }) {
+    assert(winnerCount >= 2);
+
+    final maxPerRow = winnerCount <= 4 ? winnerCount : 4;
+    final rows = (winnerCount + maxPerRow - 1) ~/ maxPerRow;
+
+    // Target diameter (logical) by case.
+    final double targetMax;
+    if (winnerCount <= 3) {
+      targetMax = 58;
+    } else if (winnerCount == 4) {
+      targetMax = 60;
+    } else {
+      targetMax = 54; // 5–8: ~50–56
+    }
+    const targetMin = 28.0;
+
+    final spacing = winnerCount <= 3 ? 14.0 : (winnerCount == 4 ? 10.0 : 8.0);
+    final runSpacing = winnerCount <= 4 ? 12.0 : 14.0;
+
+    // Full column share so names get width beyond the avatar circle.
+    final chipWidth = ((maxWidth - spacing * (maxPerRow - 1)) / maxPerRow)
+        .clamp(1.0, maxWidth);
+
+    final diameterFromHeight = _diameterFromHeight(
+      maxHeight: maxHeight,
+      rows: rows,
+      runSpacing: runSpacing,
+    );
+
+    // Avatar fills most of the chip, capped by case target and height budget.
+    var diameter = [
+      targetMax,
+      chipWidth * 0.92,
+      diameterFromHeight,
+    ].reduce((a, b) => a < b ? a : b);
+    diameter = diameter.clamp(targetMin, targetMax);
+
+    final nameSize = (diameter * 0.34).clamp(13.0, 22.0);
+    final scoreSize = (diameter * 0.40).clamp(18.0, 28.0);
+    final labelSize = (diameter * 0.28).clamp(13.0, 18.0);
+    final trophySize = (diameter * 0.50).clamp(26.0, 34.0);
+    final gapAfterLabel = (diameter * 0.20).clamp(10.0, 16.0);
+    final gapBeforeScore = (diameter * 0.20).clamp(10.0, 16.0);
+
+    return _TieLayoutMetrics(
+      avatarDiameter: diameter,
+      chipWidth: chipWidth,
+      nameSize: nameSize,
+      scoreSize: scoreSize,
+      labelSize: labelSize,
+      trophySize: trophySize,
+      gapAfterLabel: gapAfterLabel,
+      gapBeforeScore: gapBeforeScore,
+      spacing: spacing,
+      runSpacing: runSpacing,
+      maxPerRow: maxPerRow,
+    );
+  }
+
+  static double _diameterFromHeight({
+    required double maxHeight,
+    required int rows,
+    required double runSpacing,
+  }) {
+    // Keep the coefficient modest so all-tied heroes grow toward targetMax.
+    final fixed = 28.0 + runSpacing * (rows - 1);
+    final coef = 0.75 + rows * 1.28;
+    if (coef <= 0 || maxHeight <= fixed) {
+      return 28;
+    }
+    return (maxHeight - fixed) / coef;
+  }
+}
+
 class _TieHeroContent extends StatelessWidget {
-  const _TieHeroContent({required this.winners, required this.score});
+  const _TieHeroContent({
+    required this.winners,
+    required this.score,
+    required this.expandToFill,
+  });
 
   final List<RankingEntry> winners;
   final int score;
+  final bool expandToFill;
 
   @override
   Widget build(BuildContext context) {
-    final compact = winners.length >= 4;
-    // Compact chips sized to fit up to 4 per row in the 360-wide card.
-    final avatarRadius = compact ? 14.0 : 22.0;
-    final chipWidth = compact ? 62.0 : 96.0;
-    final nameSize = compact ? 11.0 : 15.0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Leave a little slack so the row never forces FittedBox to shrink.
+        final usableWidth = constraints.maxWidth * 0.98;
+        final metrics = _TieLayoutMetrics.compute(
+          winnerCount: winners.length,
+          maxWidth: usableWidth,
+          maxHeight: constraints.maxHeight,
+        );
 
-    return Column(
-      children: [
-        const Row(
+        final label = Row(
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               Icons.emoji_events,
               color: ShareResultCard.trophyGold,
-              size: 28,
+              size: metrics.trophySize,
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Text(
               'EMPATE',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: metrics.labelSize,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.4,
                 color: ShareResultCard.accentMint,
@@ -443,51 +570,120 @@ class _TieHeroContent extends StatelessWidget {
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 12),
-        Expanded(
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return FittedBox(
-                fit: BoxFit.scaleDown,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: constraints.maxWidth),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Wrap(
-                        spacing: compact ? 6 : 12,
-                        runSpacing: compact ? 8 : 10,
-                        alignment: WrapAlignment.center,
-                        children: [
-                          for (final entry in winners)
-                            _TiedWinnerChip(
-                              entry: entry,
-                              avatarRadius: avatarRadius,
-                              width: chipWidth,
-                              nameSize: nameSize,
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        '$score pts',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontFamily: ShareResultCard.brandFontFamily,
-                          fontSize: 20,
-                          color: ShareResultCard.trophyGold,
-                          height: 1.1,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
+        );
+        final grid = _TieAvatarGrid(winners: winners, metrics: metrics);
+        final points = Text(
+          '$score pts',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontFamily: ShareResultCard.brandFontFamily,
+            fontSize: metrics.scoreSize,
+            color: ShareResultCard.trophyGold,
+            height: 1.1,
           ),
+        );
+
+        // All tied: spread label / avatars / points to use the hero height.
+        if (expandToFill) {
+          return KeyedSubtree(
+            key: const Key('share_result_tie_hero'),
+            child: SizedBox(
+              width: constraints.maxWidth,
+              height: constraints.maxHeight,
+              child: Column(
+                children: [
+                  const Spacer(flex: 2),
+                  label,
+                  SizedBox(height: metrics.gapAfterLabel),
+                  grid,
+                  SizedBox(height: metrics.gapBeforeScore),
+                  points,
+                  const Spacer(flex: 2),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return FittedBox(
+          fit: BoxFit.scaleDown,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: usableWidth),
+            child: KeyedSubtree(
+              key: const Key('share_result_tie_hero'),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  label,
+                  SizedBox(height: metrics.gapAfterLabel),
+                  grid,
+                  SizedBox(height: metrics.gapBeforeScore),
+                  points,
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _TieAvatarGrid extends StatelessWidget {
+  const _TieAvatarGrid({required this.winners, required this.metrics});
+
+  final List<RankingEntry> winners;
+  final _TieLayoutMetrics metrics;
+
+  List<Widget> _rowChildren(List<RankingEntry> entries) {
+    return [
+      for (var i = 0; i < entries.length; i++) ...[
+        if (i > 0) SizedBox(width: metrics.spacing),
+        _TiedWinnerChip(
+          entry: entries[i],
+          avatarRadius: metrics.avatarRadius,
+          width: metrics.chipWidth,
+          nameSize: metrics.nameSize,
+          nameGap: metrics.avatarDiameter * 0.12,
         ),
       ],
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // ≤4: one centered row (avoids Wrap turning 3 into 2+1).
+    if (winners.length <= 4) {
+      return Row(
+        key: const Key('share_result_tie_single_row'),
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: _rowChildren(winners),
+      );
+    }
+
+    // 5–8: explicit rows of at most 4 (Wrap would fit 5 in one row when chips are narrow).
+    final rows = <Widget>[];
+    for (var i = 0; i < winners.length; i += metrics.maxPerRow) {
+      final end = (i + metrics.maxPerRow < winners.length)
+          ? i + metrics.maxPerRow
+          : winners.length;
+      if (rows.isNotEmpty) {
+        rows.add(SizedBox(height: metrics.runSpacing));
+      }
+      rows.add(
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: _rowChildren(winners.sublist(i, end)),
+        ),
+      );
+    }
+
+    return Column(
+      key: const Key('share_result_tie_wrap'),
+      mainAxisSize: MainAxisSize.min,
+      children: rows,
     );
   }
 }
@@ -498,12 +694,14 @@ class _TiedWinnerChip extends StatelessWidget {
     required this.avatarRadius,
     required this.width,
     required this.nameSize,
+    required this.nameGap,
   });
 
   final RankingEntry entry;
   final double avatarRadius;
   final double width;
   final double nameSize;
+  final double nameGap;
 
   @override
   Widget build(BuildContext context) {
@@ -518,7 +716,7 @@ class _TiedWinnerChip extends StatelessWidget {
             colorIndex: entry.player.seatOrder,
             radius: avatarRadius,
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: nameGap),
           Text(
             name,
             maxLines: 1,
