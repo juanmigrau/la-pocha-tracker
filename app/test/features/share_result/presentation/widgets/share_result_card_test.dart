@@ -267,9 +267,44 @@ void main() {
     final listBox = tester.getRect(
       find.byKey(const Key('share_result_standings')),
     );
+    final footerBox = tester.getRect(
+      find.byKey(const Key('share_result_footer')),
+    );
+    expect(heroBox.height, inInclusiveRange(118.0, 130.0));
     expect(listBox.top - heroBox.bottom, lessThanOrEqualTo(40.5));
-    expect(heroBox.height, lessThanOrEqualTo(130));
+    expect(footerBox.top - listBox.bottom, lessThanOrEqualTo(40.5));
     expect(find.byKey(const Key('share_result_hero_row')), findsOneWidget);
+    expect(find.textContaining('35 pts'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('long winner name scales instead of single-line ellipsis', (
+    tester,
+  ) async {
+    _failOnOverflow();
+    final longName = 'NombreLargoJugador0'.padRight(20).substring(0, 20);
+    final ranking = [
+      _entry(id: '0', name: longName, rank: 1, score: 40),
+      for (var i = 1; i < 8; i++)
+        _entry(
+          id: '$i',
+          name: 'NombreLargoJugador$i'.padRight(20).substring(0, 20),
+          rank: i + 1,
+          score: 40 - i,
+        ),
+    ];
+
+    await _pumpCard(tester, _payload(ranking: ranking));
+
+    expect(find.text(longName), findsOneWidget);
+    final nameText = tester.widget<Text>(find.text(longName));
+    // Prefer scale-down on one line; ellipsis only as last resort on 2 lines.
+    if (nameText.overflow == TextOverflow.ellipsis) {
+      expect(nameText.maxLines, 2);
+      expect(nameText.style?.fontSize, closeTo(24 * 0.6, 0.05));
+    } else {
+      expect(nameText.maxLines, 1);
+    }
     expect(tester.takeException(), isNull);
   });
 

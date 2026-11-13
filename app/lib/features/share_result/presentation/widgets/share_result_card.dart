@@ -201,7 +201,9 @@ class _CardBody extends StatelessWidget {
   static const double _maxBlockGap = 40;
   static const double _minBlockGap = 14;
   static const double _heroMinHeight = 88;
-  static const double _singleHeroSoftMax = 118;
+
+  /// Fixed single-winner hero band (matches previews 11/12).
+  static const double _singleHeroHeight = 124;
 
   final List<RankingEntry> winners;
   final List<RankingEntry> rest;
@@ -226,8 +228,9 @@ class _CardBody extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final listAtMax = _StandingsList.intrinsicHeight(rest.length);
+        final singleHeroBudget = isTie ? _heroMinHeight : _singleHeroHeight;
         final tight =
-            listAtMax + _minBlockGap + _heroMinHeight > constraints.maxHeight;
+            listAtMax + _minBlockGap + singleHeroBudget > constraints.maxHeight;
 
         if (tight) {
           final heroFlex = isTie ? 5 : 3;
@@ -235,7 +238,27 @@ class _CardBody extends StatelessWidget {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(flex: heroFlex, child: hero),
+              Expanded(
+                flex: heroFlex,
+                child: isTie
+                    ? hero
+                    : LayoutBuilder(
+                        builder: (context, heroConstraints) {
+                          final h = _singleHeroHeight.clamp(
+                            0.0,
+                            heroConstraints.maxHeight,
+                          );
+                          return Align(
+                            alignment: Alignment.center,
+                            child: SizedBox(
+                              height: h,
+                              width: double.infinity,
+                              child: hero,
+                            ),
+                          );
+                        },
+                      ),
+              ),
               const SizedBox(height: _minBlockGap),
               Expanded(
                 flex: listFlex,
@@ -247,32 +270,52 @@ class _CardBody extends StatelessWidget {
 
         assert(_minBlockGap <= _maxBlockGap);
 
-        // Compact single-winner row: cap green height; center list; no voids.
+        // Fixed-height single-winner hero; center hero+list; gaps ≤ maxBlockGap.
+        // Parent adds 12 dp before the footer — keep body bottom pad ≤ 28 so
+        // the measured list→footer gap stays ≤ ~40.
         if (!isTie) {
-          var heroH = _singleHeroSoftMax;
-          var leftover = constraints.maxHeight - heroH - listAtMax;
-          if (leftover < 2 * _minBlockGap) {
-            heroH = (constraints.maxHeight - listAtMax - 2 * _minBlockGap)
-                .clamp(_heroMinHeight, _singleHeroSoftMax);
-            leftover = constraints.maxHeight - heroH - listAtMax;
+          const heroH = _singleHeroHeight;
+          const outerFooterGap = 12.0;
+          final maxBottomPad = (_maxBlockGap - outerFooterGap).clamp(
+            0.0,
+            _maxBlockGap,
+          );
+          var midGap = _minBlockGap;
+          var free = constraints.maxHeight - heroH - listAtMax - midGap;
+          var topPad = 0.0;
+          var bottomPad = 0.0;
+          if (free > 0) {
+            topPad = free / 2;
+            bottomPad = free - topPad;
+            if (topPad > _maxBlockGap || bottomPad > maxBottomPad) {
+              topPad = topPad.clamp(0.0, _maxBlockGap);
+              bottomPad = bottomPad.clamp(0.0, maxBottomPad);
+              final consumed = topPad + bottomPad;
+              final overflow = free - consumed;
+              midGap = (_minBlockGap + overflow).clamp(
+                _minBlockGap,
+                _maxBlockGap,
+              );
+            }
+            final used = topPad + heroH + midGap + listAtMax + bottomPad;
+            final still = constraints.maxHeight - used;
+            if (still > 0) {
+              // Prefer extra space above the block over a tall bottom void.
+              topPad += still;
+            }
           }
-          if (leftover > 2 * _maxBlockGap) {
-            heroH = constraints.maxHeight - listAtMax - 2 * _maxBlockGap;
-            leftover = 2 * _maxBlockGap;
-          }
-          final pad = (leftover / 2).clamp(0.0, _maxBlockGap);
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              SizedBox(height: topPad),
               SizedBox(height: heroH, child: hero),
-              SizedBox(height: pad),
+              SizedBox(height: midGap),
               SizedBox(
                 height: listAtMax,
                 child: _StandingsList(entries: rest),
               ),
-              // Absorb remainder (avoids float rounding overflow on exact sums).
-              const Expanded(child: SizedBox.shrink()),
+              SizedBox(height: bottomPad),
             ],
           );
         }
@@ -324,9 +367,13 @@ class _WinnerHero extends StatelessWidget {
   }
 }
 
-/// Single-winner hero: same Row structure as [WinnerCard], brand-fixed styles.
+/// Single-winner hero: Row like [WinnerCard], points pinned to the trailing edge.
 class _SingleWinnerRow extends StatelessWidget {
   const _SingleWinnerRow({required this.entry});
+
+  static const double _nameFontSize = 24;
+  static const double _scoreFontSize = 22;
+  static const double _minNameScale = 0.6;
 
   final RankingEntry entry;
 
@@ -339,6 +386,7 @@ class _SingleWinnerRow extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final row = Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Icon(
                 Icons.emoji_events,
@@ -369,34 +417,28 @@ class _SingleWinnerRow extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontFamily: ShareResultCard.brandFontFamily,
-                        fontSize: 24,
-                        color: Colors.white,
-                        height: 1.05,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${entry.totalScore} pts',
-                      style: const TextStyle(
-                        fontFamily: ShareResultCard.brandFontFamily,
-                        fontSize: 18,
-                        color: ShareResultCard.trophyGold,
-                        height: 1.1,
-                      ),
+                    _WinnerDisplayName(
+                      name: name,
+                      fontSize: _nameFontSize,
+                      minScale: _minNameScale,
                     ),
                   ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${entry.totalScore} pts',
+                style: const TextStyle(
+                  fontFamily: ShareResultCard.brandFontFamily,
+                  fontSize: _scoreFontSize,
+                  color: ShareResultCard.trophyGold,
+                  height: 1.0,
                 ),
               ),
             ],
           );
 
-          // Scale down when the hero band is shorter than the row (long lists).
+          // Scale the whole row when the hero band is shorter (long lists).
           return FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
@@ -404,6 +446,62 @@ class _SingleWinnerRow extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+/// Scales the winner name down to [minScale]; then up to 2 lines + ellipsis.
+class _WinnerDisplayName extends StatelessWidget {
+  const _WinnerDisplayName({
+    required this.name,
+    required this.fontSize,
+    required this.minScale,
+  });
+
+  final String name;
+  final double fontSize;
+  final double minScale;
+
+  @override
+  Widget build(BuildContext context) {
+    final baseStyle = TextStyle(
+      fontFamily: ShareResultCard.brandFontFamily,
+      fontSize: fontSize,
+      color: Colors.white,
+      height: 1.05,
+    );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxW = constraints.maxWidth;
+        final painter = TextPainter(
+          text: TextSpan(text: name, style: baseStyle),
+          maxLines: 1,
+          textDirection: TextDirection.ltr,
+          textScaler: TextScaler.noScaling,
+        )..layout();
+        final natural = painter.width;
+
+        if (natural <= maxW) {
+          return Text(name, maxLines: 1, style: baseStyle);
+        }
+
+        final scale = (maxW / natural).clamp(0.0, 1.0);
+        if (scale >= minScale) {
+          return FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(name, maxLines: 1, style: baseStyle),
+          );
+        }
+
+        return Text(
+          name,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: baseStyle.copyWith(fontSize: fontSize * minScale),
+        );
+      },
     );
   }
 }
