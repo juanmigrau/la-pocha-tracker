@@ -271,6 +271,29 @@ void main() {
       );
 
       await renderPreview(
+        fileName: '14_tie_two_of_three.png',
+        payload: _payload(
+          ranking: [
+            _entry(id: '0', name: 'María', rank: 1, score: 100),
+            _entry(id: '1', name: 'Juan', rank: 1, score: 100),
+            _entry(id: '2', name: 'Ana', rank: 3, score: 40),
+          ],
+        ),
+      );
+
+      await renderPreview(
+        fileName: '15_tie_three_of_four.png',
+        payload: _payload(
+          ranking: [
+            _entry(id: '0', name: 'María', rank: 1, score: 100),
+            _entry(id: '1', name: 'Juan', rank: 1, score: 100),
+            _entry(id: '2', name: 'Ana', rank: 1, score: 100),
+            _entry(id: '3', name: 'Luis', rank: 4, score: 40),
+          ],
+        ),
+      );
+
+      await renderPreview(
         fileName: '11_five_vertical_winner.png',
         payload: _payload(
           ranking: [
@@ -305,7 +328,7 @@ void main() {
           .whereType<File>()
           .where((f) => f.path.endsWith('.png'))
           .toList();
-      expect(files, hasLength(13));
+      expect(files, hasLength(15));
       // ignore: avoid_print
       print('Share previews written to: ${previewDir.path}');
     },

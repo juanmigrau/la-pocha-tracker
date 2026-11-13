@@ -56,13 +56,15 @@ Future<void> _pumpCard(WidgetTester tester, ShareResultPayload payload) async {
 }
 
 void _failOnOverflow() {
+  final previous = FlutterError.onError;
   FlutterError.onError = (details) {
     final message = details.exceptionAsString();
     if (message.contains('overflowed') || message.contains('RenderFlex')) {
       fail(message);
     }
-    FlutterError.presentError(details);
+    (previous ?? FlutterError.presentError)(details);
   };
+  addTearDown(() => FlutterError.onError = previous);
 }
 
 void main() {
@@ -133,7 +135,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('five of six tied uses wrap grid without overflow', (
+  testWidgets('five of six tied uses 3+2 wrap without overflow', (
     tester,
   ) async {
     _failOnOverflow();
@@ -147,9 +149,49 @@ void main() {
 
     expect(find.text('EMPATE'), findsOneWidget);
     expect(find.byKey(const Key('share_result_tie_wrap')), findsOneWidget);
+    expect(find.byKey(const Key('share_result_tie_row_0_3')), findsOneWidget);
+    expect(find.byKey(const Key('share_result_tie_row_1_2')), findsOneWidget);
     expect(find.byKey(const Key('share_result_tie_single_row')), findsNothing);
     expect(find.byKey(const Key('share_result_standings')), findsOneWidget);
     expect(find.text('Sexto'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('short standings keep list near footer without overflow', (
+    tester,
+  ) async {
+    _failOnOverflow();
+    final ranking = [
+      _entry(id: '0', name: 'María', rank: 1, score: 100),
+      _entry(id: '1', name: 'Juan', rank: 1, score: 100),
+      _entry(id: '2', name: 'Ana', rank: 3, score: 40),
+    ];
+
+    await _pumpCard(tester, _payload(ranking: ranking));
+
+    final heroBox = tester.getRect(
+      find.byKey(const Key('share_result_tie_hero')),
+    );
+    final listBox = tester.getRect(
+      find.byKey(const Key('share_result_standings')),
+    );
+    final gap = listBox.top - heroBox.bottom;
+    expect(gap, lessThanOrEqualTo(40.5));
+    expect(gap, greaterThanOrEqualTo(0));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('tie names scale before ellipsis for Jugador0', (tester) async {
+    _failOnOverflow();
+    final ranking = [
+      for (var i = 0; i < 4; i++)
+        _entry(id: '$i', name: 'Jugador$i', rank: 1, score: 15),
+    ];
+
+    await _pumpCard(tester, _payload(ranking: ranking));
+
+    expect(find.text('Jugador0'), findsOneWidget);
+    expect(find.text('Jugador1'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -263,7 +305,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('all eight tied uses wrap and omits standings without overflow', (
+  testWidgets('all eight tied uses 4+4 wrap and omits standings', (
     tester,
   ) async {
     _failOnOverflow();
@@ -276,6 +318,8 @@ void main() {
 
     expect(find.text('EMPATE'), findsOneWidget);
     expect(find.byKey(const Key('share_result_tie_wrap')), findsOneWidget);
+    expect(find.byKey(const Key('share_result_tie_row_0_4')), findsOneWidget);
+    expect(find.byKey(const Key('share_result_tie_row_1_4')), findsOneWidget);
     expect(find.byKey(const Key('share_result_standings')), findsNothing);
     expect(find.textContaining('12 pts'), findsOneWidget);
     expect(tester.takeException(), isNull);

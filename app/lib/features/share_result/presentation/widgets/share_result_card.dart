@@ -53,19 +53,6 @@ class ShareResultCard extends StatelessWidget {
     final isTie = winners.length > 1;
     final useVerticalSingle = !isTie && totalPlayers <= verticalHeroMaxPlayers;
 
-    final int heroFlex;
-    if (rest.isEmpty) {
-      heroFlex = 8;
-    } else if (isTie) {
-      heroFlex = 5;
-    } else if (useVerticalSingle) {
-      heroFlex = 5;
-    } else {
-      heroFlex = 3;
-    }
-
-    final listFlex = rest.length >= 5 ? 5 : 3;
-
     return MediaQuery(
       data: MediaQueryData(size: logicalSize, textScaler: TextScaler.noScaling),
       child: Directionality(
@@ -94,22 +81,13 @@ class ShareResultCard extends StatelessWidget {
                         const _BrandHeader(),
                         const SizedBox(height: 16),
                         Expanded(
-                          flex: heroFlex,
-                          child: winners.isEmpty
-                              ? const SizedBox.shrink()
-                              : _WinnerHero(
-                                  winners: winners,
-                                  useVerticalSingle: useVerticalSingle,
-                                  expandTieToFill: rest.isEmpty,
-                                ),
-                        ),
-                        if (rest.isNotEmpty) ...[
-                          const SizedBox(height: 14),
-                          Expanded(
-                            flex: listFlex,
-                            child: _StandingsList(entries: rest),
+                          child: _CardBody(
+                            winners: winners,
+                            rest: rest,
+                            useVerticalSingle: useVerticalSingle,
+                            isTie: isTie,
                           ),
-                        ],
+                        ),
                         const SizedBox(height: 12),
                         _FooterMeta(
                           finishedAt: payload.finishedAt,
@@ -211,6 +189,86 @@ class _BrandHeader extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Middle section: hero + optional standings with capped inter-block gaps.
+///
+/// Short lists keep intrinsic row height; leftover height grows the hero so
+/// the gap between hero and list stays ≤ [_maxBlockGap] (fixed [_minBlockGap]).
+class _CardBody extends StatelessWidget {
+  const _CardBody({
+    required this.winners,
+    required this.rest,
+    required this.useVerticalSingle,
+    required this.isTie,
+  });
+
+  static const double _maxBlockGap = 40;
+  static const double _minBlockGap = 14;
+  static const double _heroMinHeight = 96;
+
+  final List<RankingEntry> winners;
+  final List<RankingEntry> rest;
+  final bool useVerticalSingle;
+  final bool isTie;
+
+  @override
+  Widget build(BuildContext context) {
+    if (winners.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final hero = _WinnerHero(
+      winners: winners,
+      useVerticalSingle: useVerticalSingle,
+      // Fill grown hero height for all-tied and multi-ties with a short list.
+      expandTieToFill: rest.isEmpty || isTie,
+    );
+
+    if (rest.isEmpty) {
+      return hero;
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final listAtMax = _StandingsList.intrinsicHeight(rest.length);
+        final tight =
+            listAtMax + _minBlockGap + _heroMinHeight > constraints.maxHeight;
+
+        if (tight) {
+          // Long standings: share space; rows shrink below max height.
+          final heroFlex = isTie || useVerticalSingle ? 5 : 3;
+          final listFlex = rest.length >= 5 ? 5 : 3;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(flex: heroFlex, child: hero),
+              const SizedBox(height: _minBlockGap),
+              Expanded(
+                flex: listFlex,
+                child: _StandingsList(entries: rest, shrinkToFit: true),
+              ),
+            ],
+          );
+        }
+
+        // Short standings: hero Expanded absorbs leftover; list stays compact.
+        // Gap is fixed at [_minBlockGap] (≤ [_maxBlockGap]); no floating void.
+        assert(_minBlockGap <= _maxBlockGap);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(child: hero),
+            const SizedBox(height: _minBlockGap),
+            SizedBox(
+              height: listAtMax,
+              child: _StandingsList(entries: rest),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -446,7 +504,19 @@ class _TieLayoutMetrics {
 
   double get avatarRadius => avatarDiameter / 2;
 
-  /// Computes sizes so ≤4 winners stay on one row and 5–8 use two rows of ≤4.
+  /// Row lengths for multi-row ties: 5→3+2, 6→3+3, 7→4+3, 8→4+4.
+  static List<int> rowCounts(int winnerCount) {
+    assert(winnerCount >= 2);
+    return switch (winnerCount) {
+      5 => const [3, 2],
+      6 => const [3, 3],
+      7 => const [4, 3],
+      8 => const [4, 4],
+      _ => [winnerCount],
+    };
+  }
+
+  /// Computes sizes so ≤4 winners stay on one row and 5–8 use balanced rows.
   static _TieLayoutMetrics compute({
     required int winnerCount,
     required double maxWidth,
@@ -454,8 +524,9 @@ class _TieLayoutMetrics {
   }) {
     assert(winnerCount >= 2);
 
-    final maxPerRow = winnerCount <= 4 ? winnerCount : 4;
-    final rows = (winnerCount + maxPerRow - 1) ~/ maxPerRow;
+    final counts = rowCounts(winnerCount);
+    final maxPerRow = counts.reduce((a, b) => a > b ? a : b);
+    final rows = counts.length;
 
     // Target diameter (logical) by case.
     final double targetMax;
@@ -583,7 +654,18 @@ class _TieHeroContent extends StatelessWidget {
           ),
         );
 
-        // All tied: spread label / avatars / points to use the hero height.
+        final block = Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            label,
+            SizedBox(height: metrics.gapAfterLabel),
+            grid,
+            SizedBox(height: metrics.gapBeforeScore),
+            points,
+          ],
+        );
+
+        // Fill hero height: center the cohesive block; scale down if tight.
         if (expandToFill) {
           return KeyedSubtree(
             key: const Key('share_result_tie_hero'),
@@ -593,11 +675,16 @@ class _TieHeroContent extends StatelessWidget {
               child: Column(
                 children: [
                   const Spacer(flex: 2),
-                  label,
-                  SizedBox(height: metrics.gapAfterLabel),
-                  grid,
-                  SizedBox(height: metrics.gapBeforeScore),
-                  points,
+                  Flexible(
+                    flex: 8,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: usableWidth),
+                        child: block,
+                      ),
+                    ),
+                  ),
                   const Spacer(flex: 2),
                 ],
               ),
@@ -611,16 +698,7 @@ class _TieHeroContent extends StatelessWidget {
             constraints: BoxConstraints(maxWidth: usableWidth),
             child: KeyedSubtree(
               key: const Key('share_result_tie_hero'),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  label,
-                  SizedBox(height: metrics.gapAfterLabel),
-                  grid,
-                  SizedBox(height: metrics.gapBeforeScore),
-                  points,
-                ],
-              ),
+              child: block,
             ),
           ),
         );
@@ -652,8 +730,10 @@ class _TieAvatarGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final counts = _TieLayoutMetrics.rowCounts(winners.length);
+
     // ≤4: one centered row (avoids Wrap turning 3 into 2+1).
-    if (winners.length <= 4) {
+    if (counts.length == 1) {
       return Row(
         key: const Key('share_result_tie_single_row'),
         mainAxisAlignment: MainAxisAlignment.center,
@@ -662,20 +742,22 @@ class _TieAvatarGrid extends StatelessWidget {
       );
     }
 
-    // 5–8: explicit rows of at most 4 (Wrap would fit 5 in one row when chips are narrow).
+    // 5–8: balanced rows (3+2, 3+3, 4+3, 4+4).
     final rows = <Widget>[];
-    for (var i = 0; i < winners.length; i += metrics.maxPerRow) {
-      final end = (i + metrics.maxPerRow < winners.length)
-          ? i + metrics.maxPerRow
-          : winners.length;
+    var offset = 0;
+    for (var r = 0; r < counts.length; r++) {
+      final n = counts[r];
+      final slice = winners.sublist(offset, offset + n);
+      offset += n;
       if (rows.isNotEmpty) {
         rows.add(SizedBox(height: metrics.runSpacing));
       }
       rows.add(
         Row(
+          key: Key('share_result_tie_row_${r}_$n'),
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
-          children: _rowChildren(winners.sublist(i, end)),
+          children: _rowChildren(slice),
         ),
       );
     }
@@ -703,6 +785,9 @@ class _TiedWinnerChip extends StatelessWidget {
   final double nameSize;
   final double nameGap;
 
+  /// Scale names down to this factor before falling back to ellipsis.
+  static const double _minNameScale = 0.6;
+
   @override
   Widget build(BuildContext context) {
     final name = entry.player.displayName;
@@ -717,17 +802,11 @@ class _TiedWinnerChip extends StatelessWidget {
             radius: avatarRadius,
           ),
           SizedBox(height: nameGap),
-          Text(
-            name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: ShareResultCard.brandFontFamily,
-              fontSize: nameSize,
-              color: Colors.white,
-              height: 1.1,
-            ),
+          _ScaledEllipsisName(
+            name: name,
+            width: width,
+            fontSize: nameSize,
+            minScale: _minNameScale,
           ),
         ],
       ),
@@ -735,10 +814,92 @@ class _TiedWinnerChip extends StatelessWidget {
   }
 }
 
+/// Scales [name] down with [FittedBox] semantics to [minScale], then ellipsis.
+class _ScaledEllipsisName extends StatelessWidget {
+  const _ScaledEllipsisName({
+    required this.name,
+    required this.width,
+    required this.fontSize,
+    required this.minScale,
+  });
+
+  final String name;
+  final double width;
+  final double fontSize;
+  final double minScale;
+
+  @override
+  Widget build(BuildContext context) {
+    final baseStyle = TextStyle(
+      fontFamily: ShareResultCard.brandFontFamily,
+      fontSize: fontSize,
+      color: Colors.white,
+      height: 1.1,
+    );
+
+    return SizedBox(
+      width: width,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final maxW = constraints.maxWidth;
+          final painter = TextPainter(
+            text: TextSpan(text: name, style: baseStyle),
+            maxLines: 1,
+            textDirection: TextDirection.ltr,
+            textScaler: TextScaler.noScaling,
+          )..layout();
+          final natural = painter.width;
+
+          if (natural <= maxW) {
+            return Text(
+              name,
+              maxLines: 1,
+              textAlign: TextAlign.center,
+              style: baseStyle,
+            );
+          }
+
+          final scale = (maxW / natural).clamp(0.0, 1.0);
+          if (scale >= minScale) {
+            return FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                name,
+                maxLines: 1,
+                textAlign: TextAlign.center,
+                style: baseStyle,
+              ),
+            );
+          }
+
+          return Text(
+            name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: baseStyle.copyWith(fontSize: fontSize * minScale),
+          );
+        },
+      ),
+    );
+  }
+}
+
 class _StandingsList extends StatelessWidget {
-  const _StandingsList({required this.entries});
+  const _StandingsList({required this.entries, this.shrinkToFit = false});
+
+  static const double rowMaxHeight = 48;
+  static const double dividerHeight = 1;
 
   final List<RankingEntry> entries;
+  final bool shrinkToFit;
+
+  static double intrinsicHeight(int count) {
+    if (count <= 0) {
+      return 0;
+    }
+    return count * rowMaxHeight + (count - 1) * dividerHeight;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -749,19 +910,28 @@ class _StandingsList extends StatelessWidget {
           for (var i = 0; i < entries.length; i++) ...[
             if (i > 0)
               Divider(
-                height: 1,
+                height: dividerHeight,
                 thickness: 1,
                 color: Colors.white.withValues(alpha: 0.12),
               ),
-            Expanded(
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 48),
+            if (shrinkToFit)
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: rowMaxHeight),
+                    child: _StandingRow(entry: entries[i]),
+                  ),
+                ),
+              )
+            else
+              SizedBox(
+                height: rowMaxHeight,
+                child: Align(
+                  alignment: Alignment.centerLeft,
                   child: _StandingRow(entry: entries[i]),
                 ),
               ),
-            ),
           ],
         ],
       ),
