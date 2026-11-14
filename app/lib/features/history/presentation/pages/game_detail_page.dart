@@ -14,9 +14,13 @@ import 'package:la_pocha/features/history/domain/services/game_history_mapper.da
 import 'package:la_pocha/features/history/presentation/bloc/delete_game_from_history_cubit.dart';
 import 'package:la_pocha/features/history/presentation/bloc/game_detail_bloc.dart';
 import 'package:la_pocha/features/history/presentation/bloc/repeat_game_cubit.dart';
+import 'package:la_pocha/features/game_setup/domain/entities/game_status.dart';
 import 'package:la_pocha/features/history/presentation/widgets/delete_game_dialog.dart';
 import 'package:la_pocha/features/history/presentation/widgets/repeat_game_button.dart';
 import 'package:la_pocha/features/history/presentation/widgets/source_badge.dart';
+import 'package:la_pocha/features/share_result/domain/entities/share_result_payload.dart';
+import 'package:la_pocha/features/share_result/presentation/bloc/share_result_cubit.dart';
+import 'package:la_pocha/features/share_result/presentation/widgets/share_result_button.dart';
 
 class GameDetailPage extends StatelessWidget {
   const GameDetailPage({super.key, required this.gameId, required this.source});
@@ -35,6 +39,7 @@ class GameDetailPage extends StatelessWidget {
         ),
         BlocProvider(create: (_) => getIt<DeleteGameFromHistoryCubit>()),
         BlocProvider(create: (_) => getIt<RepeatGameCubit>()),
+        BlocProvider(create: (_) => getIt<ShareResultCubit>()),
       ],
       child: _GameDetailView(gameId: gameId),
     );
@@ -161,6 +166,15 @@ class _LoadedBody extends StatelessWidget {
           expanded: true,
           onBack: () => context.pop(),
           actions: [
+            if (game.status == GameStatus.finished && ranking.isNotEmpty)
+              ShareResultButton(
+                payload: ShareResultPayload(
+                  ranking: ranking,
+                  finishedAt: finishedAt,
+                  playerCount: game.playerCount,
+                  roundCount: game.roundSequence.length,
+                ),
+              ),
             IconButton(
               icon: Icon(
                 Icons.table_chart_outlined,

@@ -17,6 +17,9 @@ import 'package:la_pocha/features/history/presentation/bloc/repeat_game_cubit.da
 import 'package:la_pocha/features/history/presentation/widgets/repeat_game_dialog.dart';
 import 'package:la_pocha/features/round/domain/entities/ranking_entry.dart';
 import 'package:la_pocha/features/round/domain/services/ranking_service.dart';
+import 'package:la_pocha/features/share_result/domain/entities/share_result_payload.dart';
+import 'package:la_pocha/features/share_result/presentation/bloc/share_result_cubit.dart';
+import 'package:la_pocha/features/share_result/presentation/widgets/share_result_button.dart';
 import 'package:la_pocha/features/sync/presentation/bloc/game_sync_bloc.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -66,13 +69,18 @@ class _GameFinalResultPageState extends State<GameFinalResultPage> {
     return _FinalResultData(
       entries: entries,
       roundCount: game.roundSequence.length,
+      finishedAt: game.finishedAt,
+      playerCount: game.playerCount,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => getIt<RepeatGameCubit>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => getIt<RepeatGameCubit>()),
+        BlocProvider(create: (_) => getIt<ShareResultCubit>()),
+      ],
       child: Scaffold(
         body: SafeArea(
           top: false,
@@ -153,6 +161,14 @@ class _LoadedBody extends StatelessWidget {
               },
             ),
             actions: [
+              ShareResultButton(
+                payload: ShareResultPayload(
+                  ranking: data.entries,
+                  finishedAt: data.finishedAt,
+                  playerCount: data.playerCount,
+                  roundCount: data.roundCount,
+                ),
+              ),
               Builder(
                 builder: (context) {
                   final onPrimary = Theme.of(context).colorScheme.onPrimary;
@@ -174,7 +190,8 @@ class _LoadedBody extends StatelessWidget {
                   const SizedBox(height: 16),
                   WinnerCard(
                     entry: data.entries.first,
-                    photoURL: data.entries.first.player.photoURL ??
+                    photoURL:
+                        data.entries.first.player.photoURL ??
                         (data.entries.first.player.userId == currentUser?.uid
                             ? currentUser?.photoUrl
                             : null),
@@ -276,8 +293,15 @@ class _SignUpBanner extends StatelessWidget {
 }
 
 class _FinalResultData {
-  const _FinalResultData({required this.entries, required this.roundCount});
+  const _FinalResultData({
+    required this.entries,
+    required this.roundCount,
+    required this.finishedAt,
+    required this.playerCount,
+  });
 
   final List<RankingEntry> entries;
   final int roundCount;
+  final DateTime? finishedAt;
+  final int playerCount;
 }

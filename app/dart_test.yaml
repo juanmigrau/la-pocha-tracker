@@ -1,3 +1,7 @@
 tags:
   integration:
   firebase:
+  # Opt-in PNG previews for ShareResultCard visual review.
+  # Default suite skips via test-level guard; generate with:
+  #   flutter test --dart-define=SHARE_PREVIEWS=true --tags preview
+  preview:
