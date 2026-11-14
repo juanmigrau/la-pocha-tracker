@@ -243,7 +243,7 @@ void main() {
     expect(find.text('Nueva partida'), findsOneWidget);
     expect(find.text('Repetir partida'), findsOneWidget);
     expect(find.byIcon(Icons.bar_chart), findsOneWidget);
-    expect(find.byIcon(Icons.ios_share), findsOneWidget);
+    expect(find.byIcon(Icons.share), findsOneWidget);
     expect(find.byIcon(Icons.more_vert), findsNothing);
   });
 

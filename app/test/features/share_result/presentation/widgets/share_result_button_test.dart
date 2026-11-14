@@ -88,7 +88,7 @@ void main() {
       ),
     );
 
-    expect(find.byIcon(Icons.ios_share), findsNothing);
+    expect(find.byIcon(Icons.share), findsNothing);
   });
 
   testWidgets('shows share icon when ranking is not empty', (tester) async {
@@ -101,7 +101,7 @@ void main() {
       ),
     );
 
-    expect(find.byIcon(Icons.ios_share), findsOneWidget);
+    expect(find.byIcon(Icons.share), findsOneWidget);
     expect(find.byTooltip('Compartir'), findsOneWidget);
   });
 }

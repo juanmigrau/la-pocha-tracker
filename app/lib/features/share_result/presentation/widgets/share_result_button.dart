@@ -64,7 +64,7 @@ class ShareResultButton extends StatelessWidget {
                       color: color,
                     ),
                   )
-                : Icon(Icons.ios_share, color: color),
+                : Icon(Icons.share, color: color),
           );
         },
       ),
